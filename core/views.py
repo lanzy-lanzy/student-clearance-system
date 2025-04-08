@@ -183,9 +183,27 @@ def student_dashboard(request):
     try:
         student = request.user.student
         clearances = Clearance.objects.filter(student=student).order_by('-school_year', '-semester')
+
+        # Get the latest clearance for the student
+        latest_clearance = clearances.first()
+
+        # Get all clearance requests for the student
+        if latest_clearance:
+            clearance_requests = ClearanceRequest.objects.filter(
+                clearance=latest_clearance
+            ).select_related('office', 'reviewed_by')
+        else:
+            clearance_requests = []
+
+        # Get student's course and other related information
+        course_info = student.course
+
         return render(request, 'core/student_dashboard.html', {
             'student_info': student,
             'clearances': clearances,
+            'latest_clearance': latest_clearance,
+            'clearance_requests': clearance_requests,
+            'course_info': course_info,
         })
     except Student.DoesNotExist:
         messages.error(request, "Student profile not found.")
@@ -195,7 +213,18 @@ def student_dashboard(request):
 def student_profile(request):
     try:
         student = request.user.student
-        return render(request, 'core/student_profile.html', {'student': student})
+        student_info = {
+            'full_name': student.user.get_full_name(),
+            'student_id': student.student_id,
+            'course': student.course.name,
+            'year_level': student.year_level,
+            'program_chair': student.course.dean.name,
+            'is_boarder': student.is_boarder
+        }
+        return render(request, 'core/student_profile.html', {
+            'student': student,
+            'student_info': student_info
+        })
     except Student.DoesNotExist:
         messages.error(request, "Student profile not found.")
         return redirect('home')
@@ -532,71 +561,125 @@ def staff_pending_requests(request):
 @require_POST
 def approve_clearance_request(request, request_id):
     try:
+        # Get the staff member and clearance request
         staff = request.user.staff
         clearance_request = get_object_or_404(ClearanceRequest, id=request_id)
 
+        # Log the request for debugging
+        logger.info(f"Approve request received for request_id={request_id} by staff={staff.id}")
+
+        # Check if staff has permission for this office
         if staff.office != clearance_request.office:
             messages.error(request, f"No permission for {clearance_request.office.name}")
-            return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+            return redirect('staff_pending_requests')
 
+        # Check if request is still pending
         if clearance_request.status != 'pending':
-            messages.error(request, 'Request already processed')
-            return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+            messages.warning(request, f'Request already processed (current status: {clearance_request.status})')
+            return redirect('staff_pending_requests')
 
-        clearance_request.approve(staff)
-        clearance = Clearance.objects.get(
-            student=clearance_request.student,
-            school_year=clearance_request.school_year,
-            semester=clearance_request.semester
-        )
-        clearance.check_clearance()
+        # Process the approval
+        try:
+            # Update the clearance request status
+            clearance_request.status = "approved"
+            clearance_request.reviewed_by = staff
+            clearance_request.reviewed_date = timezone.now()
+            clearance_request.notes = None  # Clear notes on approval
+            clearance_request.save()
 
-        messages.success(request, f'Approved clearance for {clearance_request.student.full_name}')
+            # Update the parent clearance
+            clearance = Clearance.objects.get(
+                student=clearance_request.student,
+                school_year=clearance_request.school_year,
+                semester=clearance_request.semester
+            )
+            clearance.check_clearance()
+
+            logger.info(f"Successfully approved request_id={request_id}")
+
+            # Show success message and redirect
+            messages.success(request, f'Successfully approved clearance for {clearance_request.student.user.get_full_name()}')
+            return redirect('staff_pending_requests')
+
+        except Exception as inner_e:
+            logger.error(f"Error in approval process: {str(inner_e)}")
+            messages.error(request, f'Error processing approval: {str(inner_e)}')
+            return redirect('staff_pending_requests')
+
     except Staff.DoesNotExist:
+        logger.error(f"Staff access required for user_id={request.user.id}")
         messages.error(request, 'Staff access required')
-    except Exception as e:
-        messages.error(request, f'Error: {str(e)}')
+        return redirect('login')
 
-    return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+    except Exception as e:
+        logger.error(f"Unexpected error in approve_clearance_request: {str(e)}")
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('staff_pending_requests')
 
 @login_required
 @require_POST
 def deny_clearance_request(request, request_id):
     try:
+        # Get the staff member and clearance request
         staff = request.user.staff
         clearance_request = get_object_or_404(ClearanceRequest, id=request_id)
 
+        # Log the request for debugging
+        logger.info(f"Deny request received for request_id={request_id} by staff={staff.id}")
+
+        # Check if staff has permission for this office
         if staff.office != clearance_request.office:
             messages.error(request, f"No permission for {clearance_request.office.name}")
-            return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+            return redirect('staff_pending_requests')
 
+        # Check if request is still pending
         if clearance_request.status != 'pending':
-            messages.error(request, 'Request already processed')
-            return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+            messages.warning(request, f'Request already processed (current status: {clearance_request.status})')
+            return redirect('staff_pending_requests')
 
-        reason = (json.loads(request.body).get('reason', '')
-                 if request.content_type == 'application/json'
-                 else request.POST.get('reason', ''))
+        # Get the reason from form data
+        reason = request.POST.get('remarks', '')
 
         if not reason:
             messages.error(request, 'Reason required for denial')
-            return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+            return redirect('staff_pending_requests')
 
-        clearance_request.deny(staff, reason)
-        clearance = Clearance.objects.get(
-            student=clearance_request.student,
-            school_year=clearance_request.school_year,
-            semester=clearance_request.semester
-        )
-        clearance.check_clearance()
+        try:
+            # Update the clearance request status
+            clearance_request.status = "denied"
+            clearance_request.reviewed_by = staff
+            clearance_request.reviewed_date = timezone.now()
+            clearance_request.notes = reason
+            clearance_request.save()
 
-        messages.success(request, f'Denied clearance for {clearance_request.student.full_name}')
+            # Update the parent clearance
+            clearance = Clearance.objects.get(
+                student=clearance_request.student,
+                school_year=clearance_request.school_year,
+                semester=clearance_request.semester
+            )
+            clearance.check_clearance()
+
+            logger.info(f"Successfully denied request_id={request_id}")
+
+            # Show success message and redirect
+            messages.success(request, f'Successfully denied clearance for {clearance_request.student.user.get_full_name()}')
+            return redirect('staff_pending_requests')
+
+        except Exception as inner_e:
+            logger.error(f"Error in denial process: {str(inner_e)}")
+            messages.error(request, f'Error processing denial: {str(inner_e)}')
+            return redirect('staff_pending_requests')
+
     except Staff.DoesNotExist:
+        logger.error(f"Staff access required for user_id={request.user.id}")
         messages.error(request, 'Staff access required')
-    except Exception as e:
-        messages.error(request, f'Error: {str(e)}')
+        return redirect('login')
 
-    return redirect(request.META.get('HTTP_REFERER', 'staff_dashboard'))
+    except Exception as e:
+        logger.error(f"Unexpected error in deny_clearance_request: {str(e)}")
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('staff_pending_requests')
 
 @login_required
 def staff_clearance_history(request):
@@ -1287,6 +1370,31 @@ def update_profile_picture(request):
     except Exception as e:
         messages.error(request, f'Error: {str(e)}')
         return redirect('home')
+
+@login_required
+@require_POST
+def update_contact_number(request):
+    try:
+        if not hasattr(request.user, 'student'):
+            messages.error(request, 'Only students can update contact numbers')
+            return redirect('home')
+
+        student = request.user.student
+        contact_number = request.POST.get('contact_number', '').strip()
+
+        # Basic validation
+        if contact_number and not contact_number.startswith('+'):
+            contact_number = '+' + contact_number
+
+        # Update the contact number
+        student.contact_number = contact_number
+        student.save()
+
+        messages.success(request, 'Contact number updated successfully')
+        return redirect('student_profile')
+    except Exception as e:
+        messages.error(request, f'Error updating contact number: {str(e)}')
+        return redirect('student_profile')
 
 @login_required
 def print_permit(request, student_id):

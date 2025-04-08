@@ -11,6 +11,7 @@ urlpatterns = [
     # Student Routes
     path('profile/', views.student_profile, name='student_profile'),
     path('profile/update-picture/', views.update_profile_picture, name='update_profile_picture'),
+    path('profile/update-contact/', views.update_contact_number, name='update_contact_number'),
     path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
     path('student/create-clearance-requests/', views.create_clearance_requests, name='create_clearance_requests'),
     path('student/clearance/<int:clearance_id>/', views.view_clearance_details, name='view_clearance_details'),

@@ -26,75 +26,68 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Search and Filter Section -->
-        <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
-                    <select name="school_year" class="w-full rounded-md border-gray-300">
-                        <option value="">All</option>
-                        {% for year in school_years %}
-                            <option value="{{ year }}" {% if current_filters.school_year == year %}selected{% endif %}>{{ year }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                    <select name="semester" class="w-full rounded-md border-gray-300">
-                        <option value="">All</option>
-                        {% for sem_value, sem_label in SEMESTER_CHOICES %}
-                            <option value="{{ sem_value }}" {% if current_filters.semester == sem_value %}selected{% endif %}>{{ sem_label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Office</label>
-                    <select name="office" class="w-full rounded-md border-gray-300">
-                        <option value="">All Offices</option>
-                        <option value="DSA" {% if current_filters.office == 'DSA' %}selected{% endif %}>DSA</option>
-                        <option value="OSA" {% if current_filters.office == 'OSA' %}selected{% endif %}>OSA</option>
-                        <option value="LIBRARY" {% if current_filters.office == 'LIBRARY' %}selected{% endif %}>LIBRARY</option>
-                        <option value="GUIDANCE OFFICE" {% if current_filters.office == 'GUIDANCE OFFICE' %}selected{% endif %}>GUIDANCE OFFICE</option>
-                        <option value="ACCOUNTING OFFICE" {% if current_filters.office == 'ACCOUNTING OFFICE' %}selected{% endif %}>ACCOUNTING OFFICE</option>
-                        <option value="REGISTRAR" {% if current_filters.office == 'REGISTRAR' %}selected{% endif %}>REGISTRAR</option>
-                        <option value="SSC" {% if current_filters.office == 'SSC' %}selected{% endif %}>SSC</option>
-                        <option value="DORMITORY" {% if current_filters.office == 'DORMITORY' %}selected{% endif %}>DORMITORY</option>
-                        <option value="LABORATORY" {% if current_filters.office == 'LABORATORY' %}selected{% endif %}>LABORATORY</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-                    <select name="sort" class="w-full rounded-md border-gray-300">
-                        <option value="request_date" {% if current_filters.sort == 'request_date' %}selected{% endif %}>Request Date</option>
-                        <option value="student_name" {% if current_filters.sort == 'student_name' %}selected{% endif %}>Student Name</option>
-                        <option value="course" {% if current_filters.sort == 'course' %}selected{% endif %}>Course</option>
-                        <option value="office" {% if current_filters.sort == 'office' %}selected{% endif %}>Office</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                    <div class="relative">
-                        <input type="text" 
-                               name="search" 
-                               value="{{ current_filters.search }}"
-                               class="w-full rounded-md border-gray-300 pl-10" 
-                               placeholder="Search by name or ID...">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+            <!-- Search and Filter Section -->
+            <div class="p-6">
+                <form method="GET" action="{% url 'staff_pending_requests' %}" class="space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4">
+                    <!-- Search Input -->
+                    <div class="flex-1">
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search Student</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" name="search" id="search" value="{{ current_filters.search }}"
+                                   class="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 pr-3 py-2 border-gray-300 rounded-md"
+                                   placeholder="Name or ID">
                         </div>
                     </div>
-                </div>
-                <div class="md:col-span-5 flex justify-end">
-                    <button type="submit" 
-                            class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors duration-150">
-                        Apply Filters
-                    </button>
-                </div>
-            </form>
+
+                    <!-- School Year Filter -->
+                    <div class="w-full md:w-48">
+                        <label for="school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                        <select id="school_year" name="school_year"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 rounded-md">
+                            <option value="">All Years</option>
+                            {% for year in school_years %}
+                                <option value="{{ year }}" {% if current_filters.school_year == year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Semester Filter -->
+                    <div class="w-full md:w-48">
+                        <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                        <select id="semester" name="semester"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 rounded-md">
+                            <option value="">All Semesters</option>
+                            {% for sem_code, sem_name in SEMESTER_CHOICES %}
+                                <option value="{{ sem_code }}" {% if current_filters.semester == sem_code %}selected{% endif %}>{{ sem_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Sort By Filter -->
+                    <div class="w-full md:w-48">
+                        <label for="sort" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                        <select id="sort" name="sort"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 rounded-md">
+                            <option value="request_date" {% if current_filters.sort == 'request_date' %}selected{% endif %}>Request Date</option>
+                            <option value="student__user__last_name" {% if current_filters.sort == 'student__user__last_name' %}selected{% endif %}>Student Name</option>
+                            <option value="student__course__code" {% if current_filters.sort == 'student__course__code' %}selected{% endif %}>Course</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="w-full md:w-auto">
+                        <button type="submit" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-150">
+                            Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Enhanced Pending Requests Table -->
@@ -106,28 +99,22 @@
                         <tr class="bg-gray-50">
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Student</th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Course</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Office</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact Number</th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Request Date</th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200">
                         {% for request in pending_requests %}
-                        <tr class="hover:bg-gray-50 transition duration-150">
-                            <td class="px-6 py-4">
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <span class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                                            <span class="text-emerald-700 font-medium">{{ request.student.user.get_full_name|make_list|first }}</span>
-                                        </span>
+                                        <img class="h-10 w-10 rounded-full object-cover" src="{{ request.student.get_profile_picture_url }}" alt="{{ request.student.user.get_full_name }}">
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ request.student.user.get_full_name }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ request.student.student_id }}
-                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">{{ request.student.user.get_full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ request.student.student_id }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -137,9 +124,13 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="px-3 py-1 text-sm text-blue-700 bg-blue-100 rounded-full">
-                                    {{ request.office.name }}
-                                </span>
+                                <div class="text-sm text-gray-900">
+                                    {% if request.student.contact_number %}
+                                        {{ request.student.contact_number }}
+                                    {% else %}
+                                        Not provided
+                                    {% endif %}
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-900">{{ request.request_date|date:"M d, Y" }}</div>
@@ -149,17 +140,25 @@
                                 <div class="flex items-center space-x-4">
                                     <a href="{% url 'view_request' request.id %}"
                                        class="inline-flex items-center px-3 py-2 border border-emerald-600 text-sm font-medium rounded-md text-emerald-600 bg-white hover:bg-emerald-50 transition-colors duration-150">
-                                        <i class="fas fa-eye mr-2"></i> View
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View
                                     </a>
-                                    <button type="button"
-                                            onclick="approveRequest('{{ request.id }}')"
+                                    <button onclick="approveRequest({{ request.id }})"
                                             class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-150">
-                                        <i class="fas fa-check mr-2"></i> Approve
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Approve
                                     </button>
-                                    <button type="button"
-                                            onclick="showDenialModal('{{ request.id }}')"
+                                    <button onclick="showDenialModal({{ request.id }})"
                                             class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-150">
-                                        <i class="fas fa-times mr-2"></i> Deny
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Deny
                                     </button>
                                 </div>
                             </td>
@@ -169,14 +168,12 @@
                 </table>
             </div>
             {% else %}
-            <div class="p-12 text-center">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-4">
-                    <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900">All Caught Up!</h3>
-                <p class="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
-                    There are no pending clearance requests at the moment.
-                </p>
+            <div class="p-8 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-lg font-medium text-gray-900">No pending requests</h3>
+                <p class="mt-1 text-sm text-gray-500">There are no pending clearance requests for your office at this time.</p>
             </div>
             {% endif %}
         </div>
@@ -184,148 +181,94 @@
 </div>
 
 <!-- Denial Modal -->
-<div id="denialModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form onsubmit="return handleDenial(event)">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <i class="fas fa-exclamation-triangle text-red-600"></i>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                Deny Clearance Request
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500">
-                                    Please provide a reason for denying this clearance request.
-                                </p>
-                                <input type="hidden" id="denialRequestId" name="requestId">
-                                <textarea id="remarks" 
-                                          name="remarks"
-                                          rows="3"
-                                          class="mt-4 shadow-sm block w-full focus:ring-red-500 focus:border-red-500 sm:text-sm border border-gray-300 rounded-md"
-                                          placeholder="Enter reason for denial..."></textarea>
-                            </div>
-                        </div>
+<div id="denialModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Deny Clearance Request</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500 mb-4">Please provide a reason for denying this clearance request.</p>
+                <form id="denialForm" method="POST" action="">
+                    {% csrf_token %}
+                    <textarea id="remarks" name="remarks" rows="4" required
+                              class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+                              placeholder="Enter reason for denial"></textarea>
+                    <div class="flex items-center justify-between mt-4">
+                        <button type="button" onclick="closeDenialModal()"
+                                class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            Deny Request
+                        </button>
                     </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit"
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Deny Request
-                    </button>
-                    <button type="button"
-                            onclick="closeDenialModal()"
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Cancel
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
-    }
-    return cookieValue;
-}
-
-async function approveRequest(requestId) {
-    if (!confirm('Are you sure you want to approve this request?')) {
-        return;
+        return cookieValue;
     }
 
-    try {
-        const response = await fetch(`/approve-clearance-request/${requestId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            const data = await response.json();
-            alert(data.message || 'Error approving request');
+    function approveRequest(requestId) {
+        if (!confirm('Are you sure you want to approve this request?')) {
+            return;
         }
-    } catch (error) {
-        alert('Error processing request');
-    }
-}
 
-function showDenialModal(requestId) {
-    document.getElementById('denialRequestId').value = requestId;
-    document.getElementById('denialModal').classList.remove('hidden');
-    document.getElementById('remarks').focus();
-}
+        // Create a form for traditional form submission
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/approve-clearance-request/${requestId}/`;
+        form.style.display = 'none';
 
-function closeDenialModal() {
-    document.getElementById('denialModal').classList.add('hidden');
-    document.getElementById('remarks').value = '';
-}
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = getCookie('csrftoken');
+        form.appendChild(csrfInput);
 
-async function handleDenial(event) {
-    event.preventDefault();
-    const requestId = document.getElementById('denialRequestId').value;
-    const remarks = document.getElementById('remarks').value;
-
-    if (!remarks.trim()) {
-        alert('Please provide a reason for denial');
-        return false;
+        // Add the form to the document and submit it
+        document.body.appendChild(form);
+        form.submit();
     }
 
-    try {
-        const formData = new FormData();
-        formData.append('reason', remarks);
-        
-        const response = await fetch(`/deny-clearance-request/${requestId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: formData
-        });
+    function showDenialModal(requestId) {
+        document.getElementById('denialForm').action = `/deny-clearance-request/${requestId}/`;
+        document.getElementById('denialModal').classList.remove('hidden');
+        document.getElementById('remarks').focus();
+    }
 
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            const data = await response.json();
-            alert(data.message || 'Error denying request');
+    function closeDenialModal() {
+        document.getElementById('denialModal').classList.add('hidden');
+        document.getElementById('remarks').value = '';
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.getElementById('denialModal');
+        if (event.target === modal) {
+            closeDenialModal();
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error processing request');
     }
-
-    closeDenialModal();
-    return false;
-}
-
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('denialModal');
-    if (event.target === modal) {
-        closeDenialModal();
-    }
-}
 </script>
 {% endblock %}
