@@ -11,7 +11,7 @@
 
     <!-- Filters -->
     <div class="flex gap-4 mb-6">
-        <input type="text" id="search" placeholder="Search..." 
+        <input type="text" id="search" placeholder="Search..."
                class="px-4 py-2 border rounded-md">
         <select id="course-filter" class="px-4 py-2 border rounded-md">
             <option value="">All Courses</option>
@@ -28,6 +28,7 @@
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year Level</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -41,6 +42,13 @@
                         <div class="text-sm text-gray-500">{{ student.user.email }}</div>
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-500">{{ student.student_id }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        {% if student.contact_number %}
+                            {{ student.contact_number }}
+                        {% else %}
+                            <span class="text-gray-400">Not provided</span>
+                        {% endif %}
+                    </td>
                     <td class="px-6 py-4">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
                             {{ student.course.code }}
@@ -48,11 +56,11 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-500">{{ student.year_level }}</td>
                     <td class="px-6 py-4 text-sm">
-                        <button onclick="approveStudent('{{ student.id }}')" 
+                        <button onclick="showApproveModal('{{ student.id }}', '{{ student.user.get_full_name }}', '{{ student.student_id }}')"
                                 class="text-emerald-600 hover:text-emerald-900 mr-3">
                             Approve
                         </button>
-                        <button onclick="showRejectModal('{{ student.id }}')" 
+                        <button onclick="showRejectModal('{{ student.id }}', '{{ student.user.get_full_name }}', '{{ student.student_id }}')"
                                 class="text-red-600 hover:text-red-900">
                             Reject
                         </button>
@@ -63,20 +71,128 @@
         </table>
     </div>
 
-    <!-- Reject Modal -->
-    <div id="reject-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <!-- Approve Modal -->
+    <div id="approve-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Student</h3>
-            <textarea id="rejection-reason" rows="4" 
-                      class="w-full border rounded-md p-2 mb-4"
-                      placeholder="Please provide a reason for rejection..."></textarea>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Approve Student</h3>
+                <button onclick="document.getElementById('approve-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="bg-emerald-50 border-l-4 border-emerald-400 p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-emerald-700" id="approve-student-info">
+                            You are about to approve student registration.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
+                <textarea id="approval-notes" rows="3"
+                          class="w-full border rounded-md p-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          placeholder="Add any notes about this approval..."></textarea>
+            </div>
+
+            <div class="mb-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="send-sms" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded" checked>
+                    <label for="send-sms" class="ml-2 block text-sm text-gray-700">
+                        Send SMS notification to student via Infobip
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-500" id="sms-status">
+                    <span id="has-phone-number" class="hidden text-emerald-600">
+                        <i class="fas fa-check-circle mr-1"></i> Student has a contact number
+                    </span>
+                    <span id="no-phone-number" class="hidden text-red-600">
+                        <i class="fas fa-exclamation-circle mr-1"></i> Student has no contact number
+                    </span>
+                </p>
+            </div>
+
             <div class="flex justify-end space-x-2">
-                <button onclick="rejectStudent()" 
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                    Confirm
+                <button onclick="approveStudent()"
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    Confirm Approval
+                </button>
+                <button onclick="document.getElementById('approve-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="reject-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Reject Student</h3>
+                <button onclick="document.getElementById('reject-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700" id="reject-student-info">
+                            You are about to reject student registration.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Rejection <span class="text-red-500">*</span></label>
+                <textarea id="rejection-reason" rows="4"
+                          class="w-full border rounded-md p-2 focus:ring-red-500 focus:border-red-500"
+                          placeholder="Please provide a reason for rejection..."></textarea>
+            </div>
+
+            <div class="mb-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="reject-send-sms" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" checked>
+                    <label for="reject-send-sms" class="ml-2 block text-sm text-gray-700">
+                        Send SMS notification to student via Infobip
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-500" id="reject-sms-status">
+                    <span id="reject-has-phone-number" class="hidden text-emerald-600">
+                        <i class="fas fa-check-circle mr-1"></i> Student has a contact number
+                    </span>
+                    <span id="reject-no-phone-number" class="hidden text-red-600">
+                        <i class="fas fa-exclamation-circle mr-1"></i> Student has no contact number
+                    </span>
+                </p>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="rejectStudent()"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Confirm Rejection
                 </button>
                 <button onclick="document.getElementById('reject-modal').classList.add('hidden')"
-                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                     Cancel
                 </button>
             </div>
@@ -88,61 +204,256 @@
 
 <script>
 let selectedStudentId = null;
+let selectedStudentName = null;
+let selectedStudentId_display = null;
 
-function approveStudent(studentId) {
-    if (!confirm('Are you sure you want to approve this student?')) return;
-    
-    fetch(`/dashboard/admin/approve-student/${studentId}/`, {  // Updated URL path
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById(`student-row-${studentId}`).remove();
-            location.reload();
-        } else {
-            alert(data.error || 'Failed to approve student');
-        }
-    })
-    .catch(error => alert('Error processing request'));
-}
-
-function showRejectModal(studentId) {
+function showApproveModal(studentId, studentName, studentIdDisplay) {
     selectedStudentId = studentId;
-    document.getElementById('reject-modal').classList.remove('hidden');
-    document.getElementById('rejection-reason').value = '';
+    selectedStudentName = studentName;
+    selectedStudentId_display = studentIdDisplay;
+
+    // Update the modal with student info
+    document.getElementById('approve-student-info').textContent =
+        `You are about to approve ${studentName} (${studentIdDisplay}). This will grant the student access to the system.`;
+
+    // Clear any previous notes
+    document.getElementById('approval-notes').value = '';
+
+    // Check if student has a contact number
+    fetch(`/dashboard/admin/get-student-details/${studentId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const hasPhoneNumber = data.contact_number && data.contact_number !== 'Not provided';
+            document.getElementById('has-phone-number').classList.toggle('hidden', !hasPhoneNumber);
+            document.getElementById('no-phone-number').classList.toggle('hidden', hasPhoneNumber);
+
+            // Enable/disable SMS checkbox based on whether student has a phone number
+            const smsCheckbox = document.getElementById('send-sms');
+            smsCheckbox.checked = hasPhoneNumber;
+            smsCheckbox.disabled = !hasPhoneNumber;
+        })
+        .catch(error => {
+            console.error('Error fetching student details:', error);
+            // Hide both status messages if there's an error
+            document.getElementById('has-phone-number').classList.add('hidden');
+            document.getElementById('no-phone-number').classList.add('hidden');
+        });
+
+    // Show the modal
+    document.getElementById('approve-modal').classList.remove('hidden');
 }
 
-function rejectStudent() {
-    const reason = document.getElementById('rejection-reason').value.trim();
-    if (!reason) {
-        alert('Please provide a reason for rejection');
-        return;
-    }
+function approveStudent() {
+    const notes = document.getElementById('approval-notes').value.trim();
+    const sendSms = document.getElementById('send-sms').checked;
 
-    fetch(`/dashboard/admin/reject-student/${selectedStudentId}/`, {  // Updated URL path
+    fetch(`/dashboard/admin/approve-student/${selectedStudentId}/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ reason: reason })
+        body: JSON.stringify({
+            notes: notes,
+            send_sms: sendSms
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`student-row-${selectedStudentId}`).remove();
+            document.getElementById('approve-modal').classList.add('hidden');
+
+            // Prepare notification message
+            let notificationMessage = `Student ${selectedStudentName} approved successfully!`;
+
+            // Add SMS status if applicable
+            if (data.sms_status) {
+                if (data.sms_status.sent) {
+                    // Check if it's a fallback mode
+                    if (data.sms_status.status === 'fallback') {
+                        notificationMessage += ' SMS notification processed (using alternative delivery method).';
+                    } else {
+                        notificationMessage += ' SMS notification sent.';
+                    }
+                } else {
+                    // Check for specific error types
+                    if (data.sms_status.error_type === 'GEOGRAPHIC_RESTRICTION') {
+                        notificationMessage += ` SMS notification simulated due to geographic restrictions.`;
+                    } else if (data.sms_status.error_type === 'UNVERIFIED_NUMBER') {
+                        notificationMessage += ` SMS notification simulated (unverified number in trial account).`;
+                    } else {
+                        notificationMessage += ` SMS notification failed: ${data.sms_status.error}`;
+                    }
+                }
+            }
+
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-emerald-100 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded shadow-md';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">${notificationMessage}</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+                location.reload();
+            }, 3000);
+        } else {
+            alert(data.error || 'Failed to approve student');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing request');
+    });
+}
+
+function showRejectModal(studentId, studentName, studentIdDisplay) {
+    selectedStudentId = studentId;
+    selectedStudentName = studentName;
+    selectedStudentId_display = studentIdDisplay;
+
+    // Update the modal with student info
+    document.getElementById('reject-student-info').textContent =
+        `You are about to reject ${studentName} (${studentIdDisplay}). The student will be notified of the rejection reason.`;
+
+    // Clear any previous reason
+    document.getElementById('rejection-reason').value = '';
+
+    // Check if student has a contact number
+    fetch(`/dashboard/admin/get-student-details/${studentId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const hasPhoneNumber = data.contact_number && data.contact_number !== 'Not provided';
+            document.getElementById('reject-has-phone-number').classList.toggle('hidden', !hasPhoneNumber);
+            document.getElementById('reject-no-phone-number').classList.toggle('hidden', hasPhoneNumber);
+
+            // Enable/disable SMS checkbox based on whether student has a phone number
+            const smsCheckbox = document.getElementById('reject-send-sms');
+            smsCheckbox.checked = hasPhoneNumber;
+            smsCheckbox.disabled = !hasPhoneNumber;
+        })
+        .catch(error => {
+            console.error('Error fetching student details:', error);
+            // Hide both status messages if there's an error
+            document.getElementById('reject-has-phone-number').classList.add('hidden');
+            document.getElementById('reject-no-phone-number').classList.add('hidden');
+        });
+
+    // Show the modal
+    document.getElementById('reject-modal').classList.remove('hidden');
+}
+
+function rejectStudent() {
+    const reason = document.getElementById('rejection-reason').value.trim();
+    if (!reason) {
+        // Show validation error
+        const reasonField = document.getElementById('rejection-reason');
+        reasonField.classList.add('border-red-500');
+        reasonField.focus();
+
+        // Add error message if it doesn't exist
+        if (!document.getElementById('reason-error')) {
+            const errorMsg = document.createElement('p');
+            errorMsg.id = 'reason-error';
+            errorMsg.className = 'mt-1 text-sm text-red-600';
+            errorMsg.textContent = 'Please provide a reason for rejection';
+            reasonField.parentNode.appendChild(errorMsg);
+        }
+        return;
+    }
+
+    // Remove any validation errors
+    document.getElementById('rejection-reason').classList.remove('border-red-500');
+    const errorMsg = document.getElementById('reason-error');
+    if (errorMsg) errorMsg.remove();
+
+    // Get SMS notification preference
+    const sendSms = document.getElementById('reject-send-sms').checked;
+
+    fetch(`/dashboard/admin/reject-student/${selectedStudentId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            reason: reason,
+            send_sms: sendSms
+        })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             document.getElementById(`student-row-${selectedStudentId}`).remove();
             document.getElementById('reject-modal').classList.add('hidden');
-            location.reload();
+
+            // Prepare notification message
+            let notificationMessage = `Student ${selectedStudentName} rejected successfully.`;
+
+            // Add SMS status if applicable
+            if (data.sms_status) {
+                if (data.sms_status.sent) {
+                    // Check if it's a fallback mode
+                    if (data.sms_status.status === 'fallback') {
+                        notificationMessage += ' SMS notification processed (using alternative delivery method).';
+                    } else {
+                        notificationMessage += ' SMS notification sent.';
+                    }
+                } else {
+                    // Check for specific error types
+                    if (data.sms_status.error_type === 'GEOGRAPHIC_RESTRICTION') {
+                        notificationMessage += ` SMS notification simulated due to geographic restrictions.`;
+                    } else if (data.sms_status.error_type === 'UNVERIFIED_NUMBER') {
+                        notificationMessage += ` SMS notification simulated (unverified number in trial account).`;
+                    } else {
+                        notificationMessage += ` SMS notification failed: ${data.sms_status.error}`;
+                    }
+                }
+            }
+
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">${notificationMessage}</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+                location.reload();
+            }, 3000);
         } else {
             alert(data.error || 'Failed to reject student');
         }
     })
-    .catch(error => alert('Error processing request'));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing request');
+    });
 }
 
 // Simple search and filter functionality
@@ -157,9 +468,12 @@ function filterTable() {
     rows.forEach(row => {
         const studentName = row.querySelector('.text-gray-900').textContent.toLowerCase();
         const studentId = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        const contactNumber = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
         const courseName = row.querySelector('.bg-emerald-100').textContent.trim();
 
-        const matchesSearch = studentName.includes(searchTerm) || studentId.includes(searchTerm);
+        const matchesSearch = studentName.includes(searchTerm) ||
+                             studentId.includes(searchTerm) ||
+                             contactNumber.includes(searchTerm);
         const matchesCourse = !courseFilter || courseName === courseFilter;
 
         row.classList.toggle('hidden', !matchesSearch || !matchesCourse);

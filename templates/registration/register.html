@@ -15,28 +15,28 @@
 				transform: translateY(0);
 			}
 		}
-		
+
 		@keyframes spin {
 			from { transform: rotate(0deg); }
 			to { transform: rotate(360deg); }
 		}
-		
+
 		.input-focus-effect:focus {
 			box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 			border-color: #10B981;
 		}
-		
+
 		.loading-spinner {
 			display: none;
 			animation: spin 1s linear infinite;
 			width: 1.5rem;
 			height: 1.5rem;
 		}
-		
+
 		.btn-loading .loading-spinner {
 			display: inline-block;
 		}
-		
+
 		.btn-loading .btn-text {
 			display: none;
 		}
@@ -109,6 +109,15 @@
 								<i class="fas fa-envelope mr-2 text-emerald-600"></i>Email
 							</label>
 							<input type="email" name="email" id="email" required
+										 class="mt-1 block w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 input-focus-effect">
+						</div>
+
+						<!-- Contact Number -->
+						<div>
+							<label for="contact_number" class="block text-sm font-medium text-gray-700">
+								<i class="fas fa-phone mr-2 text-emerald-600"></i>Contact Number
+							</label>
+							<input type="tel" name="contact_number" id="contact_number" placeholder="e.g. 09123456789"
 										 class="mt-1 block w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 input-focus-effect">
 						</div>
 						<!-- Password -->
@@ -217,24 +226,24 @@ function handleSubmit(e) {
     const form = e.target;
     const submitBtn = document.getElementById('submitBtn');
     const courseSelect = document.getElementById('course');
-    
+
     // Debug log
     console.log('Selected course value:', courseSelect.value);
-    
+
     // Validate course selection
     if (!courseSelect.value) {
         alert('Please select a course');
         return false;
     }
-    
+
     // Disable the button and show spinner
     submitBtn.disabled = true;
     submitBtn.classList.add('btn-loading');
-    
+
     // Start the spinner animation
     const spinner = submitBtn.querySelector('.loading-spinner');
     spinner.style.display = 'inline-block';
-    
+
     // Submit the form after 2 seconds
     setTimeout(() => {
         form.submit();
@@ -271,11 +280,11 @@ const courseSelect = document.getElementById('course');
 
 deanSelect.addEventListener('change', async function() {
     const deanId = this.value;
-    
+
     // Clear and disable course select
     courseSelect.innerHTML = '<option value="">Select your course</option>';
     courseSelect.disabled = true;
-    
+
     if (!deanId) {
         courseSelect.innerHTML = '<option value="">First select a dean</option>';
         return;
@@ -289,7 +298,7 @@ deanSelect.addEventListener('change', async function() {
         const response = await fetch(`/api/courses/${deanId}/`);
         if (!response.ok) throw new Error('Failed to fetch courses');
         const courses = await response.json();
-        
+
         if (courses.length === 0) {
             courseSelect.innerHTML = '<option value="">No courses available for this dean</option>';
             return;
@@ -303,7 +312,7 @@ deanSelect.addEventListener('change', async function() {
             option.textContent = `${course.code} - ${course.name}`;
             courseSelect.appendChild(option);
         });
-        
+
         // Enable course selection
         courseSelect.disabled = false;
     } catch (error) {
@@ -325,18 +334,18 @@ style.textContent = `
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
-    
+
     .loading-spinner {
         display: none;
         animation: spin 1s linear infinite;
         width: 1.5rem;
         height: 1.5rem;
     }
-    
+
     .btn-loading .btn-text {
         display: none;
     }
-    
+
     .btn-loading .loading-spinner {
         display: inline-block;
     }
@@ -353,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deanSelect = document.getElementById('dean');
     const courseSelect = document.getElementById('course');
     const registerForm = document.getElementById('registerForm');
-    
+
     // Debug form submission
     registerForm.addEventListener('submit', function(e) {
         const formData = new FormData(this);
@@ -362,14 +371,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(pair[0] + ': ' + pair[1]);
         }
     });
-    
+
     deanSelect.addEventListener('change', async function() {
         const deanId = this.value;
         console.log('Selected dean ID:', deanId);
-        
+
         courseSelect.innerHTML = '<option value="">Select your course</option>';
         courseSelect.disabled = true;
-        
+
         if (!deanId) {
             courseSelect.innerHTML = '<option value="">First select a dean</option>';
             return;
@@ -380,14 +389,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const response = await fetch(`/api/courses/${deanId}/`);
             console.log('API Response:', response);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const courses = await response.json();
             console.log('Received courses:', courses);
-            
+
             if (!Array.isArray(courses) || courses.length === 0) {
                 courseSelect.innerHTML = '<option value="">No courses available for this dean</option>';
                 return;
@@ -401,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 courseSelect.appendChild(option);
                 console.log(`Added course option: ${course.code} - ${course.name} (ID: ${course.id})`);
             });
-            
+
             courseSelect.disabled = false;
 
         } catch (error) {

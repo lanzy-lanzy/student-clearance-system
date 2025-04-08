@@ -14,9 +14,9 @@ class StaffAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('student_id', 'get_full_name', 'course', 'year_level', 'is_boarder')
+    list_display = ('student_id', 'get_full_name', 'course', 'year_level', 'contact_number', 'is_boarder')
     list_filter = ('course', 'year_level', 'is_boarder')
-    search_fields = ('student_id', 'user__username', 'user__first_name', 'user__last_name')
+    search_fields = ('student_id', 'user__username', 'user__first_name', 'user__last_name', 'contact_number')
     raw_id_fields = ('user',)
 
     def get_full_name(self, obj):

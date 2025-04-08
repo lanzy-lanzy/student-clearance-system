@@ -108,6 +108,7 @@ class Student(models.Model):
     student_id = models.CharField(max_length=20, unique=True)
     course = models.ForeignKey(Course, on_delete=models.PROTECT)
     year_level = models.IntegerField()
+    contact_number = models.CharField(max_length=20, blank=True, null=True)
     is_boarder = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)

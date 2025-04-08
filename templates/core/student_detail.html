@@ -36,6 +36,16 @@
 						<p class="mt-1 text-lg text-gray-900">{{ student.course }}</p>
 					</div>
 					<div>
+						<label class="block text-sm font-medium text-emerald-700">Contact Number</label>
+						<p class="mt-1 text-lg text-gray-900">
+							{% if student.contact_number %}
+								{{ student.contact_number }}
+							{% else %}
+								Not provided
+							{% endif %}
+						</p>
+					</div>
+					<div>
 						<label class="block text-sm font-medium text-emerald-700">Year Level</label>
 						<p class="mt-1 text-lg text-gray-900">{{ student.year_level }}</p>
 					</div>
