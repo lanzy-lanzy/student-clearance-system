@@ -17,15 +17,24 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.colors import HexColor
 
-# Twilio credentials (kept for reference)
-TWILIO_ACCOUNT_SID = 'YOUR_TWILIO_ACCOUNT_SID'
-TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN'
-TWILIO_PHONE_NUMBER = '+15418033069'
+# Twilio credentials - should be loaded from environment variables in production
+TWILIO_ACCOUNT_SID = 'YOUR_TWILIO_ACCOUNT_SID'  # Replace with actual SID in production
+TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN'  # Replace with actual token in production
+TWILIO_PHONE_NUMBER = 'YOUR_TWILIO_PHONE_NUMBER'  # Replace with actual phone number in production
 
-# Infobip credentials
-INFOBIP_API_HOST = 'ypejm9.api.infobip.com'
-INFOBIP_API_KEY = 'YOUR_INFOBIP_API_KEY'
-INFOBIP_SENDER = '447491163443'
+# Infobip credentials - should be loaded from environment variables in production
+INFOBIP_API_HOST = 'YOUR_INFOBIP_API_HOST'  # Replace with actual host in production
+INFOBIP_API_KEY = 'YOUR_INFOBIP_API_KEY'  # Replace with actual API key in production
+INFOBIP_SENDER = 'YOUR_INFOBIP_SENDER'  # Replace with actual sender in production
+
+# For production, use environment variables:
+# import os
+# TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+# TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+# TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
+# INFOBIP_API_HOST = os.environ.get('INFOBIP_API_HOST')
+# INFOBIP_API_KEY = os.environ.get('INFOBIP_API_KEY')
+# INFOBIP_SENDER = os.environ.get('INFOBIP_SENDER')
 
 def generate_pdf_report(response, data):
     # Create document
