@@ -1,0 +1,233 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div class="p-6 space-y-8">
+    <!-- Header Section -->
+    <div class="mb-8 bg-gradient-to-r from-blue-500 to-blue-700 p-6 rounded-xl shadow-lg text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">Student Details</h1>
+                <p class="mt-2 text-blue-100">Viewing information for {{ student.user.get_full_name }}</p>
+            </div>
+            <a href="{% url 'admin_students' %}" class="px-4 py-2 bg-white text-blue-700 rounded-lg hover:bg-blue-50 transition-colors duration-200 font-medium shadow-sm">
+                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Students
+            </a>
+        </div>
+    </div>
+
+    <!-- Student Information -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Profile Section -->
+                <div class="md:col-span-1 space-y-4">
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                        {% if student.profile_picture %}
+                            <img src="{{ student.get_profile_picture_url }}" alt="{{ student.user.get_full_name }}" class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-md">
+                        {% else %}
+                            <div class="w-32 h-32 rounded-full mx-auto bg-blue-100 flex items-center justify-center border-4 border-white shadow-md">
+                                <span class="text-blue-700 font-bold text-4xl">{{ student.user.get_full_name|make_list|first }}</span>
+                            </div>
+                        {% endif %}
+                        <h2 class="text-xl font-bold mt-4">{{ student.user.get_full_name }}</h2>
+                        <p class="text-gray-500">{{ student.student_id }}</p>
+                        
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-500">Status:</span>
+                                {% if student.is_approved %}
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">Approved</span>
+                                {% else %}
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-semibold">Pending</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-500">Account:</span>
+                                {% if student.user.is_active %}
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-semibold">Active</span>
+                                {% else %}
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full font-semibold">Inactive</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium text-gray-500">Residence:</span>
+                                {% if student.is_boarder %}
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-semibold">Boarder</span>
+                                {% else %}
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full font-semibold">Non-Boarder</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions Section -->
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Actions</h3>
+                        <div class="space-y-2">
+                            <a href="{% url 'admin_students' %}?action=edit_form&student_id={{ student.id }}" class="w-full block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors duration-200">
+                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Student
+                            </a>
+                            
+                            {% if not student.is_approved %}
+                            <form method="post" action="{% url 'admin_students' %}" class="block">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="approve">
+                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors duration-200">
+                                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Approve Student
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <form method="post" action="{% url 'admin_students' %}" class="block" onsubmit="return confirm('Are you sure you want to delete this student? This action cannot be undone.')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors duration-200">
+                                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete Student
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Details Sections -->
+                <div class="md:col-span-2 space-y-6">
+                    <!-- Personal Information -->
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Personal Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">First Name</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.user.first_name }}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Last Name</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.user.last_name }}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Email Address</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.user.email }}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Contact Number</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.contact_number|default:"Not provided" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Academic Information -->
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Academic Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Student ID</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.student_id }}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Course</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.course.name }} ({{ student.course.code }})
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Year Level</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.year_level == 1 %}1st Year
+                                    {% elif student.year_level == 2 %}2nd Year
+                                    {% elif student.year_level == 3 %}3rd Year
+                                    {% elif student.year_level == 4 %}4th Year
+                                    {% elif student.year_level == 5 %}5th Year
+                                    {% else %}{{ student.year_level }} Year{% endif %}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Registration Date</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.user.date_joined|date:"F d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Information -->
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Account Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Username</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {{ student.user.username }}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Last Login</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.user.last_login %}
+                                        {{ student.user.last_login|date:"F d, Y H:i" }}
+                                    {% else %}
+                                        Never logged in
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if student.is_approved %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Approved By</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.approval_admin %}
+                                        {{ student.approval_admin.get_full_name }}
+                                    {% else %}
+                                        Not recorded
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Approval Date</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.approval_date %}
+                                        {{ student.approval_date|date:"F d, Y" }}
+                                    {% else %}
+                                        Not recorded
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -23,9 +23,9 @@ TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN'  # Replace with actual token in pro
 TWILIO_PHONE_NUMBER = 'YOUR_TWILIO_PHONE_NUMBER'  # Replace with actual phone number in production
 
 # Infobip credentials - should be loaded from environment variables in production
-INFOBIP_API_HOST = 'YOUR_INFOBIP_API_HOST'  # Replace with actual host in production
-INFOBIP_API_KEY = 'YOUR_INFOBIP_API_KEY'  # Replace with actual API key in production
-INFOBIP_SENDER = 'YOUR_INFOBIP_SENDER'  # Replace with actual sender in production
+INFOBIP_API_HOST = 'ypejm9.api.infobip.com'  # Replace with environment variable in production
+INFOBIP_API_KEY = 'a3169c60a19754c3df10cf1dd3de3f94-191444f9-cc43-426f-811e-84af9998698f'  # Replace with environment variable in production
+INFOBIP_SENDER = '447491163443'  # Replace with environment variable in production
 
 # For production, use environment variables:
 # import os

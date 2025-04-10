@@ -1,0 +1,26 @@
+{% extends "admin/delete_confirmation.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+<div class="messagelist">
+  <div class="warning">
+    <strong>Warning:</strong> Deleting a Dean with associated courses is not allowed.
+    Please use the "Reassign courses to another dean" action first, then try deleting again.
+  </div>
+</div>
+
+{% if courses %}
+<div class="module">
+  <h2>This Dean has the following courses:</h2>
+  <ul>
+    {% for course in courses %}
+    <li>{{ course.code }} - {{ course.name }}</li>
+    {% endfor %}
+  </ul>
+  <p>You must reassign these courses before deleting this Dean.</p>
+  <a href="{% url 'admin:core_dean_changelist' %}" class="button">Return to Dean list</a>
+</div>
+{% else %}
+  {{ block.super }}
+{% endif %}
+{% endblock %}

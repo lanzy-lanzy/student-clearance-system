@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+  {% if message %}
+    <div class="messagelist">
+      <div class="warning">{{ message }}</div>
+    </div>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

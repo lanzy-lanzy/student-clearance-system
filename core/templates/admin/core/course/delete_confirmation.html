@@ -1,0 +1,26 @@
+{% extends "admin/delete_confirmation.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+<div class="messagelist">
+  <div class="warning">
+    <strong>Warning:</strong> Deleting a Course with enrolled students is not allowed.
+    Please use the "Reassign students to another course" action first, then try deleting again.
+  </div>
+</div>
+
+{% if students %}
+<div class="module">
+  <h2>This Course has the following students:</h2>
+  <ul>
+    {% for student in students %}
+    <li>{{ student.student_id }} - {{ student.get_full_name }}</li>
+    {% endfor %}
+  </ul>
+  <p>You must reassign these students before deleting this Course.</p>
+  <a href="{% url 'admin:core_course_changelist' %}" class="button">Return to Course list</a>
+</div>
+{% else %}
+  {{ block.super }}
+{% endif %}
+{% endblock %}
