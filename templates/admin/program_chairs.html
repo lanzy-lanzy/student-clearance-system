@@ -1,0 +1,261 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div class="space-y-6">
+    <!-- Warning Message -->
+    <div class="bg-indigo-50 border-l-4 border-indigo-400 p-4 mb-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-indigo-700">
+                    <strong>Program Chair Management:</strong> Program chairs are responsible for approving student clearances and printing permits.
+                </p>
+                <ul class="list-disc ml-5 text-xs text-indigo-700 mt-1">
+                    <li>Each program chair should be assigned to a specific dean</li>
+                    <li>Program chairs can only manage students in courses under their assigned dean</li>
+                    <li>Program chairs have access to a separate dashboard for clearance management</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Program Chairs</h1>
+        <button onclick="showAddProgramChairModal()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+            Add Program Chair
+        </button>
+    </div>
+
+    <!-- Program Chairs Table -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Chair Info</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dean</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for program_chair in program_chairs %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                {% if program_chair.profile_picture %}
+                                <img class="h-10 w-10 rounded-full object-cover" src="{{ program_chair.profile_picture.url }}" alt="{{ program_chair.get_full_name }}">
+                                {% else %}
+                                <div class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <span class="text-emerald-600 font-bold">{{ program_chair.get_full_name|slice:":1" }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ program_chair.get_full_name }}</div>
+                                <div class="text-sm text-gray-500">{{ program_chair.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ program_chair.dean.name|default:"Not Assigned" }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ program_chair.designation|default:"Not Specified" }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ program_chair.student_count }} student{{ program_chair.student_count|pluralize }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex items-center space-x-3">
+                            <button onclick="editProgramChair('{{ program_chair.id }}')" 
+                                    class="text-indigo-600 hover:text-indigo-900 transition-colors" title="Edit Program Chair">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            
+                            <!-- Delete Button (with dropdown) -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" type="button"
+                                        class="text-red-600 hover:text-red-900 transition-colors"
+                                        title="Delete Options">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div x-show="open" @click.away="open = false" 
+                                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1">
+                                    <!-- Safe Delete Option -->
+                                    <form method="POST" class="block">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="delete_type" value="safe">
+                                        <input type="hidden" name="program_chair_id" value="{{ program_chair.id }}">
+                                        <button type="submit"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onclick="return confirm('Are you sure you want to safely delete this program chair?')">
+                                            <span class="flex items-center">
+                                                <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Safe Delete
+                                            </span>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Force Delete Option -->
+                                    <form method="POST" class="block">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="delete_type" value="force">
+                                        <input type="hidden" name="program_chair_id" value="{{ program_chair.id }}">
+                                        <button type="submit"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onclick="return confirm('WARNING: This will delete the program chair and remove their association with students. Are you sure?')">
+                                            <span class="flex items-center">
+                                                <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Force Delete
+                                            </span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        No program chairs found. Click "Add Program Chair" to create one.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Program Chair Modal -->
+<div id="addProgramChairModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900">Add Program Chair</h3>
+            <form id="addProgramChairForm" method="POST" class="mt-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                
+                <div class="mb-4">
+                    <label for="user" class="block text-sm font-medium text-gray-700">User</label>
+                    <select id="user" name="user" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" required>
+                        <option value="">Select a user</option>
+                        {% for user in available_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="dean" class="block text-sm font-medium text-gray-700">Dean</label>
+                    <select id="dean" name="dean" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" required>
+                        <option value="">Select a dean</option>
+                        {% for dean in deans %}
+                        <option value="{{ dean.id }}">{{ dean.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="designation" class="block text-sm font-medium text-gray-700">Designation</label>
+                    <input type="text" id="designation" name="designation" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" placeholder="e.g., SAFES DEAN">
+                </div>
+                
+                <div class="mt-4 flex justify-end gap-2">
+                    <button type="button" onclick="closeAddProgramChairModal()" 
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">Add Program Chair</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Program Chair Modal -->
+<div id="editProgramChairModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900">Edit Program Chair</h3>
+            <form id="editProgramChairForm" method="POST" class="mt-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit_program_chair_id" name="program_chair_id" value="">
+                
+                <div class="mb-4">
+                    <label for="edit_dean" class="block text-sm font-medium text-gray-700">Dean</label>
+                    <select id="edit_dean" name="dean" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" required>
+                        <option value="">Select a dean</option>
+                        {% for dean in deans %}
+                        <option value="{{ dean.id }}">{{ dean.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="edit_designation" class="block text-sm font-medium text-gray-700">Designation</label>
+                    <input type="text" id="edit_designation" name="designation" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" placeholder="e.g., SAFES DEAN">
+                </div>
+                
+                <div class="mt-4 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditProgramChairModal()" 
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">Update Program Chair</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAddProgramChairModal() {
+        document.getElementById('addProgramChairModal').classList.remove('hidden');
+    }
+    
+    function closeAddProgramChairModal() {
+        document.getElementById('addProgramChairModal').classList.add('hidden');
+        document.getElementById('addProgramChairForm').reset();
+    }
+    
+    function editProgramChair(id) {
+        // Fetch program chair details
+        fetch(`/api/program-chair/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('edit_program_chair_id').value = id;
+                document.getElementById('edit_dean').value = data.dean_id || '';
+                document.getElementById('edit_designation').value = data.designation || '';
+                document.getElementById('editProgramChairModal').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching program chair details:', error);
+                alert('Error loading program chair details. Please try again.');
+            });
+    }
+    
+    function closeEditProgramChairModal() {
+        document.getElementById('editProgramChairModal').classList.add('hidden');
+        document.getElementById('editProgramChairForm').reset();
+    }
+</script>
+{% endblock %}

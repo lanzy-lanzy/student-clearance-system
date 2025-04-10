@@ -42,6 +42,7 @@ urlpatterns = [
     path('dashboard/admin/clearances/', views.admin_clearances, name='admin_clearances'),
     path('dashboard/admin/clearances/<int:clearance_id>/', views.clearance_details, name='clearance_details'),
     path('dashboard/admin/deans/', views.admin_deans, name='admin_deans'),
+    path('dashboard/admin/deans/reassign/<int:dean_id>/', views.admin_reassign_courses, name='admin_reassign_courses'),
     path('dashboard/admin/courses/', views.admin_courses, name='admin_courses'),
     path('dashboard/admin/reassign-students/', views.admin_reassign_students, name='admin_reassign_students'),
     path('dashboard/admin/students/', views.admin_students, name='admin_students'),
@@ -50,6 +51,7 @@ urlpatterns = [
     path('dashboard/admin/staff/<int:staff_id>/edit/', views.admin_staff_edit, name='admin_staff_edit'),
     path('dashboard/admin/settings/', views.admin_settings, name='admin_settings'),
     path('dashboard/admin/pending-approvals/', views.admin_pending_approvals, name='admin_pending_approvals'),
+    path('dashboard/admin/program-chairs/', views.admin_program_chairs, name='admin_program_chairs'),
     path('dashboard/create/users/', views.create_user, name='create_user'),
     path('profile/admin/', views.admin_profile, name='admin_profile'),
 
@@ -64,10 +66,11 @@ urlpatterns = [
     path('api/deans/<int:dean_id>/', views.get_dean_details, name='get_dean_details'),
     path('api/offices/detail/<int:office_id>/', views.office_detail_api, name='office_detail_api'),
     path('api/staff/<int:staff_id>/delete/', views.delete_staff, name='api_staff_delete'),
-    path('admin/student-details/<int:student_id>/', views.get_student_details, name='get_student_details'),
+    path('dashboard/admin/student-details/<int:student_id>/', views.get_student_details, name='get_student_details'),
     # Add missing stats endpoint (example)
     path('dashboard/admin/get-approval-stats/', views.get_approval_stats, name='get_approval_stats'),
     path('api/courses-by-dean/<str:dean_name>/', views.get_courses_by_dean, name='courses_by_dean'),
     path('api/program-chairs/<int:dean_id>/', views.get_program_chairs, name='get_program_chairs'),
+    path('api/program-chair/<int:program_chair_id>/', views.get_program_chair_details, name='get_program_chair_details'),
     path('api/courses/<int:dean_id>/', views.get_courses, name='get_courses'),  # Remove any login_required decorator
 ]

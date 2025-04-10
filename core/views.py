@@ -140,10 +140,20 @@ def register(request):
                 print(f"Available course IDs: {[c.id for c in available_courses]}")
                 raise Exception(f"Course with ID {course_id} does not exist")
 
+            # Get the program chair for the selected course's dean
+            program_chair = ProgramChair.objects.filter(dean=course.dean).first()
+
+            # Get dormitory owner if student is a boarder
+            dormitory_owner = None
+            if request.POST.get('is_boarder') == 'on' and request.POST.get('dormitory_owner'):
+                dormitory_owner = Staff.objects.filter(id=request.POST.get('dormitory_owner')).first()
+
             Student.objects.create(
                 user=user,
                 student_id=request.POST.get('student_id'),
                 course=course,
+                program_chair=program_chair,
+                dormitory_owner=dormitory_owner,
                 year_level=request.POST.get('year_level'),
                 contact_number=request.POST.get('contact_number'),
                 is_boarder=request.POST.get('is_boarder') == 'on',
@@ -741,6 +751,114 @@ def view_request(request, request_id):
         return redirect('home')
 
 # Admin Views
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_program_chairs(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        try:
+            if action == 'add':
+                user = User.objects.get(id=request.POST.get('user'))
+                dean = None
+                if request.POST.get('dean'):
+                    dean = Dean.objects.get(id=request.POST.get('dean'))
+
+                # Check if user already has a program chair profile
+                if hasattr(user, 'programchair'):
+                    messages.error(request, f'User {user.get_full_name()} is already a program chair.')
+                else:
+                    # Create program chair
+                    program_chair = ProgramChair.objects.create(
+                        user=user,
+                        dean=dean,
+                        designation=request.POST.get('designation')
+                    )
+
+                    # Create staff entry if it doesn't exist
+                    office, _ = Office.objects.get_or_create(name="Program Chair", defaults={"description": "Handles final clearance approval"})
+                    if not hasattr(user, 'staff'):
+                        Staff.objects.create(user=user, office=office, role="Program Chair")
+
+                    messages.success(request, f'Program Chair {program_chair.get_full_name()} added successfully.')
+
+            elif action == 'edit':
+                program_chair = ProgramChair.objects.get(id=request.POST.get('program_chair_id'))
+
+                # Update dean
+                if request.POST.get('dean'):
+                    program_chair.dean = Dean.objects.get(id=request.POST.get('dean'))
+                else:
+                    program_chair.dean = None
+
+                # Update designation
+                program_chair.designation = request.POST.get('designation')
+                program_chair.save()
+
+                messages.success(request, f'Program Chair {program_chair.get_full_name()} updated successfully.')
+
+            elif action == 'delete':
+                program_chair = ProgramChair.objects.get(id=request.POST.get('program_chair_id'))
+                delete_type = request.POST.get('delete_type', 'safe')
+
+                if delete_type == 'safe':
+                    # Check if there are any students associated with this program chair
+                    if Student.objects.filter(program_chair=program_chair).exists():
+                        messages.error(
+                            request,
+                            f"Cannot safely delete program chair '{program_chair.get_full_name()}' because they have associated students. "
+                            f"Please reassign the students first or use Force Delete."
+                        )
+                    else:
+                        # Safe to delete
+                        program_chair_name = program_chair.get_full_name()
+                        program_chair.delete()
+                        messages.success(request, f'Program Chair {program_chair_name} safely deleted.')
+
+                elif delete_type == 'force':
+                    # Force delete - will remove program chair association from students
+                    student_count = Student.objects.filter(program_chair=program_chair).count()
+
+                    # Use a transaction to ensure all operations succeed or fail together
+                    from django.db import transaction
+                    with transaction.atomic():
+                        # Remove program chair association from students
+                        Student.objects.filter(program_chair=program_chair).update(program_chair=None)
+
+                        # Delete the program chair
+                        program_chair_name = program_chair.get_full_name()
+                        program_chair.delete()
+
+                    messages.success(
+                        request,
+                        f'Program Chair {program_chair_name} force deleted and {student_count} student(s) reassigned.'
+                    )
+
+        except User.DoesNotExist:
+            messages.error(request, 'User not found.')
+        except Dean.DoesNotExist:
+            messages.error(request, 'Dean not found.')
+        except ProgramChair.DoesNotExist:
+            messages.error(request, 'Program Chair not found.')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+
+    # Get all program chairs
+    program_chairs = ProgramChair.objects.all().select_related('user', 'dean')
+
+    # Add student count to each program chair
+    for pc in program_chairs:
+        pc.student_count = Student.objects.filter(program_chair=pc).count()
+
+    # Get available users (those who are not already program chairs)
+    program_chair_user_ids = program_chairs.values_list('user_id', flat=True)
+    available_users = User.objects.exclude(id__in=program_chair_user_ids).filter(is_active=True)
+
+    return render(request, 'admin/program_chairs.html', {
+        'program_chairs': program_chairs,
+        'available_users': available_users,
+        'deans': Dean.objects.all()
+    })
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_reassign_students(request):
@@ -852,8 +970,10 @@ def admin_profile(request):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_students(request):
     if request.method == 'POST':
+        action = request.POST.get('action')
         student_id = request.POST.get('student_id')
-        if request.POST.get('action') == 'approve':
+
+        if action == 'approve':
             try:
                 student = Student.objects.get(id=student_id)
                 student.is_approved = True
@@ -862,13 +982,234 @@ def admin_students(request):
                 student.user.is_active = True
                 student.save()
                 student.user.save()
-                messages.success(request, f'Student {student.user.get_full_name()} approved.')
+                messages.success(request, f'Student {student.user.get_full_name()} approved successfully.')
             except Student.DoesNotExist:
                 messages.error(request, 'Student not found.')
 
+        elif action == 'delete':
+            try:
+                student = Student.objects.get(id=student_id)
+                student_name = student.user.get_full_name()
+                # Delete the user which will cascade delete the student
+                student.user.delete()
+                messages.success(request, f'Student {student_name} deleted successfully.')
+            except Student.DoesNotExist:
+                messages.error(request, 'Student not found.')
+
+        elif action == 'add_student_form':
+            return render(request, 'admin/add_student.html', {
+                'courses': Course.objects.all(),
+                'deans': Dean.objects.all().order_by('name'),
+            })
+
+        elif action == 'export_pdf':
+            from core.pdf_utils import generate_students_pdf
+
+            # Get the filtered students based on the current filters
+            search_query = request.POST.get('search_query', '')
+            course_filter = request.POST.get('course_filter', '')
+            year_level_filter = request.POST.get('year_level_filter', '')
+            status_filter = request.POST.get('status_filter', '')
+            boarder_filter = request.POST.get('boarder_filter', '')
+
+            # Start with all students
+            students = Student.objects.select_related('user', 'course').all()
+
+            # Apply filters
+            if search_query:
+                students = students.filter(
+                    Q(user__first_name__icontains=search_query) |
+                    Q(user__last_name__icontains=search_query) |
+                    Q(student_id__icontains=search_query) |
+                    Q(user__email__icontains=search_query)
+                )
+
+            if course_filter:
+                students = students.filter(course_id=course_filter)
+
+            if year_level_filter:
+                students = students.filter(year_level=year_level_filter)
+
+            if status_filter == 'active':
+                students = students.filter(user__is_active=True)
+            elif status_filter == 'inactive':
+                students = students.filter(user__is_active=False)
+            elif status_filter == 'pending':
+                students = students.filter(is_approved=False)
+
+            if boarder_filter == '1':
+                students = students.filter(is_boarder=True)
+            elif boarder_filter == '0':
+                students = students.filter(is_boarder=False)
+
+            # Generate PDF
+            pdf = generate_students_pdf(students, request)
+
+            # Create the HttpResponse with PDF headers
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="students_report.pdf"'
+
+            return response
+
+        elif action == 'view_details':
+            try:
+                student = Student.objects.get(id=student_id)
+                return render(request, 'admin/view_student.html', {
+                    'student': student,
+                })
+            except Student.DoesNotExist:
+                messages.error(request, 'Student not found.')
+                return redirect('admin_students')
+
+        elif action == 'edit_form':
+            try:
+                student = Student.objects.get(id=student_id)
+                return render(request, 'admin/edit_student.html', {
+                    'student': student,
+                    'courses': Course.objects.all(),
+                })
+            except Student.DoesNotExist:
+                messages.error(request, 'Student not found.')
+                return redirect('admin_students')
+
+        elif action == 'edit_student':
+            try:
+                student = Student.objects.get(id=student_id)
+                user = student.user
+
+                # Update user information
+                user.first_name = request.POST.get('first_name')
+                user.last_name = request.POST.get('last_name')
+                user.email = request.POST.get('email')
+                user.save()
+
+                # Update student information
+                student.contact_number = request.POST.get('contact_number')
+                if request.POST.get('course'):
+                    student.course_id = request.POST.get('course')
+                if request.POST.get('year_level'):
+                    student.year_level = request.POST.get('year_level')
+                student.is_boarder = request.POST.get('is_boarder') == 'on'
+                student.is_approved = request.POST.get('is_approved') == 'on'
+                student.user.is_active = student.is_approved
+                student.save()
+                user.save()
+
+                messages.success(request, f'Student {student.user.get_full_name()} updated successfully.')
+            except Student.DoesNotExist:
+                messages.error(request, 'Student not found.')
+            except Exception as e:
+                messages.error(request, f'Error updating student: {str(e)}')
+
+        elif action == 'add_student':
+            try:
+                # Create user
+                user = User.objects.create_user(
+                    username=request.POST.get('email').split('@')[0],  # Use first part of email as username
+                    password='student123',  # Default password
+                    email=request.POST.get('email'),
+                    first_name=request.POST.get('first_name'),
+                    last_name=request.POST.get('last_name'),
+                    is_active=request.POST.get('auto_approve') == 'on'
+                )
+
+                # Generate student ID
+                import random
+                import string
+                from django.utils.text import slugify
+
+                year = timezone.now().year % 100
+                first_chars = slugify(request.POST.get('first_name'))[:2].upper()
+                last_chars = slugify(request.POST.get('last_name'))[:2].upper()
+                random_digits = ''.join(random.choices(string.digits, k=4))
+                student_id = f"{year}-{first_chars}{last_chars}-{random_digits}"
+
+                # Get the course
+                course_id = request.POST.get('course')
+
+                # Get program chair if selected
+                program_chair_id = request.POST.get('program_chair')
+                program_chair = None
+                if program_chair_id:
+                    try:
+                        program_chair = ProgramChair.objects.get(id=program_chair_id)
+                    except ProgramChair.DoesNotExist:
+                        pass
+
+                # Create student
+                student = Student.objects.create(
+                    user=user,
+                    student_id=student_id,
+                    course_id=course_id,
+                    program_chair=program_chair,
+                    year_level=request.POST.get('year_level'),
+                    contact_number=request.POST.get('contact_number'),
+                    is_boarder=request.POST.get('is_boarder') == 'on',
+                    is_approved=request.POST.get('auto_approve') == 'on'
+                )
+
+                # If no program chair was selected, try to assign one automatically
+                if not program_chair:
+                    course = Course.objects.get(id=course_id)
+                    if course and course.dean:
+                        # Try to find a program chair for this dean
+                        auto_program_chair = ProgramChair.objects.filter(dean=course.dean).first()
+                        if auto_program_chair:
+                            student.program_chair = auto_program_chair
+                            student.save()
+
+                messages.success(request, f'Student {student.user.get_full_name()} added successfully with ID {student_id}.')
+            except Exception as e:
+                messages.error(request, f'Error adding student: {str(e)}')
+                # Clean up if user was created but student wasn't
+                if 'user' in locals() and 'student' not in locals():
+                    user.delete()
+
+    # Get query parameters for filtering
+    search_query = request.GET.get('search', '')
+    course_filter = request.GET.get('course', '')
+    year_level_filter = request.GET.get('year_level', '')
+    status_filter = request.GET.get('status', '')
+    boarder_filter = request.GET.get('boarder', '')
+
+    # Start with all students
+    students = Student.objects.select_related('user', 'course').all()
+
+    # Apply filters
+    if search_query:
+        students = students.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(student_id__icontains=search_query) |
+            Q(user__email__icontains=search_query)
+        )
+
+    if course_filter:
+        students = students.filter(course_id=course_filter)
+
+    if year_level_filter:
+        students = students.filter(year_level=year_level_filter)
+
+    if status_filter == 'active':
+        students = students.filter(user__is_active=True)
+    elif status_filter == 'inactive':
+        students = students.filter(user__is_active=False)
+    elif status_filter == 'pending':
+        students = students.filter(is_approved=False)
+
+    if boarder_filter == '1':
+        students = students.filter(is_boarder=True)
+    elif boarder_filter == '0':
+        students = students.filter(is_boarder=False)
+
     return render(request, 'admin/students.html', {
-        'students': Student.objects.select_related('user', 'course').all(),
+        'students': students,
         'courses': Course.objects.all(),
+        'search_query': search_query,
+        'course_filter': course_filter,
+        'year_level_filter': year_level_filter,
+        'status_filter': status_filter,
+        'boarder_filter': boarder_filter,
     })
 
 @login_required
@@ -973,14 +1314,155 @@ def admin_deans(request):
                 messages.success(request, f'Dean {dean.name} updated.')
             elif action == 'delete':
                 dean = Dean.objects.get(id=request.POST.get('dean_id'))
-                if dean.logo:
-                    dean.logo.delete(save=False)
-                dean.delete()
-                messages.success(request, f'Dean {dean.name} deleted.')
+                delete_type = request.POST.get('delete_type', 'safe')
+
+                if delete_type == 'safe':
+                    # Check if there are any courses associated with this dean
+                    if dean.courses.exists():
+                        messages.error(
+                            request,
+                            f"Cannot safely delete dean '{dean.name}' because it has associated courses. "
+                            f"Please reassign the courses first or use a different delete option."
+                        )
+                    else:
+                        # Safe to delete
+                        dean_name = dean.name
+                        if dean.logo:
+                            dean.logo.delete(save=False)
+                        dean.delete()
+                        messages.success(request, f'Dean {dean_name} safely deleted.')
+
+                elif delete_type == 'force':
+                    # Force delete - will cascade delete all courses
+                    course_count = dean.courses.count()
+                    student_count = Student.objects.filter(course__dean=dean).count()
+
+                    # If there are students, we need to handle them first
+                    if student_count > 0:
+                        messages.error(
+                            request,
+                            f"Cannot force delete dean '{dean.name}' because there are {student_count} students "
+                            f"enrolled in its courses. Please reassign or delete these students first."
+                        )
+                    else:
+                        # No students, safe to delete courses and dean
+                        dean_name = dean.name
+                        if dean.logo:
+                            dean.logo.delete(save=False)
+
+                        # Use a transaction to ensure all operations succeed or fail together
+                        from django.db import transaction
+                        with transaction.atomic():
+                            # Delete all courses first
+                            dean.courses.all().delete()
+                            # Then delete the dean
+                            dean.delete()
+
+                        messages.success(
+                            request,
+                            f'Dean {dean_name} force deleted along with {course_count} course(s).'
+                        )
+
+                elif delete_type == 'cascade':
+                    # Cascade delete - will delete everything including students
+                    course_count = dean.courses.count()
+                    student_count = Student.objects.filter(course__dean=dean).count()
+
+                    # Use a transaction to ensure all operations succeed or fail together
+                    from django.db import transaction
+                    with transaction.atomic():
+                        dean_name = dean.name
+                        if dean.logo:
+                            dean.logo.delete(save=False)
+
+                        # Delete all students associated with this dean's courses
+                        Student.objects.filter(course__dean=dean).delete()
+
+                        # Delete all courses
+                        dean.courses.all().delete()
+
+                        # Delete the dean
+                        dean.delete()
+
+                    messages.success(
+                        request,
+                        f'Dean {dean_name} permanently deleted along with {course_count} course(s) and {student_count} student(s).'
+                    )
+            elif action == 'reassign':
+                # Redirect to the reassign view
+                dean_id = request.POST.get('dean_id')
+                return redirect('admin_reassign_courses', dean_id=dean_id)
         except Dean.DoesNotExist:
             messages.error(request, 'Dean not found.')
 
-    return render(request, 'admin/deans.html', {'deans': Dean.objects.all()})
+    deans = Dean.objects.all()
+
+    # Get additional statistics for the template
+    total_courses = Course.objects.count()
+    latest_dean = deans.order_by('-created_at').first() if deans.exists() else None
+
+    # Add course count to each dean
+    for dean in deans:
+        dean.course_count = dean.courses.count()
+        dean.student_count = Student.objects.filter(course__dean=dean).count()
+
+    return render(request, 'admin/deans.html', {
+        'deans': deans,
+        'total_courses': total_courses,
+        'latest_dean': latest_dean
+    })
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_reassign_courses(request, dean_id):
+    """View to reassign courses from one dean to another"""
+    try:
+        source_dean = Dean.objects.get(id=dean_id)
+    except Dean.DoesNotExist:
+        messages.error(request, "Dean not found.")
+        return redirect('admin_deans')
+
+    # Get all courses for this dean
+    courses = source_dean.courses.all()
+    if not courses.exists():
+        messages.warning(request, f"No courses found for dean '{source_dean.name}'.")
+        return redirect('admin_deans')
+
+    # Add student count to each course for display
+    for course in courses:
+        course.student_count = Student.objects.filter(course=course).count()
+
+    # Get all other deans
+    available_deans = Dean.objects.exclude(id=dean_id)
+
+    if request.method == 'POST':
+        target_dean_id = request.POST.get('target_dean')
+        if not target_dean_id:
+            messages.error(request, "Please select a target dean.")
+            return redirect('admin_reassign_courses', dean_id=dean_id)
+
+        try:
+            target_dean = Dean.objects.get(id=target_dean_id)
+
+            # Use a transaction to ensure all courses are reassigned or none
+            from django.db import transaction
+            with transaction.atomic():
+                count = courses.update(dean=target_dean)
+
+            messages.success(
+                request,
+                f"Successfully reassigned {count} courses from '{source_dean.name}' to '{target_dean.name}'."
+            )
+            return redirect('admin_deans')
+        except Exception as e:
+            messages.error(request, f"Error reassigning courses: {str(e)}")
+            return redirect('admin_reassign_courses', dean_id=dean_id)
+
+    return render(request, 'admin/reassign_dean_courses.html', {
+        'source_dean': source_dean,
+        'available_deans': available_deans,
+        'courses': courses,
+    })
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -1008,8 +1490,22 @@ def admin_offices(request):
                 messages.success(request, f'Office "{office.name}" updated.')
             elif action == 'delete':
                 office = Office.objects.get(id=request.POST.get('office_id'))
-                office.delete()
-                messages.success(request, f'Office "{office.name}" deleted.')
+                # Check if there are staff members associated with this office
+                if office.staff.exists():
+                    staff_list = ", ".join([staff.get_full_name() for staff in office.staff.all()[:5]])
+                    if office.staff.count() > 5:
+                        staff_list += f" and {office.staff.count() - 5} more"
+
+                    messages.error(
+                        request,
+                        f"Cannot delete office '{office.name}' because it has associated staff members: {staff_list}. "
+                        f"Please reassign or delete these staff members first."
+                    )
+                else:
+                    # Safe to delete
+                    office_name = office.name
+                    office.delete()
+                    messages.success(request, f'Office "{office_name}" deleted.')
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
 
@@ -1416,6 +1912,24 @@ def get_program_chairs(request, dean_id):
     } for pc in program_chairs]
     return JsonResponse(data, safe=False)
 
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def get_program_chair_details(request, program_chair_id):
+    try:
+        program_chair = ProgramChair.objects.get(id=program_chair_id)
+        return JsonResponse({
+            'id': program_chair.id,
+            'user_id': program_chair.user.id,
+            'full_name': program_chair.get_full_name(),
+            'email': program_chair.user.email,
+            'dean_id': program_chair.dean.id if program_chair.dean else None,
+            'dean_name': program_chair.dean.name if program_chair.dean else None,
+            'designation': program_chair.designation or '',
+            'student_count': Student.objects.filter(program_chair=program_chair).count()
+        })
+    except ProgramChair.DoesNotExist:
+        return JsonResponse({'error': 'Program Chair not found'}, status=404)
+
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Course, Dean
@@ -1494,20 +2008,27 @@ def get_user_details(request, user_id):
         return JsonResponse({'error': 'Student not found'}, status=404)
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def get_student_details(request, student_id):
     try:
         student = Student.objects.select_related('user', 'course').get(id=student_id)
         return JsonResponse({
             'id': student.id,
             'full_name': f"{student.user.first_name} {student.user.last_name}",
+            'first_name': student.user.first_name,
+            'last_name': student.user.last_name,
             'student_id': student.student_id,
             'email': student.user.email,
-            'contact_number': student.contact_number or 'Not provided',
-            'course': student.course.code,
+            'contact_number': student.contact_number or '',
+            'course': student.course.code if student.course else '',
+            'course_id': student.course.id if student.course else '',
             'year_level': student.year_level,
             'date_applied': student.user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
             'is_boarder': student.is_boarder,
-            'profile_picture_url': student.get_profile_picture_url(),
+            'is_approved': student.is_approved,
+            'is_active': student.user.is_active,
+            'profile_picture_url': student.get_profile_picture_url() if hasattr(student, 'get_profile_picture_url') else None,
+            'created_at': student.created_at.strftime('%Y-%m-%d') if hasattr(student, 'created_at') and student.created_at else ''
         })
     except Student.DoesNotExist:
         return JsonResponse({'error': 'Student not found'}, status=404)
