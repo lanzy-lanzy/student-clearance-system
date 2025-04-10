@@ -20,7 +20,7 @@
             <div class="flex justify-between items-center mb-6">
                 <!-- Static Logo (Left) -->
                 <div class="w-24 h-24">
-                    <img src="{% static 'img/permit_logo.png' %}" alt="JHCSC Logo" 
+                    <img src="{% static 'img/permit_logo.png' %}" alt="JHCSC Logo"
                          class="w-full h-full object-contain transform hover:scale-105 transition-transform duration-300"
                          style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));">
                 </div>
@@ -35,8 +35,8 @@
                 <!-- Dean's Logo (Right) -->
                 <div class="w-24 h-24">
                     {% if student.program_chair.dean.logo %}
-                        <img src="{{ student.program_chair.dean.logo.url }}" 
-                             alt="{{ student.program_chair.dean.name }} Logo" 
+                        <img src="{{ student.program_chair.dean.logo.url }}"
+                             alt="{{ student.program_chair.dean.name }} Logo"
                              class="w-full h-full object-contain transform hover:scale-105 transition-transform duration-300"
                              style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));">
                     {% else %}
@@ -51,12 +51,12 @@
 
             <!-- Department and Permit Title -->
             <div class="mt-6">
-                <h3 class="text-lg font-bold text-emerald-700">School of Engineering and Technology</h3>
+                <h3 class="text-lg font-bold text-emerald-700">{{ student.course.dean.description }}</h3>
                 <div class="relative mt-4">
                     <!-- Decorative Lines -->
                     <div class="absolute w-1/4 h-px bg-emerald-600 left-0 top-1/2 transform -translate-y-1/2"></div>
                     <div class="absolute w-1/4 h-px bg-emerald-600 right-0 top-1/2 transform -translate-y-1/2"></div>
-                    
+
                     <!-- Permit Title -->
                     <h4 class="text-xl font-bold inline-block bg-emerald-700 text-white py-2 px-8 rounded-lg transform -skew-x-6">
                         EXAMINATION PERMIT
@@ -112,7 +112,7 @@
                 {{ student.program_chair.user.get_full_name }}
             </p>
             <div class="border-t-2 border-emerald-600 pt-2 inline-block px-12">
-                <p class="font-semibold text-emerald-800">SET DEAN</p>
+                <p class="font-semibold text-emerald-800">{{ student.program_chair.get_title }}</p>
             </div>
         </div>
 
@@ -123,7 +123,7 @@
 
         <!-- Print Button (Hidden during print) -->
         <div class="mt-8 text-center print:hidden">
-            <button onclick="window.print()" 
+            <button onclick="window.print()"
                     class="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-lg">
                 <span class="flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,8 +139,8 @@
 <style>
   @media print {
       /* Reset background and remove shadows for cleaner print */
-      .shadow-2xl, button, svg { 
-          box-shadow: none !important; 
+      .shadow-2xl, button, svg {
+          box-shadow: none !important;
       }
       body, html {
          background: #fff;
@@ -188,18 +188,18 @@
       img {
           filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) !important;
       }
-      
+
       /* Ensure logos maintain size in print */
       .w-24 {
           width: 6rem !important;
           height: 6rem !important;
       }
-      
+
       /* Keep decorative lines visible in print */
       .bg-emerald-600 {
           background-color: #059669 !important;
       }
-      
+
       /* Maintain background colors in print */
       .bg-emerald-700 {
           background-color: #047857 !important;

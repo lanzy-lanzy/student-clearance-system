@@ -78,12 +78,22 @@ class ProgramChair(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     dean = models.ForeignKey(Dean, on_delete=models.SET_NULL, null=True, blank=True)
     profile_picture = models.ImageField(upload_to='program_chair_profiles/', null=True, blank=True)
+    designation = models.CharField(max_length=100, blank=True, null=True)
 
     def get_profile_picture_url(self):
         return self.profile_picture.url if self.profile_picture else static('img/default-profile.png')
 
     def get_full_name(self):
         return self.user.get_full_name()
+
+    def get_title(self):
+        """Return the formatted title for the program chair"""
+        if self.designation:
+            return f"Program Chair {self.designation}"
+        elif self.dean:
+            return f"Program Chair {self.dean.name}"
+        else:
+            return "Program Chair"
 
     def __str__(self):
         return self.get_full_name()
@@ -107,6 +117,8 @@ class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     student_id = models.CharField(max_length=20, unique=True)
     course = models.ForeignKey(Course, on_delete=models.PROTECT)
+    program_chair = models.ForeignKey('ProgramChair', on_delete=models.SET_NULL, null=True, blank=True)
+    dormitory_owner = models.ForeignKey('Staff', on_delete=models.SET_NULL, null=True, blank=True, related_name='dormitory_students')
     year_level = models.IntegerField()
     contact_number = models.CharField(max_length=20, blank=True, null=True)
     is_boarder = models.BooleanField(default=False)
@@ -138,6 +150,22 @@ class Student(models.Model):
 
     def get_full_name(self):
         return self.user.get_full_name()
+
+    @property
+    def has_complete_clearance(self):
+        """Check if student has a complete clearance for the current school year and semester"""
+        current_year = timezone.now().year
+        school_year = f"{current_year}-{current_year + 1}"
+        semester = "1ST"  # You might want to get this dynamically based on current date
+
+        # Check if there's a cleared clearance for the current period
+        clearance = self.clearances.filter(
+            school_year=school_year,
+            semester=semester,
+            is_cleared=True
+        ).first()
+
+        return clearance is not None
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.student_id})"
@@ -226,6 +254,45 @@ class Clearance(models.Model):
         if self.is_cleared:
             self.program_chair_approved = True
             self.save()
+
+    @property
+    def pending_count(self):
+        """Return the count of pending clearance requests"""
+        return self.requests.filter(status='pending').count()
+
+    @property
+    def approved_count(self):
+        """Return the count of approved clearance requests"""
+        return self.requests.filter(status='approved').count()
+
+    @property
+    def denied_count(self):
+        """Return the count of denied clearance requests"""
+        return self.requests.filter(status='denied').count()
+
+    @property
+    def total_requests(self):
+        """Return the total number of clearance requests"""
+        return self.requests.count()
+
+    @property
+    def progress_percentage(self):
+        """Calculate the progress percentage based on approved requests"""
+        if self.total_requests == 0:
+            return 0
+        return int((self.approved_count / self.total_requests) * 100)
+
+    @property
+    def status_label(self):
+        """Return a human-readable status label"""
+        if self.is_cleared:
+            return "Cleared"
+        elif self.denied_count > 0:
+            return "Denied"
+        elif self.approved_count > 0:
+            return "In Progress"
+        else:
+            return "Pending"
 
     def __str__(self):
         status = 'Cleared' if self.is_cleared else 'Not Cleared'
