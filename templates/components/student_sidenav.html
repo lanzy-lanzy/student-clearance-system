@@ -1,7 +1,7 @@
-<nav x-data="{ isOpen: true }" 
-     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col" 
+<nav x-data="{ isOpen: true }"
+     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col"
      :class="isOpen ? 'w-64' : 'w-20'">
-    
+
     <div class="p-6 flex-grow" :class="isOpen ? '' : 'px-4'">
         <!-- Header -->
         <div class="flex items-center gap-3 mb-8" :class="isOpen ? '' : 'justify-center'">
@@ -15,7 +15,7 @@
 
         <ul class="space-y-4">
             <li>
-                <a href="{% url 'student_dashboard' %}" 
+                <a href="{% url 'student_dashboard' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'student_dashboard' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Dashboard' }"
@@ -29,8 +29,8 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'create_clearance_requests' %}" 
-                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'clearance_requests' %}bg-emerald-800 text-white{% endif %}"
+                <a href="{% url 'create_clearance_requests' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'create_clearance_requests' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Clearance Requests' }"
                    @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
@@ -38,12 +38,26 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
                     </svg>
-                    <span x-show="isOpen">Clearance Requests</span>
-                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Clearance Requests</div>
+                    <span x-show="isOpen">Create Clearance</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Create Clearance</div>
                 </a>
             </li>
             <li>
-                <a href="{% url 'student_profile' %}" 
+                <a href="{% url 'student_clearance_history' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'student_clearance_history' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'Clearance History' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Clearance History</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Clearance History</div>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'student_profile' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'student_profile' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'My Profile' }"
@@ -61,7 +75,7 @@
 
     <!-- Toggle Button -->
     <div class="p-6" :class="isOpen ? '' : 'px-4'">
-        <button @click="isOpen = !isOpen" 
+        <button @click="isOpen = !isOpen"
                 class="w-full flex items-center justify-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="isOpen ? 'transform rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
@@ -72,7 +86,7 @@
 
     <!-- Logout Section -->
     <div class="p-6 border-t border-emerald-800" :class="isOpen ? '' : 'px-4'">
-        <a href="{% url 'logout' %}" 
+        <a href="{% url 'logout' %}"
            class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
            :class="isOpen ? '' : 'justify-center px-2'"
            x-data="{ tooltip: 'Logout' }"

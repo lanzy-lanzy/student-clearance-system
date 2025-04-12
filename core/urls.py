@@ -15,6 +15,7 @@ urlpatterns = [
     path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
     path('student/create-clearance-requests/', views.create_clearance_requests, name='create_clearance_requests'),
     path('student/clearance/<int:clearance_id>/', views.view_clearance_details, name='view_clearance_details'),
+    path('student/clearance-history/', views.student_clearance_history, name='student_clearance_history'),
     path('request-again/<int:request_id>/', views.request_again, name='request_again'),
 
     # Program Chair Routes

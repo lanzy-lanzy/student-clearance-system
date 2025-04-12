@@ -380,6 +380,73 @@ def request_again(request, request_id):
 
     return redirect('view_clearance_details', clearance_id=clearance_request.clearance.id)
 
+@login_required
+def student_clearance_history(request):
+    try:
+        student = request.user.student
+
+        # Get all clearance requests for the student
+        clearance_requests = ClearanceRequest.objects.filter(
+            student=student
+        ).select_related('office', 'reviewed_by', 'clearance').order_by('-request_date')
+
+        # Get counts for each status before applying filters
+        approved_count = clearance_requests.filter(status='approved').count()
+        pending_count = clearance_requests.filter(status='pending').count()
+        denied_count = clearance_requests.filter(status='denied').count()
+
+        # Apply filters if provided
+        status = request.GET.get('status', '')
+        if status:
+            clearance_requests = clearance_requests.filter(status=status)
+
+        school_year = request.GET.get('school_year', '')
+        if school_year:
+            clearance_requests = clearance_requests.filter(school_year=school_year)
+
+        semester = request.GET.get('semester', '')
+        if semester:
+            clearance_requests = clearance_requests.filter(semester=semester)
+
+        office = request.GET.get('office', '')
+        if office:
+            clearance_requests = clearance_requests.filter(office__name__icontains=office)
+
+        # Pagination
+        paginator = Paginator(clearance_requests, 10)  # Show 10 requests per page
+        page = request.GET.get('page')
+        try:
+            clearance_requests_page = paginator.page(page)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page
+            clearance_requests_page = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range, deliver last page of results
+            clearance_requests_page = paginator.page(paginator.num_pages)
+
+        # Get all offices for filter dropdown
+        offices = Office.objects.filter(clearance_requests__student=student).distinct()
+
+        return render(request, 'core/student_clearance_history.html', {
+            'student': student,
+            'clearance_requests': clearance_requests_page,
+            'school_years': get_school_years(),
+            'semesters': SEMESTER_CHOICES,
+            'offices': offices,
+            'approved_count': approved_count,
+            'pending_count': pending_count,
+            'denied_count': denied_count,
+            'current_filters': {
+                'status': status,
+                'school_year': school_year,
+                'semester': semester,
+                'office': office
+            }
+        })
+    except Student.DoesNotExist:
+        messages.error(request, "Student profile not found.")
+        return redirect('home')
+
 # Program Chair Views
 @login_required
 @user_passes_test(is_program_chair)
