@@ -30,6 +30,12 @@
                 {% endfor %}
             {% endif %}
 
+            {% if not student.program_chair %}
+                <div class="mb-6 p-4 rounded-lg bg-amber-100 text-amber-700">
+                    <strong>Warning:</strong> You don't have an assigned program chair. Please contact your administrator to assign a program chair to your account before creating a clearance request.
+                </div>
+            {% endif %}
+
             <!-- Current Details Card -->
             <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-800 mb-3">Current Details</h3>
@@ -50,12 +56,22 @@
                         <p class="text-sm text-gray-600">Year Level</p>
                         <p class="font-medium">{{ request.user.student.get_year_level_display }}</p>
                     </div>
+                    <div class="md:col-span-2">
+                        <p class="text-sm text-gray-600">Assigned Program Chair</p>
+                        <p class="font-medium {% if not student.program_chair %}text-amber-600{% endif %}">
+                            {% if student.program_chair %}
+                                {{ student.program_chair.get_full_name }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
             </div>
 
             <form method="POST" class="space-y-6">
                 {% csrf_token %}
-                
+
                 <!-- School Year Selection -->
                 <div>
                     <label for="school_year" class="block text-sm font-medium text-gray-700 mb-2">School Year</label>
@@ -99,6 +115,7 @@
                         <li>You can only create one clearance request per semester</li>
                         <li>Make sure to select the correct school year and semester</li>
                         <li>All required offices will be automatically included</li>
+                        <li>You can only request clearance from your assigned program chair</li>
                         <li>You can track the status of your clearance in the dashboard</li>
                     </ul>
                 </div>

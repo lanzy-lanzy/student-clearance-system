@@ -15,7 +15,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.generic import TemplateView, ListView, DetailView
 
 # PDF Generation
@@ -263,6 +263,10 @@ def create_clearance_requests(request):
             messages.error(request, "Account must be approved first.")
             return redirect('student_dashboard')
 
+        if not student.program_chair:
+            messages.error(request, "You must have an assigned program chair before creating clearance requests.")
+            return redirect('student_dashboard')
+
         try:
             clearance = Clearance.objects.create(
                 student=student,
@@ -271,9 +275,59 @@ def create_clearance_requests(request):
                 is_cleared=False
             )
 
+            # Get the student's assigned program chair and their associated dean
+            student_program_chair = student.program_chair
+            student_program_chair_dean = student_program_chair.dean if student_program_chair else None
+
+            logger.info(f"Creating clearance for student {student.id} with program chair {student_program_chair.id if student_program_chair else 'None'}")
+
+            # Get all program chairs and their associated deans
+            all_program_chairs = ProgramChair.objects.select_related('dean').all()
+
+            # Get basic offices (non-program chair offices)
             required_offices = Office.objects.filter(
                 Q(office_type='OTHER') | Q(office_type=student.course.dean.name)
             )
+
+            # Collect all program chair offices to exclude
+            program_chair_offices_to_exclude = []
+            student_program_chair_office = None
+
+            # Find all program chair offices
+            for pc in all_program_chairs:
+                try:
+                    # Get the staff record for this program chair
+                    pc_staff = Staff.objects.get(user=pc.user)
+
+                    # If this is the student's program chair, save their office
+                    if student_program_chair and pc.id == student_program_chair.id:
+                        student_program_chair_office = pc_staff.office
+                        logger.info(f"Found student's program chair office: {student_program_chair_office.name} (ID: {student_program_chair_office.id})")
+                    else:
+                        # Otherwise, add to exclusion list
+                        program_chair_offices_to_exclude.append(pc_staff.office.id)
+                        logger.info(f"Adding program chair office to exclude: {pc_staff.office.name} (ID: {pc_staff.office.id})")
+                except Staff.DoesNotExist:
+                    # Program chair doesn't have a staff record
+                    logger.warning(f"Program chair {pc.id} doesn't have a staff record")
+                    continue
+
+            # Exclude all other program chair offices
+            if program_chair_offices_to_exclude:
+                required_offices = required_offices.exclude(id__in=program_chair_offices_to_exclude)
+                logger.info(f"Excluded {len(program_chair_offices_to_exclude)} program chair offices")
+
+            # Add the student's program chair's office if it exists
+            if student_program_chair_office:
+                # Convert to list and add the specific office
+                required_offices = list(required_offices)
+                if student_program_chair_office not in required_offices:
+                    required_offices.append(student_program_chair_office)
+                    logger.info(f"Added student's program chair office: {student_program_chair_office.name}")
+
+            # Log the final list of offices
+            office_names = [office.name for office in required_offices]
+            logger.info(f"Final list of offices for clearance: {office_names}")
 
             for office in required_offices:
                 ClearanceRequest.objects.create(
@@ -754,6 +808,129 @@ def view_request(request, request_id):
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
+def admin_dormitory_owners(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        try:
+            if action == 'add':
+                user_id = request.POST.get('user')
+                user = User.objects.get(id=user_id)
+                office = Office.objects.get(name="DORMITORY")
+
+                # Check if user already has a staff profile
+                if hasattr(user, 'staff'):
+                    messages.error(request, f'User {user.get_full_name()} is already a staff member.')
+                else:
+                    # Create dormitory owner
+                    staff = Staff.objects.create(
+                        user=user,
+                        office=office,
+                        role=request.POST.get('role', 'Dormitory Owner'),
+                        is_dormitory_owner=True
+                    )
+                    messages.success(request, f'Dormitory Owner {staff.get_full_name()} added successfully.')
+
+            elif action == 'batch_assign':
+                dormitory_owner_id = request.POST.get('dormitory_owner_id')
+                student_ids = request.POST.getlist('student_ids')
+                mark_as_boarders = request.POST.get('mark_as_boarders') == 'on'
+
+                if not dormitory_owner_id or not student_ids:
+                    messages.error(request, 'Missing required parameters for batch assignment.')
+                    return redirect('admin_dormitory_owners')
+
+                # Get the dormitory owner
+                dormitory_owner = Staff.objects.get(id=dormitory_owner_id, is_dormitory_owner=True)
+
+                # Assign students to the dormitory owner
+                students = Student.objects.filter(id__in=student_ids)
+                count = 0
+
+                for student in students:
+                    student.dormitory_owner = dormitory_owner
+                    if mark_as_boarders:
+                        student.is_boarder = True
+                    student.save()
+                    count += 1
+
+                messages.success(request, f'{count} student(s) have been assigned to {dormitory_owner.get_full_name()}.')
+
+            elif action == 'edit':
+                staff = Staff.objects.get(id=request.POST.get('staff_id'))
+
+                # Update role
+                staff.role = request.POST.get('role')
+                staff.save()
+
+                messages.success(request, f'Dormitory Owner {staff.get_full_name()} updated successfully.')
+
+            elif action == 'delete':
+                staff = Staff.objects.get(id=request.POST.get('staff_id'))
+                delete_type = request.POST.get('delete_type', 'safe')
+
+                if delete_type == 'safe':
+                    # Check if there are any students associated with this dormitory owner
+                    if Student.objects.filter(dormitory_owner=staff).exists():
+                        messages.error(
+                            request,
+                            f"Cannot safely delete dormitory owner '{staff.get_full_name()}' because they have associated students. "
+                            f"Please reassign the students first or use Force Delete."
+                        )
+                    else:
+                        # Safe to delete
+                        staff_name = staff.get_full_name()
+                        staff.delete()
+                        messages.success(request, f'Dormitory Owner {staff_name} safely deleted.')
+
+                elif delete_type == 'force':
+                    # Force delete - will remove dormitory owner association from students
+                    student_count = Student.objects.filter(dormitory_owner=staff).count()
+
+                    # Use a transaction to ensure all operations succeed or fail together
+                    from django.db import transaction
+                    with transaction.atomic():
+                        # Remove dormitory owner association from students
+                        Student.objects.filter(dormitory_owner=staff).update(dormitory_owner=None, is_boarder=False)
+
+                        # Delete the dormitory owner
+                        staff_name = staff.get_full_name()
+                        staff.delete()
+
+                    messages.success(
+                        request,
+                        f'Dormitory Owner {staff_name} force deleted and {student_count} student(s) reassigned.'
+                    )
+
+        except User.DoesNotExist:
+            messages.error(request, 'User not found.')
+        except Office.DoesNotExist:
+            messages.error(request, 'Dormitory office not found. Please create an office named "DORMITORY" first.')
+        except Staff.DoesNotExist:
+            messages.error(request, 'Dormitory Owner not found.')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+
+    # Get all dormitory owners
+    dormitory_owners = Staff.objects.filter(is_dormitory_owner=True).select_related('user', 'office')
+
+    # Add student count to each dormitory owner
+    for owner in dormitory_owners:
+        owner.student_count = Student.objects.filter(dormitory_owner=owner).count()
+
+    # Get available users (those who are not already staff)
+    staff_user_ids = Staff.objects.values_list('user_id', flat=True)
+    available_users = User.objects.exclude(id__in=staff_user_ids).filter(is_active=True)
+
+    return render(request, 'admin/dormitory_owners.html', {
+        'dormitory_owners': dormitory_owners,
+        'available_users': available_users,
+        'total_boarders': Student.objects.filter(is_boarder=True).count(),
+        'total_dormitory_owners': dormitory_owners.count(),
+        'unassigned_boarders': Student.objects.filter(is_boarder=True, dormitory_owner=None).count()
+    })
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def admin_program_chairs(request):
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -943,6 +1120,8 @@ def admin_dashboard(request):
         'total_students': Student.objects.count(),
         'total_staff': Staff.objects.count(),
         'total_program_chairs': ProgramChair.objects.count(),
+        'total_dormitory_owners': Staff.objects.filter(is_dormitory_owner=True).count(),
+        'total_boarders': Student.objects.filter(is_boarder=True).count(),
         'clearance_stats': {
             'total': Clearance.objects.count(),
             'pending': ClearanceRequest.objects.filter(status='pending').count(),
@@ -1911,6 +2090,159 @@ def get_program_chairs(request, dean_id):
         }
     } for pc in program_chairs]
     return JsonResponse(data, safe=False)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def get_dormitory_owner_details(request, owner_id):
+    try:
+        owner = Staff.objects.get(id=owner_id, is_dormitory_owner=True)
+        students = Student.objects.filter(dormitory_owner=owner).select_related('user')
+
+        # Prepare owner data
+        owner_data = {
+            'id': owner.id,
+            'full_name': owner.get_full_name(),
+            'email': owner.user.email,
+            'role': owner.role,
+            'office': owner.office.name,
+            'student_count': students.count(),
+            'profile_picture': owner.get_profile_picture_url() if hasattr(owner, 'get_profile_picture_url') else None
+        }
+
+        # Prepare students data
+        students_data = []
+        for student in students:
+            students_data.append({
+                'id': student.id,
+                'student_id': student.student_id,
+                'full_name': student.get_full_name(),
+                'course': student.course.name if student.course else 'Not assigned',
+                'year_level': student.year_level
+            })
+
+        return JsonResponse({
+            'success': True,
+            'owner': owner_data,
+            'students': students_data
+        })
+    except Staff.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Dormitory owner not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def get_unassigned_students(request):
+    try:
+        # Get students who are boarders but don't have a dormitory owner assigned
+        students = Student.objects.filter(is_boarder=True, dormitory_owner=None).select_related('user', 'course')
+
+        students_data = []
+        for student in students:
+            students_data.append({
+                'id': student.id,
+                'student_id': student.student_id,
+                'full_name': student.get_full_name(),
+                'course': student.course.name if student.course else 'Not assigned',
+                'year_level': student.year_level
+            })
+
+        return JsonResponse({
+            'success': True,
+            'students': students_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+@require_POST
+def unassign_student(request):
+    try:
+        data = json.loads(request.body)
+        student_id = data.get('student_id')
+        dormitory_owner_id = data.get('dormitory_owner_id')
+
+        if not student_id or not dormitory_owner_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Missing required parameters'
+            }, status=400)
+
+        # Get the student and verify they belong to the specified dormitory owner
+        student = Student.objects.get(id=student_id, dormitory_owner_id=dormitory_owner_id)
+
+        # Unassign the dormitory owner
+        student.dormitory_owner = None
+        student.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Student {student.get_full_name()} has been unassigned from the dormitory owner.'
+        })
+    except Student.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Student not found or not assigned to this dormitory owner'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+@require_POST
+def assign_students(request):
+    try:
+        dormitory_owner_id = request.POST.get('dormitory_owner_id')
+        student_ids = request.POST.getlist('student_ids')
+        mark_as_boarders = request.POST.get('mark_as_boarders') == 'on'
+
+        if not dormitory_owner_id or not student_ids:
+            return JsonResponse({
+                'success': False,
+                'message': 'Missing required parameters'
+            }, status=400)
+
+        # Get the dormitory owner
+        dormitory_owner = Staff.objects.get(id=dormitory_owner_id, is_dormitory_owner=True)
+
+        # Assign students to the dormitory owner
+        students = Student.objects.filter(id__in=student_ids)
+        count = 0
+
+        for student in students:
+            student.dormitory_owner = dormitory_owner
+            if mark_as_boarders:
+                student.is_boarder = True
+            student.save()
+            count += 1
+
+        return JsonResponse({
+            'success': True,
+            'message': f'{count} student(s) have been assigned to {dormitory_owner.get_full_name()}.'
+        })
+    except Staff.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Dormitory owner not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)

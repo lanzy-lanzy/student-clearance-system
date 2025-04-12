@@ -52,6 +52,7 @@ urlpatterns = [
     path('dashboard/admin/settings/', views.admin_settings, name='admin_settings'),
     path('dashboard/admin/pending-approvals/', views.admin_pending_approvals, name='admin_pending_approvals'),
     path('dashboard/admin/program-chairs/', views.admin_program_chairs, name='admin_program_chairs'),
+    path('dashboard/admin/dormitory-owners/', views.admin_dormitory_owners, name='admin_dormitory_owners'),
     path('dashboard/create/users/', views.create_user, name='create_user'),
     path('profile/admin/', views.admin_profile, name='admin_profile'),
 
@@ -71,6 +72,12 @@ urlpatterns = [
     path('dashboard/admin/get-approval-stats/', views.get_approval_stats, name='get_approval_stats'),
     path('api/courses-by-dean/<str:dean_name>/', views.get_courses_by_dean, name='courses_by_dean'),
     path('api/program-chairs/<int:dean_id>/', views.get_program_chairs, name='get_program_chairs'),
+
+    # Dormitory Owner API Routes
+    path('dashboard/admin/dormitory-owners/details/<int:owner_id>/', views.get_dormitory_owner_details, name='get_dormitory_owner_details'),
+    path('dashboard/admin/dormitory-owners/unassigned-students/', views.get_unassigned_students, name='get_unassigned_students'),
+    path('dashboard/admin/dormitory-owners/unassign-student/', views.unassign_student, name='unassign_student'),
+    path('dashboard/admin/dormitory-owners/assign-students/', views.assign_students, name='assign_students'),
     path('api/program-chair/<int:program_chair_id>/', views.get_program_chair_details, name='get_program_chair_details'),
     path('api/courses/<int:dean_id>/', views.get_courses, name='get_courses'),  # Remove any login_required decorator
 ]
