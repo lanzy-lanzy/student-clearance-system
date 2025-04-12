@@ -1,14 +1,14 @@
-<nav x-data="{ isOpen: true }" 
-     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col" 
+<nav x-data="{ isOpen: true, activeSection: null }"
+     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col overflow-y-auto"
      :class="isOpen ? 'w-64' : 'w-20'">
-    
+
     <div class="p-6 flex-grow" :class="isOpen ? '' : 'px-4'">
         <!-- Toggle Button -->
-        <button @click="isOpen = !isOpen" 
+        <button @click="isOpen = !isOpen"
                 class="absolute -right-3 top-10 bg-emerald-800 rounded-full p-1.5 text-white hover:bg-emerald-700">
-            <svg xmlns="http://www.w3.org/2000/svg" 
-                 class="h-5 w-5 transition-transform duration-300" 
-                 :class="isOpen ? 'rotate-0' : 'rotate-180'" 
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-5 w-5 transition-transform duration-300"
+                 :class="isOpen ? 'rotate-0' : 'rotate-180'"
                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -21,9 +21,11 @@
             <h2 x-show="isOpen" class="text-2xl font-bold text-white">BH Owner Portal</h2>
         </div>
 
-        <ul class="space-y-4">
+        <!-- Main Navigation -->
+        <ul class="space-y-2">
+            <!-- Dashboard -->
             <li>
-                <a href="{% url 'bh_owner_dashboard' %}" 
+                <a href="{% url 'bh_owner_dashboard' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
                    :class="isOpen ? '' : 'justify-center px-2'">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -32,12 +34,123 @@
                     <span x-show="isOpen">Dashboard</span>
                 </a>
             </li>
+
+            <!-- Student Management Section -->
+            <li class="mt-6">
+                <div x-show="isOpen" class="px-4 py-2">
+                    <h3 class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Student Management</h3>
+                </div>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_boarders' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                    </svg>
+                    <span x-show="isOpen">My Boarders</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_add_student' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    <span x-show="isOpen">Add Student</span>
+                </a>
+            </li>
+
+            <!-- Clearance Management Section -->
+            <li class="mt-6">
+                <div x-show="isOpen" class="px-4 py-2">
+                    <h3 class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Clearance Management</h3>
+                </div>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_pending_requests' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Pending Requests</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_approved_requests' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Approved Requests</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_denied_requests' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Denied Requests</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_clearance_history' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Clearance History</span>
+                </a>
+            </li>
+
+            <!-- Reports Section -->
+            <li class="mt-6">
+                <div x-show="isOpen" class="px-4 py-2">
+                    <h3 class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Reports</h3>
+                </div>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_generate_reports' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm4-1a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm4-1a1 1 0 10-2 0v3a1 1 0 102 0v-3z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Generate Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'bh_owner_export_data' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                   :class="isOpen ? '' : 'justify-center px-2'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Export Data</span>
+                </a>
+            </li>
+
+
         </ul>
     </div>
 
-    <!-- Logout Section -->
+    <!-- Profile & Logout Section -->
     <div class="p-6 border-t border-emerald-800" :class="isOpen ? '' : 'px-4'">
-        <a href="{% url 'logout' %}" 
+        <a href="{% url 'bh_owner_profile' %}"
+           class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 mb-3"
+           :class="isOpen ? '' : 'justify-center px-2'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+            </svg>
+            <span x-show="isOpen">My Profile</span>
+        </a>
+        <a href="{% url 'logout' %}"
            class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
            :class="isOpen ? '' : 'justify-center px-2'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

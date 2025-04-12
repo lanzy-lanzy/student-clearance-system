@@ -6,23 +6,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Denial Reason Modal -->
-<div id="denialModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900">Enter Denial Reason</h3>
-            <form id="denialForm" method="POST" class="mt-2">
-                {% csrf_token %}
-                <input type="hidden" name="status" value="denied">
-                <textarea name="remarks" class="w-full p-2 border rounded-md" rows="4" required></textarea>
-                <div class="mt-4 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md">Submit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <div class="flex">
     <div class="flex-1 p-8 overflow-auto bg-gray-50">
@@ -35,7 +18,89 @@
             {% endfor %}
         </div>
         {% endif %}
-        <!-- Clearance Requests Section -->
+
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-emerald-900">Welcome, {{ dormitory_owner.get_full_name }}</h1>
+            <p class="text-gray-600 mt-2">{{ school_year }} | {{ current_semester }} Semester</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Boarders Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-emerald-100 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Boarders</p>
+                        <p class="text-3xl font-bold text-emerald-700 mt-1">{{ total_boarders }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'bh_owner_boarders' %}" class="text-sm text-emerald-600 hover:text-emerald-800 font-medium">View all boarders →</a>
+                </div>
+            </div>
+
+            <!-- Pending Requests Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-emerald-100 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Pending Requests</p>
+                        <p class="text-3xl font-bold text-yellow-500 mt-1">{{ pending_requests }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'bh_owner_pending_requests' %}" class="text-sm text-emerald-600 hover:text-emerald-800 font-medium">View pending requests →</a>
+                </div>
+            </div>
+
+            <!-- Approved Requests Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-emerald-100 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Approved Requests</p>
+                        <p class="text-3xl font-bold text-emerald-600 mt-1">{{ approved_requests }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'bh_owner_approved_requests' %}" class="text-sm text-emerald-600 hover:text-emerald-800 font-medium">View approved requests →</a>
+                </div>
+            </div>
+
+            <!-- Denied Requests Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-emerald-100 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Denied Requests</p>
+                        <p class="text-3xl font-bold text-red-600 mt-1">{{ denied_requests }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'bh_owner_denied_requests' %}" class="text-sm text-emerald-600 hover:text-emerald-800 font-medium">View denied requests →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Clearance Requests Section -->
         <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-8">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
@@ -60,7 +125,7 @@
                         {% for request in clearance_requests %}
                         <tr class="hover:bg-emerald-50 transition-colors duration-200">
                             <td class="px-4 py-3 text-emerald-900">{{ request.student.student_id }}</td>
-                            <td class="px-4 py-3 font-medium text-emerald-900">{{ request.student.full_name }}</td>
+                            <td class="px-4 py-3 font-medium text-emerald-900">{{ request.student.get_full_name }}</td>
                             <td class="px-4 py-3">
                                 {% if request.status == 'approved' %}
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
@@ -79,15 +144,13 @@
                             <td class="px-4 py-3">
                                 {% if request.status == 'pending' %}
                                     <div class="flex gap-2">
-                                        <form method="POST" action="{% url 'update_clearance_request' request.id %}">
-                                            {% csrf_token %}
-                                            <button type="submit" name="status" value="approved" 
-                                                    class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                                Approve
-                                            </button>
-                                        </form>
-                                        <button onclick="showDenialModal('{% url 'update_clearance_request' request.id %}')" 
-                                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                        <button onclick="approveRequest({{ request.id }})"
+                                                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                            Approve
+                                        </button>
+                                        <button onclick="showDenialModal({{ request.id }})"
+                                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                                                type="button">
                                             Deny
                                         </button>
                                     </div>
@@ -102,25 +165,103 @@
     </div>
 </div>
 
+<!-- Denial Modal -->
+<div id="denialModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Deny Clearance Request</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500 mb-4">Please provide a reason for denying this clearance request.</p>
+                <form id="denialForm" method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="denied">
+                    <textarea id="remarks" name="remarks" rows="4" required
+                              class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+                              placeholder="Enter reason for denial"></textarea>
+                    <div class="flex items-center justify-between mt-4">
+                        <button type="button" onclick="closeDenialModal()"
+                                class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            Deny Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-function showDenialModal(formAction) {
-    const modal = document.getElementById('denialModal');
-    const form = document.getElementById('denialForm');
-    form.action = formAction;
-    modal.classList.remove('hidden');
-}
-
-function closeModal() {
-    const modal = document.getElementById('denialModal');
-    modal.classList.add('hidden');
-}
-
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('denialModal');
-    if (event.target == modal) {
-        closeModal();
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
-}
+
+    function approveRequest(requestId) {
+        if (!confirm('Are you sure you want to approve this request?')) {
+            return;
+        }
+
+        // Create a form for traditional form submission
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/approve-clearance-request/${requestId}/`;
+        form.style.display = 'none';
+
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = getCookie('csrftoken');
+        form.appendChild(csrfInput);
+
+        // Add status input
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = 'approved';
+        form.appendChild(statusInput);
+
+        // Add the form to the document and submit it
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function showDenialModal(requestId) {
+        document.getElementById('denialForm').action = `/deny-clearance-request/${requestId}/`;
+        document.getElementById('denialModal').classList.remove('hidden');
+        document.getElementById('remarks').focus();
+    }
+
+    function closeDenialModal() {
+        document.getElementById('denialModal').classList.add('hidden');
+        document.getElementById('remarks').value = '';
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.getElementById('denialModal');
+        if (event.target === modal) {
+            closeDenialModal();
+        }
+    }
 </script>
 {% endblock %}

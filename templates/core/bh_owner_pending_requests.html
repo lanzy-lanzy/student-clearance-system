@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}Pending Requests | Dormitory Owner{% endblock %}
+
+{% block sidebar %}
+{% include "components/bh_owner_sidenav.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Enhanced Header -->
+        <div class="bg-white rounded-2xl shadow-xl mb-8">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-t-2xl p-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between">
+                    <div class="text-white">
+                        <h1 class="text-3xl font-bold">Pending Clearance Requests</h1>
+                        <p class="mt-2 opacity-90">Review and process pending clearance requests from your boarders.</p>
+                    </div>
+                    <div class="mt-4 sm:mt-0">
+                        <div class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
+                            <span class="text-lg font-semibold">{{ clearance_requests.paginator.count }}</span>
+                            <span class="ml-1">Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="p-6">
+                <form method="GET" action="{% url 'bh_owner_pending_requests' %}" class="space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4">
+                    <!-- Search Input -->
+                    <div class="flex-1">
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search Student</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" name="search" id="search" value="{{ search_query }}"
+                                   class="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 pr-3 py-2 border-gray-300 rounded-md"
+                                   placeholder="Name or ID">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="w-full md:w-auto">
+                        <button type="submit" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-150">
+                            Search
+                        </button>
+                    </div>
+
+                    {% if search_query %}
+                    <div class="w-full md:w-auto">
+                        <a href="{% url 'bh_owner_pending_requests' %}" class="inline-block w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-150">
+                            Clear
+                        </a>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- Enhanced Pending Requests Table -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            {% if clearance_requests %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Student</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Course</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact Number</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Request Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for request in clearance_requests %}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ request.student.get_full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ request.student.student_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 text-sm text-emerald-700 bg-emerald-100 rounded-full">
+                                    {{ request.student.course.name }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    {% if request.student.contact_number %}
+                                        {{ request.student.contact_number }}
+                                    {% else %}
+                                        Not provided
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">{{ request.request_date|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ request.request_date|time:"g:i A" }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-4">
+                                    <button onclick="approveRequest({{ request.id }})"
+                                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-150">
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Approve
+                                    </button>
+                                    <button onclick="showDenialModal({{ request.id }})"
+                                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-150">
+                                        <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Deny
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+                                {% if search_query %}
+                                No pending requests found matching "{{ search_query }}".
+                                {% else %}
+                                No pending clearance requests at this time.
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if clearance_requests.has_other_pages %}
+            <div class="flex justify-center py-4">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if clearance_requests.has_previous %}
+                    <a href="?page={{ clearance_requests.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    {% endif %}
+
+                    {% for i in clearance_requests.paginator.page_range %}
+                        {% if clearance_requests.number == i %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-emerald-500 bg-emerald-50 text-sm font-medium text-emerald-600">
+                            {{ i }}
+                        </span>
+                        {% elif i > clearance_requests.number|add:'-3' and i < clearance_requests.number|add:'3' %}
+                        <a href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ i }}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if clearance_requests.has_next %}
+                    <a href="?page={{ clearance_requests.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="p-8 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-lg font-medium text-gray-900">No pending requests</h3>
+                <p class="mt-1 text-sm text-gray-500">There are no pending clearance requests from your boarders at this time.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Denial Modal -->
+<div id="denialModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Deny Clearance Request</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500 mb-4">Please provide a reason for denying this clearance request.</p>
+                <form id="denialForm" method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="denied">
+                    <textarea id="remarks" name="remarks" rows="4" required
+                              class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+                              placeholder="Enter reason for denial"></textarea>
+                    <div class="flex items-center justify-between mt-4">
+                        <button type="button" onclick="closeDenialModal()"
+                                class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            Deny Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function approveRequest(requestId) {
+        if (!confirm('Are you sure you want to approve this request?')) {
+            return;
+        }
+
+        // Create a form for traditional form submission
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/approve-clearance-request/${requestId}/`;
+        form.style.display = 'none';
+
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = getCookie('csrftoken');
+        form.appendChild(csrfInput);
+
+        // Add status input
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = 'approved';
+        form.appendChild(statusInput);
+
+        // Add the form to the document and submit it
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function showDenialModal(requestId) {
+        document.getElementById('denialForm').action = `/deny-clearance-request/${requestId}/`;
+        document.getElementById('denialModal').classList.remove('hidden');
+        document.getElementById('remarks').focus();
+    }
+
+    function closeDenialModal() {
+        document.getElementById('denialModal').classList.add('hidden');
+        document.getElementById('remarks').value = '';
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.getElementById('denialModal');
+        if (event.target === modal) {
+            closeDenialModal();
+        }
+    }
+</script>
+{% endblock %}

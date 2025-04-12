@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Clearance History | Dormitory Owner{% endblock %}
+
+{% block sidebar %}
+{% include "components/bh_owner_sidenav.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="flex">
+    <div class="flex-1 p-8 overflow-auto bg-gray-50">
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-emerald-900">Clearance History</h1>
+            <p class="text-gray-600 mt-2">View the complete history of clearance requests from your boarders.</p>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="bg-white rounded-xl shadow-md p-6 border border-emerald-100 mb-6">
+            <form method="GET" action="{% url 'bh_owner_clearance_history' %}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Status Filter -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="status" name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if current_filters.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="approved" {% if current_filters.status == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="denied" {% if current_filters.status == 'denied' %}selected{% endif %}>Denied</option>
+                        </select>
+                    </div>
+                    
+                    <!-- School Year Filter -->
+                    <div>
+                        <label for="school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                        <select id="school_year" name="school_year" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">All School Years</option>
+                            {% for year in school_years %}
+                            <option value="{{ year }}" {% if current_filters.school_year == year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Semester Filter -->
+                    <div>
+                        <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                        <select id="semester" name="semester" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">All Semesters</option>
+                            {% for semester_choice in semesters %}
+                            <option value="{{ semester_choice.0 }}" {% if current_filters.semester == semester_choice.0 %}selected{% endif %}>{{ semester_choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Search Filter -->
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <input type="text" id="search" name="search" value="{{ current_filters.search }}" placeholder="Search by name or ID..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <a href="{% url 'bh_owner_clearance_history' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">
+                        Reset Filters
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Clearance History Table -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                    <thead class="bg-emerald-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Student ID</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Student Name</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">School Year</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Semester</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Request Date</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Status</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Reviewed Date</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-emerald-700">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-emerald-100">
+                        {% for request in clearance_requests %}
+                        <tr class="hover:bg-emerald-50 transition-colors duration-200">
+                            <td class="px-4 py-3 text-emerald-900">{{ request.student.student_id }}</td>
+                            <td class="px-4 py-3 font-medium text-emerald-900">{{ request.student.get_full_name }}</td>
+                            <td class="px-4 py-3 text-emerald-900">{{ request.school_year }}</td>
+                            <td class="px-4 py-3 text-emerald-900">{{ request.get_semester_display }}</td>
+                            <td class="px-4 py-3 text-emerald-900">{{ request.request_date|date:"M d, Y" }}</td>
+                            <td class="px-4 py-3">
+                                {% if request.status == 'approved' %}
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                        Approved
+                                    </span>
+                                {% elif request.status == 'denied' %}
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        Denied
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-emerald-900">{{ request.reviewed_date|date:"M d, Y"|default:"-" }}</td>
+                            <td class="px-4 py-3 text-emerald-900">{{ request.notes|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-4 py-6 text-center text-gray-500">
+                                {% if current_filters.search or current_filters.status or current_filters.school_year or current_filters.semester %}
+                                No clearance requests found matching the selected filters.
+                                {% else %}
+                                No clearance request history available.
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if clearance_requests.has_other_pages %}
+            <div class="flex justify-center mt-6">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if clearance_requests.has_previous %}
+                    <a href="?page={{ clearance_requests.previous_page_number }}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.school_year %}&school_year={{ current_filters.school_year }}{% endif %}{% if current_filters.semester %}&semester={{ current_filters.semester }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    {% endif %}
+
+                    {% for i in clearance_requests.paginator.page_range %}
+                        {% if clearance_requests.number == i %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-emerald-500 bg-emerald-50 text-sm font-medium text-emerald-600">
+                            {{ i }}
+                        </span>
+                        {% elif i > clearance_requests.number|add:'-3' and i < clearance_requests.number|add:'3' %}
+                        <a href="?page={{ i }}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.school_year %}&school_year={{ current_filters.school_year }}{% endif %}{% if current_filters.semester %}&semester={{ current_filters.semester }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ i }}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if clearance_requests.has_next %}
+                    <a href="?page={{ clearance_requests.next_page_number }}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.school_year %}&school_year={{ current_filters.school_year }}{% endif %}{% if current_filters.semester %}&semester={{ current_filters.semester }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

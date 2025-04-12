@@ -55,8 +55,24 @@ def get_current_semester():
     return "First"
 
 def get_school_years():
+    """Get a list of school years for the past 5 years and next 2 years"""
     current_year = timezone.now().year
-    return [f"{year}-{year + 1}" for year in range(current_year - 2, current_year + 1)]
+    years = []
+
+    # Past 5 years
+    for i in range(5, 0, -1):
+        past_year = current_year - i
+        years.append(f"{past_year}-{past_year + 1}")
+
+    # Current year
+    years.append(f"{current_year}-{current_year + 1}")
+
+    # Next 2 years
+    for i in range(1, 3):
+        future_year = current_year + i
+        years.append(f"{future_year}-{future_year + 1}")
+
+    return years
 
 def is_program_chair(user):
     return hasattr(user, 'programchair')
@@ -69,7 +85,11 @@ def user_login(request):
         elif hasattr(request.user, 'programchair'):
             return redirect('program_chair_dashboard')
         elif hasattr(request.user, 'staff'):
-            return redirect('staff_dashboard')
+            # Check if the staff member is a dormitory owner
+            if request.user.staff.is_dormitory_owner:
+                return redirect('bh_owner_dashboard')
+            else:
+                return redirect('staff_dashboard')
         elif request.user.is_superuser:
             return redirect('admin_dashboard')
 
@@ -89,7 +109,11 @@ def user_login(request):
             elif hasattr(user, 'programchair'):
                 return redirect('program_chair_dashboard')
             elif hasattr(user, 'staff'):
-                return redirect('staff_dashboard')
+                # Check if the staff member is a dormitory owner
+                if user.staff.is_dormitory_owner:
+                    return redirect('bh_owner_dashboard')
+                else:
+                    return redirect('staff_dashboard')
             elif user.is_superuser:
                 return redirect('admin_dashboard')
         else:
@@ -182,7 +206,11 @@ def home(request):
         elif hasattr(request.user, 'student'):
             return redirect('student_dashboard')
         elif hasattr(request.user, 'staff'):
-            return redirect('staff_dashboard')
+            # Check if the staff member is a dormitory owner
+            if request.user.staff.is_dormitory_owner:
+                return redirect('bh_owner_dashboard')
+            else:
+                return redirect('staff_dashboard')
         elif request.user.is_superuser:
             return redirect('admin_dashboard')
     return render(request, 'home.html')
@@ -590,6 +618,10 @@ class StudentDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
 def staff_dashboard(request):
     staff = request.user.staff
 
+    # Check if the staff member is a dormitory owner and redirect to BH Owner Dashboard
+    if staff.is_dormitory_owner:
+        return redirect('bh_owner_dashboard')
+
     # Get current school year and semester
     current_year = timezone.now().year
     school_year = f"{current_year}-{current_year + 1}"
@@ -624,6 +656,583 @@ def staff_dashboard(request):
         'school_year': school_year,
         'current_semester': semester,
         'office': staff.office,
+    })
+
+# Dormitory Owner Views
+@login_required
+def bh_owner_dashboard(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access the Dormitory Owner Dashboard.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    # Get current school year and semester
+    current_year = timezone.now().year
+    school_year = f"{current_year}-{current_year + 1}"
+    semester = get_current_semester()
+
+    # Get clearance requests for students assigned to this dormitory owner
+    clearance_requests = ClearanceRequest.objects.filter(
+        student__dormitory_owner=staff,
+        office__name="DORMITORY"
+    ).select_related(
+        'student__user',
+        'student__course'
+    ).order_by('-request_date')
+
+    # Get counts for dashboard stats
+    total_boarders = Student.objects.filter(dormitory_owner=staff).count()
+    pending_requests = clearance_requests.filter(status='pending').count()
+    approved_requests = clearance_requests.filter(status='approved').count()
+    denied_requests = clearance_requests.filter(status='denied').count()
+
+    return render(request, 'core/bh_owner_dashboard.html', {
+        'clearance_requests': clearance_requests,
+        'school_year': school_year,
+        'current_semester': semester,
+        'dormitory_owner': staff,
+        'total_boarders': total_boarders,
+        'pending_requests': pending_requests,
+        'approved_requests': approved_requests,
+        'denied_requests': denied_requests,
+    })
+
+@login_required
+def bh_owner_boarders(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    # Get all students assigned to this dormitory owner
+    students = Student.objects.filter(dormitory_owner=staff).select_related('user', 'course')
+
+    # Apply search filter if provided
+    search_query = request.GET.get('search', '')
+    if search_query:
+        students = students.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(student_id__icontains=search_query)
+        )
+
+    # Pagination
+    paginator = Paginator(students, 10)  # Show 10 students per page
+    page = request.GET.get('page')
+    try:
+        students_page = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        students_page = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        students_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'core/bh_owner_boarders.html', {
+        'students': students_page,
+        'dormitory_owner': staff,
+        'search_query': search_query,
+    })
+
+@login_required
+def bh_owner_add_student(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        try:
+            # Find the student by ID
+            student = Student.objects.get(student_id=student_id)
+
+            # Check if student is already assigned to a dormitory owner
+            if student.dormitory_owner:
+                messages.error(request, f"Student {student.get_full_name()} is already assigned to {student.dormitory_owner.get_full_name()}.")
+            else:
+                # Assign student to this dormitory owner
+                student.dormitory_owner = staff
+                student.is_boarder = True
+                student.save()
+                messages.success(request, f"Student {student.get_full_name()} has been added to your boarders.")
+                return redirect('bh_owner_boarders')
+        except Student.DoesNotExist:
+            messages.error(request, f"No student found with ID {student_id}.")
+
+    return render(request, 'core/bh_owner_add_student.html', {
+        'dormitory_owner': staff,
+    })
+
+@login_required
+def bh_owner_pending_requests(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    # Get pending clearance requests for students assigned to this dormitory owner
+    clearance_requests = ClearanceRequest.objects.filter(
+        student__dormitory_owner=staff,
+        office__name="DORMITORY",
+        status='pending'
+    ).select_related(
+        'student__user',
+        'student__course'
+    ).order_by('-request_date')
+
+    # Apply search filter if provided
+    search_query = request.GET.get('search', '')
+    if search_query:
+        clearance_requests = clearance_requests.filter(
+            Q(student__user__first_name__icontains=search_query) |
+            Q(student__user__last_name__icontains=search_query) |
+            Q(student__student_id__icontains=search_query)
+        )
+
+    # Pagination
+    paginator = Paginator(clearance_requests, 10)  # Show 10 requests per page
+    page = request.GET.get('page')
+    try:
+        requests_page = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        requests_page = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        requests_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'core/bh_owner_pending_requests.html', {
+        'clearance_requests': requests_page,
+        'dormitory_owner': staff,
+        'search_query': search_query,
+    })
+
+@login_required
+def bh_owner_approved_requests(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    # Get approved clearance requests for students assigned to this dormitory owner
+    clearance_requests = ClearanceRequest.objects.filter(
+        student__dormitory_owner=staff,
+        office__name="DORMITORY",
+        status='approved'
+    ).select_related(
+        'student__user',
+        'student__course',
+        'reviewed_by'
+    ).order_by('-reviewed_date')
+
+    # Apply search filter if provided
+    search_query = request.GET.get('search', '')
+    if search_query:
+        clearance_requests = clearance_requests.filter(
+            Q(student__user__first_name__icontains=search_query) |
+            Q(student__user__last_name__icontains=search_query) |
+            Q(student__student_id__icontains=search_query)
+        )
+
+    # Pagination
+    paginator = Paginator(clearance_requests, 10)  # Show 10 requests per page
+    page = request.GET.get('page')
+    try:
+        requests_page = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        requests_page = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        requests_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'core/bh_owner_approved_requests.html', {
+        'clearance_requests': requests_page,
+        'dormitory_owner': staff,
+        'search_query': search_query,
+    })
+
+@login_required
+def bh_owner_denied_requests(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    # Get denied clearance requests for students assigned to this dormitory owner
+    clearance_requests = ClearanceRequest.objects.filter(
+        student__dormitory_owner=staff,
+        office__name="DORMITORY",
+        status='denied'
+    ).select_related(
+        'student__user',
+        'student__course',
+        'reviewed_by'
+    ).order_by('-reviewed_date')
+
+    # Apply search filter if provided
+    search_query = request.GET.get('search', '')
+    if search_query:
+        clearance_requests = clearance_requests.filter(
+            Q(student__user__first_name__icontains=search_query) |
+            Q(student__user__last_name__icontains=search_query) |
+            Q(student__student_id__icontains=search_query)
+        )
+
+    # Pagination
+    paginator = Paginator(clearance_requests, 10)  # Show 10 requests per page
+    page = request.GET.get('page')
+    try:
+        requests_page = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        requests_page = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        requests_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'core/bh_owner_denied_requests.html', {
+        'clearance_requests': requests_page,
+        'dormitory_owner': staff,
+        'search_query': search_query,
+    })
+
+@login_required
+def bh_owner_clearance_history(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    # Get all clearance requests for students assigned to this dormitory owner
+    clearance_requests = ClearanceRequest.objects.filter(
+        student__dormitory_owner=staff,
+        office__name="DORMITORY"
+    ).select_related(
+        'student__user',
+        'student__course',
+        'reviewed_by'
+    ).order_by('-request_date')
+
+    # Apply filters if provided
+    status = request.GET.get('status', '')
+    if status:
+        clearance_requests = clearance_requests.filter(status=status)
+
+    school_year = request.GET.get('school_year', '')
+    if school_year:
+        clearance_requests = clearance_requests.filter(school_year=school_year)
+
+    semester = request.GET.get('semester', '')
+    if semester:
+        clearance_requests = clearance_requests.filter(semester=semester)
+
+    search_query = request.GET.get('search', '')
+    if search_query:
+        clearance_requests = clearance_requests.filter(
+            Q(student__user__first_name__icontains=search_query) |
+            Q(student__user__last_name__icontains=search_query) |
+            Q(student__student_id__icontains=search_query)
+        )
+
+    # Pagination
+    paginator = Paginator(clearance_requests, 10)  # Show 10 requests per page
+    page = request.GET.get('page')
+    try:
+        requests_page = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        requests_page = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        requests_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'core/bh_owner_clearance_history.html', {
+        'clearance_requests': requests_page,
+        'dormitory_owner': staff,
+        'school_years': get_school_years(),
+        'semesters': SEMESTER_CHOICES,
+        'current_filters': {
+            'status': status,
+            'school_year': school_year,
+            'semester': semester,
+            'search': search_query
+        },
+    })
+
+@login_required
+def bh_owner_generate_reports(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    if request.method == 'POST':
+        report_type = request.POST.get('report_type')
+        school_year = request.POST.get('school_year')
+        semester = request.POST.get('semester')
+
+        # Get students based on filters
+        students = Student.objects.filter(dormitory_owner=staff)
+
+        if report_type == 'boarders':
+            # Generate boarders report
+            from core.pdf_utils import generate_boarders_pdf
+            pdf = generate_boarders_pdf(students, request, school_year, semester)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="boarders_report_{school_year}_{semester}.pdf"'
+            return response
+
+        elif report_type == 'clearance':
+            # Generate clearance report
+            clearance_requests = ClearanceRequest.objects.filter(
+                student__dormitory_owner=staff,
+                office__name="DORMITORY",
+                school_year=school_year,
+                semester=semester
+            )
+            from core.pdf_utils import generate_clearance_report_pdf
+            pdf = generate_clearance_report_pdf(clearance_requests, request, school_year, semester)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="clearance_report_{school_year}_{semester}.pdf"'
+            return response
+
+    return render(request, 'core/bh_owner_generate_reports.html', {
+        'dormitory_owner': staff,
+        'school_years': get_school_years(),
+        'semesters': SEMESTER_CHOICES,
+    })
+
+@login_required
+def bh_owner_export_data(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    if request.method == 'POST':
+        export_type = request.POST.get('export_type')
+        school_year = request.POST.get('school_year')
+        semester = request.POST.get('semester')
+
+        if export_type == 'boarders':
+            # Export boarders to Excel
+            students = Student.objects.filter(dormitory_owner=staff)
+
+            # Create workbook and add worksheet
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Boarders"
+
+            # Add headers
+            headers = ['Student ID', 'Name', 'Course', 'Year Level', 'Contact Number']
+            for col_num, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_num)
+                cell.value = header
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="E0EBF5", end_color="E0EBF5", fill_type="solid")
+
+            # Add data
+            for row_num, student in enumerate(students, 2):
+                ws.cell(row=row_num, column=1).value = student.student_id
+                ws.cell(row=row_num, column=2).value = student.get_full_name()
+                ws.cell(row=row_num, column=3).value = student.course.name if student.course else ''
+                ws.cell(row=row_num, column=4).value = student.year_level
+                ws.cell(row=row_num, column=5).value = student.contact_number
+
+            # Create response
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = 'attachment; filename=boarders.xlsx'
+            wb.save(response)
+            return response
+
+        elif export_type == 'clearance':
+            # Export clearance data to Excel
+            clearance_requests = ClearanceRequest.objects.filter(
+                student__dormitory_owner=staff,
+                office__name="DORMITORY",
+                school_year=school_year,
+                semester=semester
+            )
+
+            # Create workbook and add worksheet
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Clearance Requests"
+
+            # Add headers
+            headers = ['Student ID', 'Name', 'Request Date', 'Status', 'Reviewed Date', 'Reviewed By', 'Notes']
+            for col_num, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_num)
+                cell.value = header
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="E0EBF5", end_color="E0EBF5", fill_type="solid")
+
+            # Add data
+            for row_num, req in enumerate(clearance_requests, 2):
+                ws.cell(row=row_num, column=1).value = req.student.student_id
+                ws.cell(row=row_num, column=2).value = req.student.get_full_name()
+                ws.cell(row=row_num, column=3).value = req.request_date.strftime('%Y-%m-%d %H:%M') if req.request_date else ''
+                ws.cell(row=row_num, column=4).value = req.status.upper()
+                ws.cell(row=row_num, column=5).value = req.reviewed_date.strftime('%Y-%m-%d %H:%M') if req.reviewed_date else ''
+                ws.cell(row=row_num, column=6).value = req.reviewed_by.get_full_name() if req.reviewed_by else ''
+                ws.cell(row=row_num, column=7).value = req.notes or ''
+
+            # Create response
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = f'attachment; filename=clearance_requests_{school_year}_{semester}.xlsx'
+            wb.save(response)
+            return response
+
+    return render(request, 'core/bh_owner_export_data.html', {
+        'dormitory_owner': staff,
+        'school_years': get_school_years(),
+        'semesters': SEMESTER_CHOICES,
+    })
+
+@login_required
+def update_clearance_request(request, request_id):
+    """Handle updating clearance request status (approve/deny) for dormitory owners"""
+    # Log the request for debugging
+    logger.info(f"update_clearance_request called for request_id={request_id} by user_id={request.user.id}")
+    logger.info(f"POST data: {request.POST}")
+
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('home')
+
+    staff = request.user.staff
+    clearance_request = get_object_or_404(ClearanceRequest, id=request_id)
+
+    # Log the clearance request details
+    logger.info(f"Found clearance request: {clearance_request.id} for student {clearance_request.student.id}")
+
+    # Check if this request belongs to a student assigned to this dormitory owner
+    if clearance_request.student.dormitory_owner != staff:
+        messages.error(request, "You don't have permission to update this clearance request.")
+        return redirect('bh_owner_dashboard')
+
+    # Check if the request is for the DORMITORY office
+    if clearance_request.office.name != "DORMITORY":
+        messages.error(request, "You can only update dormitory clearance requests.")
+        return redirect('bh_owner_dashboard')
+
+    # Check if request is still pending
+    if clearance_request.status != 'pending':
+        messages.warning(request, f'This request has already been {clearance_request.status}.')
+        return redirect('bh_owner_pending_requests')
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        logger.info(f"Processing POST request with status={status}")
+
+        if status not in ['approved', 'denied']:
+            messages.error(request, "Invalid status.")
+            return redirect('bh_owner_pending_requests')
+
+        try:
+            # Update the clearance request
+            clearance_request.status = status
+            clearance_request.reviewed_by = staff
+            clearance_request.reviewed_date = timezone.now()
+
+            # If denied, add the reason
+            if status == 'denied':
+                remarks = request.POST.get('remarks')
+                if not remarks:
+                    messages.error(request, "You must provide a reason for denial.")
+                    return redirect('bh_owner_pending_requests')
+                clearance_request.notes = remarks
+            else:
+                # Clear notes on approval
+                clearance_request.notes = None
+
+            clearance_request.save()
+            logger.info(f"Clearance request {clearance_request.id} updated to status={status}")
+
+            # Update the parent clearance
+            clearance = Clearance.objects.get(
+                student=clearance_request.student,
+                school_year=clearance_request.school_year,
+                semester=clearance_request.semester
+            )
+            clearance.check_clearance()
+
+            # Show success message
+            student_name = clearance_request.student.get_full_name()
+            if status == 'approved':
+                messages.success(request, f"Successfully approved clearance for {student_name}")
+            else:
+                messages.success(request, f"Clearance for {student_name} has been denied")
+
+            # Determine where to redirect based on the referrer
+            referer = request.META.get('HTTP_REFERER', '')
+            if 'dashboard' in referer:
+                logger.info(f"Redirecting to dashboard")
+                return redirect('bh_owner_dashboard')
+            else:
+                logger.info(f"Redirecting to pending requests")
+                return redirect('bh_owner_pending_requests')
+
+        except Exception as e:
+            logger.error(f"Error updating clearance request: {str(e)}", exc_info=True)
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('bh_owner_pending_requests')
+
+    # If not POST, redirect to pending requests
+    return redirect('bh_owner_pending_requests')
+
+@login_required
+def bh_owner_profile(request):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+
+    staff = request.user.staff
+    user = request.user
+
+    if request.method == 'POST':
+        # Update profile information
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.email = request.POST.get('email')
+        user.save()
+
+        # Update password if provided
+        new_password = request.POST.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Your profile has been updated. Please log in with your new password.")
+            return redirect('login')
+
+        messages.success(request, "Your profile has been updated successfully.")
+        return redirect('bh_owner_profile')
+
+    return render(request, 'core/bh_owner_profile.html', {
+        'dormitory_owner': staff,
+        'user': user,
     })
 
 @login_required
@@ -699,15 +1308,30 @@ def approve_clearance_request(request, request_id):
         # Log the request for debugging
         logger.info(f"Approve request received for request_id={request_id} by staff={staff.id}")
 
-        # Check if staff has permission for this office
-        if staff.office != clearance_request.office:
-            messages.error(request, f"No permission for {clearance_request.office.name}")
-            return redirect('staff_pending_requests')
+        # Determine if user is a dormitory owner or regular staff
+        is_dormitory_owner = staff.is_dormitory_owner
+        redirect_url = 'bh_owner_pending_requests' if is_dormitory_owner else 'staff_pending_requests'
+
+        # Check permissions based on user type
+        if is_dormitory_owner:
+            # For dormitory owners, check if this is their student and a dormitory request
+            if clearance_request.student.dormitory_owner != staff:
+                messages.error(request, "You don't have permission to update this clearance request.")
+                return redirect(redirect_url)
+
+            if clearance_request.office.name != "DORMITORY":
+                messages.error(request, "You can only update dormitory clearance requests.")
+                return redirect(redirect_url)
+        else:
+            # For regular staff, check if they belong to the right office
+            if staff.office != clearance_request.office:
+                messages.error(request, f"No permission for {clearance_request.office.name}")
+                return redirect(redirect_url)
 
         # Check if request is still pending
         if clearance_request.status != 'pending':
             messages.warning(request, f'Request already processed (current status: {clearance_request.status})')
-            return redirect('staff_pending_requests')
+            return redirect(redirect_url)
 
         # Process the approval
         try:
@@ -729,13 +1353,19 @@ def approve_clearance_request(request, request_id):
             logger.info(f"Successfully approved request_id={request_id}")
 
             # Show success message and redirect
-            messages.success(request, f'Successfully approved clearance for {clearance_request.student.user.get_full_name()}')
-            return redirect('staff_pending_requests')
+            student_name = clearance_request.student.get_full_name()
+            messages.success(request, f'Successfully approved clearance for {student_name}')
+
+            # Determine where to redirect based on the referrer
+            referer = request.META.get('HTTP_REFERER', '')
+            if is_dormitory_owner and 'dashboard' in referer:
+                return redirect('bh_owner_dashboard')
+            return redirect(redirect_url)
 
         except Exception as inner_e:
             logger.error(f"Error in approval process: {str(inner_e)}")
             messages.error(request, f'Error processing approval: {str(inner_e)}')
-            return redirect('staff_pending_requests')
+            return redirect(redirect_url)
 
     except Staff.DoesNotExist:
         logger.error(f"Staff access required for user_id={request.user.id}")
@@ -758,22 +1388,37 @@ def deny_clearance_request(request, request_id):
         # Log the request for debugging
         logger.info(f"Deny request received for request_id={request_id} by staff={staff.id}")
 
-        # Check if staff has permission for this office
-        if staff.office != clearance_request.office:
-            messages.error(request, f"No permission for {clearance_request.office.name}")
-            return redirect('staff_pending_requests')
+        # Determine if user is a dormitory owner or regular staff
+        is_dormitory_owner = staff.is_dormitory_owner
+        redirect_url = 'bh_owner_pending_requests' if is_dormitory_owner else 'staff_pending_requests'
+
+        # Check permissions based on user type
+        if is_dormitory_owner:
+            # For dormitory owners, check if this is their student and a dormitory request
+            if clearance_request.student.dormitory_owner != staff:
+                messages.error(request, "You don't have permission to update this clearance request.")
+                return redirect(redirect_url)
+
+            if clearance_request.office.name != "DORMITORY":
+                messages.error(request, "You can only update dormitory clearance requests.")
+                return redirect(redirect_url)
+        else:
+            # For regular staff, check if they belong to the right office
+            if staff.office != clearance_request.office:
+                messages.error(request, f"No permission for {clearance_request.office.name}")
+                return redirect(redirect_url)
 
         # Check if request is still pending
         if clearance_request.status != 'pending':
             messages.warning(request, f'Request already processed (current status: {clearance_request.status})')
-            return redirect('staff_pending_requests')
+            return redirect(redirect_url)
 
         # Get the reason from form data
         reason = request.POST.get('remarks', '')
 
         if not reason:
             messages.error(request, 'Reason required for denial')
-            return redirect('staff_pending_requests')
+            return redirect(redirect_url)
 
         try:
             # Update the clearance request status
@@ -794,13 +1439,19 @@ def deny_clearance_request(request, request_id):
             logger.info(f"Successfully denied request_id={request_id}")
 
             # Show success message and redirect
-            messages.success(request, f'Successfully denied clearance for {clearance_request.student.user.get_full_name()}')
-            return redirect('staff_pending_requests')
+            student_name = clearance_request.student.get_full_name()
+            messages.success(request, f'Successfully denied clearance for {student_name}')
+
+            # Determine where to redirect based on the referrer
+            referer = request.META.get('HTTP_REFERER', '')
+            if is_dormitory_owner and 'dashboard' in referer:
+                return redirect('bh_owner_dashboard')
+            return redirect(redirect_url)
 
         except Exception as inner_e:
             logger.error(f"Error in denial process: {str(inner_e)}")
             messages.error(request, f'Error processing denial: {str(inner_e)}')
-            return redirect('staff_pending_requests')
+            return redirect(redirect_url)
 
     except Staff.DoesNotExist:
         logger.error(f"Staff access required for user_id={request.user.id}")

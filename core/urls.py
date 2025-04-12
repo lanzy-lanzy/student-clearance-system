@@ -36,6 +36,18 @@ urlpatterns = [
     path('deny-clearance-request/<int:request_id>/', views.deny_clearance_request, name='deny_clearance_request'),
     path('clearance-request/<int:request_id>/update/', views.update_clearance_request, name='update_clearance_request'),
 
+    # Dormitory Owner Routes
+    path('dormitory-owner/dashboard/', views.bh_owner_dashboard, name='bh_owner_dashboard'),
+    path('dormitory-owner/boarders/', views.bh_owner_boarders, name='bh_owner_boarders'),
+    path('dormitory-owner/add-student/', views.bh_owner_add_student, name='bh_owner_add_student'),
+    path('dormitory-owner/pending-requests/', views.bh_owner_pending_requests, name='bh_owner_pending_requests'),
+    path('dormitory-owner/approved-requests/', views.bh_owner_approved_requests, name='bh_owner_approved_requests'),
+    path('dormitory-owner/denied-requests/', views.bh_owner_denied_requests, name='bh_owner_denied_requests'),
+    path('dormitory-owner/clearance-history/', views.bh_owner_clearance_history, name='bh_owner_clearance_history'),
+    path('dormitory-owner/generate-reports/', views.bh_owner_generate_reports, name='bh_owner_generate_reports'),
+    path('dormitory-owner/export-data/', views.bh_owner_export_data, name='bh_owner_export_data'),
+    path('dormitory-owner/profile/', views.bh_owner_profile, name='bh_owner_profile'),
+
     # Admin Routes
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/admin/users/', views.admin_users, name='admin_users'),
