@@ -66,6 +66,7 @@ urlpatterns = [
     path('dashboard/admin/pending-approvals/', views.admin_pending_approvals, name='admin_pending_approvals'),
     path('dashboard/admin/program-chairs/', views.admin_program_chairs, name='admin_program_chairs'),
     path('dashboard/admin/dormitory-owners/', views.admin_dormitory_owners, name='admin_dormitory_owners'),
+    path('dashboard/admin/reports/', views.admin_reports, name='admin_reports'),
     path('dashboard/create/users/', views.create_user, name='create_user'),
     path('profile/admin/', views.admin_profile, name='admin_profile'),
 

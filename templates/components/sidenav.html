@@ -1,8 +1,8 @@
 {% with request.resolver_match.url_name as url_name %}
-<nav x-data="{ isOpen: true }" 
-     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col" 
+<nav x-data="{ isOpen: true }"
+     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col"
      :class="isOpen ? 'w-64' : 'w-20'">
-    
+
     <div class="p-6 flex-grow" :class="isOpen ? '' : 'px-4'">
         <!-- Header -->
         <div class="flex items-center gap-3 mb-8" :class="isOpen ? '' : 'justify-center'">
@@ -16,7 +16,7 @@
             {% if user.is_staff %}
             <!-- Admin Navigation -->
             <li>
-                <a href="{% url 'admin_dashboard' %}" 
+                <a href="{% url 'admin_dashboard' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_dashboard' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Dashboard' }"
@@ -30,7 +30,7 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'admin_offices' %}" 
+                <a href="{% url 'admin_offices' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_offices' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Offices' }"
@@ -44,7 +44,7 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'admin_clearances' %}" 
+                <a href="{% url 'admin_clearances' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_clearances' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Clearances' }"
@@ -58,7 +58,7 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'admin_deans' %}" 
+                <a href="{% url 'admin_deans' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_deans' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Manage Deans' }"
@@ -72,7 +72,7 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'admin_courses' %}" 
+                <a href="{% url 'admin_courses' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_courses' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Courses' }"
@@ -86,7 +86,7 @@
                 </a>
             </li>
             <li>
-                            <a href="{% url 'admin_pending_approvals' %}" 
+                            <a href="{% url 'admin_pending_approvals' %}"
                                class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_pending_approvals' %}bg-emerald-800 text-white{% endif %}"
                                :class="isOpen ? '' : 'justify-center px-2'"
                                x-data="{ tooltip: 'Pending Approvals' }"
@@ -99,12 +99,26 @@
                                 <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Pending Approvals</div>
                             </a>
                         </li>
-            
-            
+            <li>
+                <a href="{% url 'admin_reports' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'admin_reports' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'Reports' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm4-1a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-2-2a1 1 0 10-2 0v5a1 1 0 102 0V9z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Reports</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Reports</div>
+                </a>
+            </li>
+
+
             {% elif user.staff %}
             <!-- Staff Navigation -->
             <li>
-                <a href="{% url 'office_dashboard' %}" 
+                <a href="{% url 'office_dashboard' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'office_dashboard' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Dashboard' }"
@@ -118,7 +132,7 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'office_settings' %}" 
+                <a href="{% url 'office_settings' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if url_name == 'office_settings' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Settings' }"
@@ -137,7 +151,7 @@
 
     <!-- Toggle Button -->
     <div class="p-6" :class="isOpen ? '' : 'px-4'">
-        <button @click="isOpen = !isOpen" 
+        <button @click="isOpen = !isOpen"
                 class="w-full flex items-center justify-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="isOpen ? 'transform rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
@@ -148,7 +162,7 @@
 
     <!-- Logout Section -->
     <div class="p-6 border-t border-emerald-800" :class="isOpen ? '' : 'px-4'">
-        <a href="{% url 'logout' %}" 
+        <a href="{% url 'logout' %}"
            class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
            :class="isOpen ? '' : 'justify-center px-2'"
            x-data="{ tooltip: 'Logout' }"
