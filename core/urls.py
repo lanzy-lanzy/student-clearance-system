@@ -96,6 +96,7 @@ urlpatterns = [
     path('dashboard/admin/dormitory-owners/assign-students/', views.assign_students, name='assign_students'),
     path('api/program-chair/<int:program_chair_id>/', views.get_program_chair_details, name='get_program_chair_details'),
     path('api/courses/<int:dean_id>/', views.get_courses, name='get_courses'),  # Remove any login_required decorator
+    path('api/courses/details/<int:course_id>/', views.get_course_details, name='get_course_details'),
 
     # Program Chair API Routes
     path('api/student/<int:student_id>/clearance-details/', api_views.student_clearance_details, name='api_student_clearance_details'),

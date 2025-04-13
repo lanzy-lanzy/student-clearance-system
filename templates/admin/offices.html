@@ -60,7 +60,7 @@
                 <h2 class="text-2xl font-bold text-gray-900">Office Management</h2>
                 <p class="text-sm text-gray-600 mt-1">Manage and monitor all office operations</p>
             </div>
-            <button onclick="openAddOfficeModal()" 
+            <button onclick="openAddOfficeModal()"
                     class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 transform hover:scale-105 shadow-md">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -143,14 +143,14 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm font-medium space-x-3">
-                            <button onclick="editOffice('{{ office.id }}')" 
+                            <button onclick="editOffice('{{ office.id }}')"
                                     class="text-indigo-600 hover:text-indigo-900 inline-flex items-center hover:bg-indigo-50 px-3 py-1 rounded-md transition-colors duration-200">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
                                 Edit
                             </button>
-                            <button onclick="deleteOffice('{{ office.id }}', '{{ office.name|escapejs }}')" 
+                            <button onclick="deleteOffice('{{ office.id }}', '{{ office.name|escapejs }}')"
                                     class="text-red-600 hover:text-red-900 inline-flex items-center hover:bg-red-50 px-3 py-1 rounded-md transition-colors duration-200">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -181,14 +181,15 @@
             {% csrf_token %}
             <input type="hidden" name="action" id="formAction" value="add">
             <input type="hidden" name="office_id" id="officeId" value="">
-            
+
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" for="name">Office Name</label>
-                    <input type="text" id="name" name="name" required
+                    <input type="text" id="name" name="name" required oninput="this.value = this.value.toUpperCase()"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
+                    <p class="text-xs text-gray-500 mt-1">Office names are automatically converted to uppercase</p>
                 </div>
-                
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" for="description">Description</label>
                     <textarea id="description" name="description" rows="3"
@@ -207,7 +208,7 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200">
                 </div>
             </div>
-            
+
             <div class="flex justify-end space-x-3 mt-6">
                 <button type="button" onclick="closeOfficeModal()"
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
@@ -256,7 +257,7 @@ function editOffice(officeId) {
     document.getElementById('submitButtonText').textContent = 'Save Changes';
     document.getElementById('formAction').value = 'edit';
     document.getElementById('officeId').value = officeId;
-    
+
     fetch(`/api/offices/detail/${officeId}/`, {
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -272,7 +273,7 @@ function editOffice(officeId) {
     })
     .then(data => {
         // Populate only the fields that exist
-        document.getElementById('name').value = data.name || '';
+        document.getElementById('name').value = (data.name || '').toUpperCase();
         if (document.getElementById('description')) {
             document.getElementById('description').value = data.description || '';
         }
@@ -282,7 +283,7 @@ function editOffice(officeId) {
         if (document.getElementById('contact_number') && data.contact_number !== undefined) {
             document.getElementById('contact_number').value = data.contact_number;
         }
-        
+
         document.getElementById('officeModal').classList.remove('hidden');
     })
     .catch(error => {

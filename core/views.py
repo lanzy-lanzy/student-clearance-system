@@ -317,6 +317,16 @@ def create_clearance_requests(request):
                 Q(office_type='OTHER') | Q(office_type=student.course.dean.name)
             )
 
+            # Debug logging
+            logger.info(f"Initial required offices: {[o.name for o in required_offices]}")
+            logger.info(f"Student is_boarder: {student.is_boarder}")
+            logger.info(f"Student dormitory_owner: {student.dormitory_owner}")
+
+            # Exclude DORMITORY office for non-boarders
+            if not student.is_boarder:
+                required_offices = required_offices.exclude(name="DORMITORY")
+                logger.info(f"Excluded DORMITORY office for non-boarder student {student.id}")
+
             # Collect all program chair offices to exclude
             program_chair_offices_to_exclude = []
             student_program_chair_office = None
@@ -2641,9 +2651,12 @@ def admin_program_chairs(request):
                     )
 
                     # Create staff entry if it doesn't exist
-                    office, _ = Office.objects.get_or_create(name="Program Chair", defaults={"description": "Handles final clearance approval"})
-                    if not hasattr(user, 'staff'):
-                        Staff.objects.create(user=user, office=office, role="Program Chair")
+                    try:
+                        office = Office.objects.get(name="PROGRAM CHAIR")
+                        if not hasattr(user, 'staff'):
+                            Staff.objects.create(user=user, office=office, role="Program Chair")
+                    except Office.DoesNotExist:
+                        messages.warning(request, 'PROGRAM CHAIR office not found. Please run migrations to create it.')
 
                     messages.success(request, f'Program Chair {program_chair.get_full_name()} added successfully.')
 
@@ -3099,20 +3112,34 @@ def admin_staff(request):
 def admin_staff_add(request):
     if request.method == 'POST':
         try:
+            # Check if this will be a dormitory owner
+            is_dormitory_owner = request.POST.get('is_dormitory_owner') == 'on'
+
+            # Apply formatting to names
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            role = request.POST.get('role')
+
+            # Apply capfirst to names (capitalize first letter, lowercase rest)
+            first_name = first_name[0].upper() + first_name[1:].lower() if first_name else ''
+            last_name = last_name[0].upper() + last_name[1:].lower() if last_name else ''
+            # Apply uppercase to role
+            role = role.upper() if role else ''
+
             user = User.objects.create_user(
                 username=request.POST.get('username'),
                 email=request.POST.get('email'),
                 password=request.POST.get('password'),
-                first_name=request.POST.get('first_name'),
-                last_name=request.POST.get('last_name'),
+                first_name=first_name,
+                last_name=last_name,
                 is_active=True
             )
 
             Staff.objects.create(
                 user=user,
                 office_id=request.POST.get('office'),
-                role=request.POST.get('role'),
-                is_dormitory_owner=request.POST.get('is_dormitory_owner') == 'on'
+                role=role,  # Use the uppercase role
+                is_dormitory_owner=is_dormitory_owner
             )
             messages.success(request, 'Staff member added successfully.')
             return redirect('admin_staff')
@@ -3130,18 +3157,34 @@ def admin_staff_edit(request, staff_id):
 
     if request.method == 'POST':
         try:
+            # Check if this will be a dormitory owner
+            is_dormitory_owner = request.POST.get('is_dormitory_owner') == 'on'
+
+            # Staff is being updated to be a dormitory owner
+
+            # Apply formatting to names
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            role = request.POST.get('role')
+
+            # Apply capfirst to names (capitalize first letter, lowercase rest)
+            first_name = first_name[0].upper() + first_name[1:].lower() if first_name else ''
+            last_name = last_name[0].upper() + last_name[1:].lower() if last_name else ''
+            # Apply uppercase to role
+            role = role.upper() if role else ''
+
             staff.user.username = request.POST.get('username')
             staff.user.email = request.POST.get('email')
-            staff.user.first_name = request.POST.get('first_name')
-            staff.user.last_name = request.POST.get('last_name')
+            staff.user.first_name = first_name
+            staff.user.last_name = last_name
             if request.POST.get('password'):
                 staff.user.set_password(request.POST.get('password'))
             staff.user.is_active = request.POST.get('is_active') == 'on'
             staff.user.save()
 
             staff.office_id = request.POST.get('office')
-            staff.role = request.POST.get('role')
-            staff.is_dormitory_owner = request.POST.get('is_dormitory_owner') == 'on'
+            staff.role = role
+            staff.is_dormitory_owner = is_dormitory_owner
             if 'profile_picture' in request.FILES:
                 staff.profile_picture = request.FILES['profile_picture']
             staff.save()
@@ -3164,14 +3207,14 @@ def admin_deans(request):
         try:
             if action == 'add':
                 dean = Dean.objects.create(
-                    name=request.POST.get('name'),
+                    name=request.POST.get('name').upper(),
                     description=request.POST.get('description'),
                     logo=request.FILES.get('logo') if 'logo' in request.FILES else None
                 )
                 messages.success(request, f'Dean {dean.name} added.')
             elif action == 'edit':
                 dean = Dean.objects.get(id=request.POST.get('dean_id'))
-                dean.name = request.POST.get('name')
+                dean.name = request.POST.get('name').upper()
                 dean.description = request.POST.get('description')
                 if 'logo' in request.FILES:
                     if dean.logo:
@@ -3339,7 +3382,7 @@ def admin_offices(request):
         try:
             if action == 'add':
                 office = Office.objects.create(
-                    name=request.POST.get('name'),
+                    name=request.POST.get('name').upper(),
                     description=request.POST.get('description'),
                     location=request.POST.get('location'),
                     contact_number=request.POST.get('contact_number'),
@@ -3348,7 +3391,7 @@ def admin_offices(request):
                 messages.success(request, f'Office "{office.name}" added.')
             elif action == 'edit':
                 office = Office.objects.get(id=request.POST.get('office_id'))
-                office.name = request.POST.get('name')
+                office.name = request.POST.get('name').upper()
                 office.description = request.POST.get('description')
                 office.location = request.POST.get('location')
                 office.contact_number = request.POST.get('contact_number')
@@ -3398,9 +3441,13 @@ def admin_courses(request):
         try:
             if action == 'add':
                 dean = get_object_or_404(Dean, id=request.POST.get('dean'))
+                # Apply formatting to course code (uppercase)
+                code = request.POST.get('code').upper()
+                name = request.POST.get('name')
+
                 Course.objects.create(
-                    code=request.POST.get('code'),
-                    name=request.POST.get('name'),
+                    code=code,
+                    name=name,
                     dean=dean
                 )
                 messages.success(request, f'Course {request.POST.get("code")} added.')
@@ -3422,8 +3469,13 @@ def admin_courses(request):
                     messages.success(request, f'Course {course.code} deleted.')
             elif action == 'edit':
                 course = get_object_or_404(Course, id=request.POST.get('course_id'))
-                course.code = request.POST.get('code')
-                course.name = request.POST.get('name')
+
+                # Apply formatting to course code (uppercase)
+                code = request.POST.get('code').upper()
+                name = request.POST.get('name')
+
+                course.code = code
+                course.name = name
                 course.dean = get_object_or_404(Dean, id=request.POST.get('dean'))
                 course.save()
                 messages.success(request, f'Course {course.code} updated.')
@@ -4444,6 +4496,21 @@ def get_approval_stats(request):
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import Course, Dean  # Import your models
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def get_course_details(request, course_id):
+    try:
+        course = Course.objects.select_related('dean').get(id=course_id)
+        return JsonResponse({
+            'id': course.id,
+            'code': course.code,
+            'name': course.name,
+            'dean_id': course.dean.id,
+            'dean_name': course.dean.name
+        })
+    except Course.DoesNotExist:
+        return JsonResponse({'error': 'Course not found'}, status=404)
 
 @require_http_methods(["GET"])
 def get_courses_by_dean(request, dean_name):

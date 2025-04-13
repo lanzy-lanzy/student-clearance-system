@@ -19,8 +19,13 @@ class Command(BaseCommand):
         designation = kwargs.get('designation')
         username = email.split('@')[0]  # Use part of the email as the username
 
-        # Check if a Program Chair office exists
-        office, created = Office.objects.get_or_create(name="Program Chair", defaults={"description": "Handles final clearance approval"})
+        # Get the PROGRAM CHAIR office
+        try:
+            office = Office.objects.get(name="PROGRAM CHAIR")
+        except Office.DoesNotExist:
+            # If it doesn't exist, use the data migration or management command to create it
+            self.stdout.write(self.style.WARNING("PROGRAM CHAIR office not found. Please run migrations or the ensure_required_offices command."))
+            return
 
         # Get dean if specified
         dean = None

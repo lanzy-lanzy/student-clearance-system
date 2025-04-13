@@ -95,8 +95,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                    <input type="text" name="name" id="name" required
+                    <input type="text" name="name" id="name" required oninput="this.value = this.value.toUpperCase()"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-colors">
+                    <p class="text-xs text-gray-500 mt-1">Dean names will be in uppercase</p>
                 </div>
                 <div>
                     <label for="logo" class="block text-sm font-medium text-gray-700">Logo (Optional)</label>
@@ -165,7 +166,7 @@
                                 </div>
                                 {% endif %}
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ dean.name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ dean.name|upper }}</div>
                                 </div>
                             </div>
                         </td>
@@ -302,8 +303,9 @@
                 <div class="space-y-4">
                     <div>
                         <label for="editName" class="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" name="name" id="editName" required
+                        <input type="text" name="name" id="editName" required oninput="this.value = this.value.toUpperCase()"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <p class="text-xs text-gray-500 mt-1">Dean names will be in uppercase</p>
                     </div>
                     <div>
                         <label for="editLogo" class="block text-sm font-medium text-gray-700">New Logo (Optional)</label>
@@ -355,7 +357,7 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('editDeanId').value = deanId;
-                document.getElementById('editName').value = data.name;
+                document.getElementById('editName').value = data.name.toUpperCase();
                 document.getElementById('editDescription').value = data.description || '';
                 document.getElementById('editDeanModal').classList.remove('hidden');
             });
