@@ -27,3 +27,18 @@ def rejectattr(value, attr_value_pair):
         return [item for item in value if not getattr(item, attr, None) == val]
     except (ValueError, AttributeError):
         return value
+
+@register.filter(name='get_item')
+def get_item(dictionary, key):
+    """
+    Get an item from a dictionary using a key.
+    Usage: {{ dictionary|get_item:key }}
+    """
+    if dictionary is None:
+        return None
+
+    # Convert key to the appropriate type if it's a string representation of an integer
+    if isinstance(key, str) and key.isdigit():
+        key = int(key)
+
+    return dictionary.get(key)

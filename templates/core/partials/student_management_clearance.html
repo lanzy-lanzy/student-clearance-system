@@ -1,0 +1,200 @@
+{% load myfilters %}
+<!-- Clearance Status View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Clearance Status</h2>
+        </div>
+    </div>
+
+    <!-- Clearance Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Cleared Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Cleared Students</h3>
+                    <span class="text-2xl font-bold text-white">{{ cleared_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ cleared_percentage }}% of total students</span>
+                    <a href="{% url 'staff_dashboard' %}?view=student_management_clearance&status=cleared"
+                       class="text-sm text-green-600 font-medium hover:text-green-800">
+                        View All
+                    </a>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ cleared_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Pending Students</h3>
+                    <span class="text-2xl font-bold text-white">{{ pending_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ pending_percentage }}% of total students</span>
+                    <a href="{% url 'staff_dashboard' %}?view=student_management_clearance&status=pending"
+                       class="text-sm text-yellow-600 font-medium hover:text-yellow-800">
+                        View All
+                    </a>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: {{ pending_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Total Students</h3>
+                    <span class="text-2xl font-bold text-white">{{ total_students }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Current School Year</span>
+                    <a href="{% url 'staff_dashboard' %}?view=student_management_all"
+                       class="text-sm text-blue-600 font-medium hover:text-blue-800">
+                        View All
+                    </a>
+                </div>
+                <div class="mt-2 flex justify-between">
+                    <span class="text-xs text-gray-500">{{ selected_school_year }}</span>
+                    <span class="text-xs text-gray-500">{{ selected_semester }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clearance Status by Course -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Clearance Status by Course</h3>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for course in courses %}
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-medium text-gray-800">{{ course.code }} - {{ course.name }}</h4>
+                        <span class="text-sm text-gray-500">{{ course_stats|get_item:course.id|get_item:'total' }} students</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                        <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ course_stats|get_item:course.id|get_item:'cleared_percentage' }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>{{ course_stats|get_item:course.id|get_item:'cleared' }} Cleared ({{ course_stats|get_item:course.id|get_item:'cleared_percentage' }}%)</span>
+                        <span>{{ course_stats|get_item:course.id|get_item:'pending' }} Pending</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Students List for Selected Status -->
+    {% if request.GET.status %}
+    <div class="bg-white rounded-lg shadow overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    {% if request.GET.status == 'cleared' %}
+                        Cleared Students
+                    {% else %}
+                        Pending Clearance Students
+                    {% endif %}
+                </h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">Total: {{ status_students.count }}</span>
+                    <a href="{% url 'staff_dashboard' %}?view=student_management_clearance" class="text-sm text-emerald-600 hover:text-emerald-800">
+                        Clear Selection
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if status_students %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in status_students %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 font-medium">
+                                        {{ student.user.get_full_name|slice:":2"|upper }}
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ student.user.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ student.student_id }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 text-sm text-emerald-700 bg-emerald-100 rounded-full">
+                                {{ student.course.code }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.year_level }}{% if student.year_level == 1 %}st{% elif student.year_level == 2 %}nd{% elif student.year_level == 3 %}rd{% else %}th{% endif %} Year
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.contact_number|default:"Not provided" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_view&student_id={{ student.id }}"
+                               class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No Students Found</h3>
+            <p class="mt-1 text-sm text-gray-500">There are no students with this clearance status.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>

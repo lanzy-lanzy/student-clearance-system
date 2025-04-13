@@ -1,0 +1,226 @@
+<!-- Search Students View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Search Students</h2>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="bg-gray-50 p-6 rounded-lg mb-6">
+        <form method="get" action="{% url 'staff_dashboard' %}" class="space-y-4">
+            <input type="hidden" name="view" value="student_management_search">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="search_term" class="block text-sm font-medium text-gray-700 mb-1">Search Term</label>
+                    <input type="text" id="search_term" name="search_term" value="{{ request.GET.search_term|default:'' }}"
+                           placeholder="Name, ID, Email, or Contact Number"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                           autofocus>
+                </div>
+
+                <div>
+                    <label for="search_type" class="block text-sm font-medium text-gray-700 mb-1">Search By</label>
+                    <select id="search_type" name="search_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="all" {% if request.GET.search_type == 'all' %}selected{% endif %}>All Fields</option>
+                        <option value="name" {% if request.GET.search_type == 'name' %}selected{% endif %}>Name</option>
+                        <option value="id" {% if request.GET.search_type == 'id' %}selected{% endif %}>Student ID</option>
+                        <option value="email" {% if request.GET.search_type == 'email' %}selected{% endif %}>Email</option>
+                        <option value="contact" {% if request.GET.search_type == 'contact' %}selected{% endif %}>Contact Number</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                    <select id="year_level" name="year_level"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Any Year Level</option>
+                        <option value="1" {% if request.GET.year_level == '1' %}selected{% endif %}>1st Year</option>
+                        <option value="2" {% if request.GET.year_level == '2' %}selected{% endif %}>2nd Year</option>
+                        <option value="3" {% if request.GET.year_level == '3' %}selected{% endif %}>3rd Year</option>
+                        <option value="4" {% if request.GET.year_level == '4' %}selected{% endif %}>4th Year</option>
+                        <option value="5" {% if request.GET.year_level == '5' %}selected{% endif %}>5th Year</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                    <select id="course" name="course"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Any Course</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"i" %}selected{% endif %}>
+                            {{ course.code }} - {{ course.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="clearance_status" class="block text-sm font-medium text-gray-700 mb-1">Clearance Status</label>
+                    <select id="clearance_status" name="clearance_status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Any Status</option>
+                        <option value="cleared" {% if request.GET.clearance_status == 'cleared' %}selected{% endif %}>Cleared</option>
+                        <option value="pending" {% if request.GET.clearance_status == 'pending' %}selected{% endif %}>Pending</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="page_size" class="block text-sm font-medium text-gray-700 mb-1">Results per page</label>
+                    <select id="page_size" name="page_size"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        {% for size in page_sizes %}
+                        <option value="{{ size }}" {% if request.GET.page_size == size|stringformat:"i" %}selected{% endif %}>
+                            {{ size }}
+                        </option>
+                        {% empty %}
+                        <option value="10" {% if not request.GET.page_size or request.GET.page_size == '10' %}selected{% endif %}>10</option>
+                        <option value="25" {% if request.GET.page_size == '25' %}selected{% endif %}>25</option>
+                        <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50</option>
+                        <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search
+                </button>
+                {% if request.GET.search_term or request.GET.year_level or request.GET.course or request.GET.clearance_status or request.GET.page %}
+                <a href="{% url 'staff_dashboard' %}?view=student_management_search" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Search Results -->
+    {% if search_performed %}
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-800">Search Results</h3>
+                <span class="text-sm text-gray-500">Found {{ search_results.paginator.count }} student(s)</span>
+            </div>
+        </div>
+
+        {% if search_results %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in search_results %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 font-medium">
+                                        {{ student.user.get_full_name|slice:":2"|upper }}
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ student.user.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ student.student_id }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 text-sm text-emerald-700 bg-emerald-100 rounded-full">
+                                {{ student.course.code }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.year_level }}{% if student.year_level == 1 %}st{% elif student.year_level == 2 %}nd{% elif student.year_level == 3 %}rd{% else %}th{% endif %} Year
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.contact_number|default:"Not provided" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% with clearance=student.clearances.all|first %}
+                            {% if clearance and clearance.is_cleared %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Cleared
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Pending
+                            </span>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_view&student_id={{ student.id }}"
+                               class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if search_results.has_other_pages %}
+            {% with page_obj=search_results %}
+                {% include 'components/pagination.html' %}
+            {% endwith %}
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No Students Found</h3>
+            <p class="mt-1 text-sm text-gray-500">No students match your search criteria. Try adjusting your filters.</p>
+            <div class="mt-6">
+                <a href="{% url 'staff_dashboard' %}?view=student_management_search" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear Search
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+        <svg class="mx-auto h-12 w-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">Search for Students</h3>
+        <p class="mt-1 text-sm text-gray-500">Use the search form above to find students by name, ID, email, or contact number.</p>
+    </div>
+    {% endif %}
+</div>

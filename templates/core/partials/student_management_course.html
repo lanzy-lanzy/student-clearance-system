@@ -1,0 +1,165 @@
+{% load myfilters %}
+<!-- Filter by Course View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Filter by Course</h2>
+        </div>
+    </div>
+
+    <!-- Course Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for course in courses %}
+        <a href="{% url 'staff_dashboard' %}?view=student_management_course&course_id={{ course.id }}"
+           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.course_id == course.id|stringformat:'i' %}ring-2 ring-emerald-500{% endif %}">
+            <div class="p-5 bg-gradient-to-r from-emerald-500 to-emerald-600 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">{{ course.code }}</h3>
+                    <span class="text-2xl font-bold text-white">{{ course_counts|get_item:course.id|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <p class="text-gray-700 font-medium mb-2">{{ course.name }}</p>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">Students</span>
+                    <span class="text-emerald-600 font-medium">View All</span>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full text-center py-12 bg-white rounded-lg shadow">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No Courses Found</h3>
+            <p class="mt-1 text-sm text-gray-500">There are no courses in the system yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Students List for Selected Course -->
+    {% if request.GET.course_id %}
+    <div class="bg-white rounded-lg shadow overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    {{ selected_course.code }} - {{ selected_course.name }} Students
+                </h3>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-500">Total: {{ course_students.count }}</span>
+
+                    <form method="get" action="{% url 'staff_dashboard' %}" class="flex items-center gap-2">
+                        <input type="hidden" name="view" value="student_management_course">
+                        <input type="hidden" name="course_id" value="{{ request.GET.course_id }}">
+
+                        <label for="page_size" class="text-sm text-gray-500">Show:</label>
+                        <select id="page_size" name="page_size" onchange="this.form.submit()"
+                                class="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            {% for size in page_sizes %}
+                            <option value="{{ size }}" {% if request.GET.page_size == size|stringformat:"i" %}selected{% endif %}>
+                                {{ size }}
+                            </option>
+                            {% empty %}
+                            <option value="10" {% if not request.GET.page_size or request.GET.page_size == '10' %}selected{% endif %}>10</option>
+                            <option value="25" {% if request.GET.page_size == '25' %}selected{% endif %}>25</option>
+                            <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50</option>
+                            <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+
+                    <a href="{% url 'staff_dashboard' %}?view=student_management_course" class="text-sm text-emerald-600 hover:text-emerald-800">
+                        Clear Selection
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if course_students %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in course_students %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 font-medium">
+                                        {{ student.user.get_full_name|slice:":2"|upper }}
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ student.user.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ student.student_id }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.year_level }}{% if student.year_level == 1 %}st{% elif student.year_level == 2 %}nd{% elif student.year_level == 3 %}rd{% else %}th{% endif %} Year
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.contact_number|default:"Not provided" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if student.has_complete_clearance %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Cleared
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_view&student_id={{ student.id }}"
+                               class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if course_students.has_other_pages %}
+            {% with page_obj=course_students %}
+                {% include 'components/pagination.html' %}
+            {% endwith %}
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No Students Found</h3>
+            <p class="mt-1 text-sm text-gray-500">There are no students in this course.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>

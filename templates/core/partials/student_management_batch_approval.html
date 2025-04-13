@@ -1,0 +1,603 @@
+{% load myfilters %}
+<!-- Batch Approval View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Batch Approval</h2>
+        </div>
+    </div>
+
+    <!-- Batch Approval Form -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Select Students for Batch Approval</h3>
+        </div>
+        <div class="p-6">
+            <form method="post" action="{% url 'staff_dashboard' %}" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="batch_approve">
+
+                <!-- Filter Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                        <select id="year_level" name="year_level" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">All Year Levels</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                            <option value="5">5th Year</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        <select id="course" name="course" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.code }} - {{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="pending">Pending Clearance</option>
+                            <option value="all">All Students</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div>
+                        <label for="page_size" class="block text-sm font-medium text-gray-700 mb-1">Results per page</label>
+                        <select id="page_size" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" onchange="changePageSize()">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="button" onclick="applyFilters()" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Student Selection Table -->
+                <div class="mt-6 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <input id="select-all" type="checkbox" class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" onchange="toggleAllCheckboxes()">
+                                        <label for="select-all" class="ml-2">Select All</label>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="students-table-body">
+                            <!-- Student rows will be populated here via JavaScript -->
+                            <tr class="text-center">
+                                <td colspan="6" class="px-6 py-4 text-sm text-gray-500">
+                                    Apply filters to see students
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination Controls -->
+                    <div id="pagination-controls" class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 hidden">
+                        <div class="flex flex-1 justify-between sm:hidden">
+                            <button id="mobile-prev-page" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Previous
+                            </button>
+                            <button id="mobile-next-page" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Next
+                            </button>
+                        </div>
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Showing <span id="pagination-start">1</span> to <span id="pagination-end">10</span> of <span id="pagination-total">0</span> results
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                    <button id="prev-page" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <span class="sr-only">Previous</span>
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <div id="page-numbers" class="flex">
+                                        <!-- Page numbers will be inserted here -->
+                                    </div>
+                                    <button id="next-page" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <span class="sr-only">Next</span>
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approval Options -->
+                <div class="bg-gray-50 p-4 rounded-lg mt-6">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Approval Options</h4>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="approval_type" class="block text-sm font-medium text-gray-700 mb-1">Approval Type</label>
+                            <select id="approval_type" name="approval_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="full">Full Clearance</option>
+                                <option value="partial">Partial Clearance</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                            <select id="semester" name="semester" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                {% for semester_choice in semester_choices %}
+                                <option value="{{ semester_choice.0 }}" {% if semester_choice.0 == current_semester %}selected{% endif %}>{{ semester_choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Comments (Optional)</label>
+                        <textarea id="comments" name="comments" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Add any comments about this batch approval..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="previewApproval()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Preview
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                        Approve Selected
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Batch Approvals -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Recent Batch Approvals</h3>
+        </div>
+
+        {% if recent_batch_approvals %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved By</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for approval in recent_batch_approvals %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ approval.date|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ approval.approved_by.get_full_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ approval.student_count }} students
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                {{ approval.type|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="viewBatchDetails('{{ approval.id }}')" class="text-blue-600 hover:text-blue-900">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No recent batch approvals</h3>
+            <p class="mt-1 text-sm text-gray-500">There have been no batch approvals recently.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+            <h3 class="text-lg font-semibold text-gray-800">Batch Approval Preview</h3>
+            <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Approval Type</h4>
+                    <p id="previewApprovalType" class="text-gray-900 font-medium"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Semester</h4>
+                    <p id="previewSemester" class="text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Comments</h4>
+                    <p id="previewComments" class="text-gray-900"></p>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Selected Students (<span id="previewStudentCount">0</span>)</h4>
+                    <div class="mt-2 max-h-96 overflow-y-auto border border-gray-200 rounded-md">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="previewStudentsTable">
+                                <!-- Selected students will be displayed here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closePreviewModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmBatchApproval()" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    Confirm Approval
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Batch Approval Functionality -->
+<script>
+    // Global variables for pagination
+    let currentPage = 1;
+    let totalPages = 1;
+    let pageSize = 10;
+    let currentFilters = {};
+
+    function applyFilters() {
+        const yearLevel = document.getElementById('year_level').value;
+        const course = document.getElementById('course').value;
+        const status = document.getElementById('status').value;
+        const schoolYear = '{{ selected_school_year }}';
+        const semester = '{{ selected_semester }}';
+
+        // Store current filters
+        currentFilters = {
+            yearLevel,
+            course,
+            status,
+            schoolYear,
+            semester
+        };
+
+        // Reset to first page when applying new filters
+        currentPage = 1;
+
+        // Fetch filtered students from the server using AJAX
+        fetchStudents();
+    }
+
+    function fetchStudents() {
+        const { yearLevel, course, status, schoolYear, semester } = currentFilters;
+
+        // Show loading state
+        const tableBody = document.getElementById('students-table-body');
+        tableBody.innerHTML = `
+            <tr class="text-center">
+                <td colspan="6" class="px-6 py-4 text-sm text-gray-500">
+                    <svg class="animate-spin h-5 w-5 mx-auto text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-2">Loading students...</p>
+                </td>
+            </tr>
+        `;
+
+        // Fetch data with pagination
+        fetch(`{% url 'staff_dashboard' %}?view=student_management_batch_approval&ajax=1&year_level=${yearLevel}&course=${course}&status=${status}&school_year=${schoolYear}&semester=${semester}&page=${currentPage}&page_size=${pageSize}`)
+            .then(response => response.json())
+            .then(data => {
+                populateStudentsTable(data.students);
+                updatePagination(data.pagination);
+            })
+            .catch(error => {
+                console.error('Error fetching students:', error);
+                tableBody.innerHTML = `
+                    <tr class="text-center">
+                        <td colspan="6" class="px-6 py-4 text-sm text-red-500">
+                            Error loading students. Please try again.
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function populateStudentsTable(students) {
+        const tableBody = document.getElementById('students-table-body');
+        tableBody.innerHTML = '';
+
+        if (students.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                    No students found matching the criteria
+                </td>
+            `;
+            tableBody.appendChild(row);
+            return;
+        }
+
+        students.forEach(student => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors duration-150';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="checkbox" name="selected_students[]" value="${student.id}" class="student-checkbox h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <span class="text-emerald-600 font-medium">
+                                ${student.full_name.substring(0, 2).toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">
+                                ${student.full_name}
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                ${student.email}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${student.student_id}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${student.course_code}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${student.year_level}${getYearSuffix(student.year_level)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${student.is_cleared ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                        ${student.is_cleared ? 'Cleared' : 'Pending'}
+                    </span>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    function getYearSuffix(year) {
+        if (year === 1) return 'st';
+        if (year === 2) return 'nd';
+        if (year === 3) return 'rd';
+        return 'th';
+    }
+
+    function updatePagination(pagination) {
+        // Update global variables
+        currentPage = pagination.current_page;
+        totalPages = pagination.total_pages;
+
+        // Show/hide pagination controls
+        const paginationControls = document.getElementById('pagination-controls');
+        if (pagination.total_count > 0) {
+            paginationControls.classList.remove('hidden');
+        } else {
+            paginationControls.classList.add('hidden');
+            return;
+        }
+
+        // Update pagination text
+        document.getElementById('pagination-total').textContent = pagination.total_count;
+        const start = ((pagination.current_page - 1) * pagination.page_size) + 1;
+        const end = Math.min(start + pagination.page_size - 1, pagination.total_count);
+        document.getElementById('pagination-start').textContent = start;
+        document.getElementById('pagination-end').textContent = end;
+
+        // Update pagination buttons
+        const prevButton = document.getElementById('prev-page');
+        const nextButton = document.getElementById('next-page');
+        const mobilePrevButton = document.getElementById('mobile-prev-page');
+        const mobileNextButton = document.getElementById('mobile-next-page');
+
+        prevButton.disabled = !pagination.has_previous;
+        nextButton.disabled = !pagination.has_next;
+        mobilePrevButton.disabled = !pagination.has_previous;
+        mobileNextButton.disabled = !pagination.has_next;
+
+        // Generate page numbers
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+
+        // Determine which page numbers to show
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+
+        // Adjust if we're near the end
+        if (endPage - startPage < 4 && startPage > 1) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        // Add page number buttons
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.className = i === currentPage
+                ? 'relative z-10 inline-flex items-center bg-emerald-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600'
+                : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0';
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => goToPage(i));
+            pageNumbers.appendChild(pageButton);
+        }
+
+        // Add event listeners to navigation buttons
+        prevButton.onclick = () => goToPage(currentPage - 1);
+        nextButton.onclick = () => goToPage(currentPage + 1);
+        mobilePrevButton.onclick = () => goToPage(currentPage - 1);
+        mobileNextButton.onclick = () => goToPage(currentPage + 1);
+    }
+
+    function goToPage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        fetchStudents();
+    }
+
+    function changePageSize() {
+        pageSize = parseInt(document.getElementById('page_size').value);
+        currentPage = 1; // Reset to first page when changing page size
+        fetchStudents();
+    }
+
+    function toggleAllCheckboxes() {
+        const selectAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.student-checkbox');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+    }
+
+    function previewApproval() {
+        const selectedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
+
+        if (selectedCheckboxes.length === 0) {
+            alert('Please select at least one student to approve.');
+            return;
+        }
+
+        // Get form values for preview
+        const approvalType = document.getElementById('approval_type');
+        const semester = document.getElementById('semester');
+        const comments = document.getElementById('comments');
+
+        // Update preview modal content
+        document.getElementById('previewApprovalType').textContent = approvalType.options[approvalType.selectedIndex].text;
+        document.getElementById('previewSemester').textContent = semester.options[semester.selectedIndex].text;
+        document.getElementById('previewComments').textContent = comments.value || 'No comments provided';
+        document.getElementById('previewStudentCount').textContent = selectedCheckboxes.length;
+
+        // Populate selected students table
+        const previewTable = document.getElementById('previewStudentsTable');
+        previewTable.innerHTML = '';
+
+        // Get the selected student IDs
+        const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+
+        // Fetch student details from the server
+        fetch(`{% url 'staff_dashboard' %}?view=student_management_batch_approval&ajax=2&selected_students=${selectedIds.join(',')}`)
+            .then(response => response.json())
+            .then(data => {
+                populatePreviewTable(data.students);
+                // Show the preview modal
+                document.getElementById('previewModal').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching student details:', error);
+                alert('Error fetching student details. Please try again.');
+            });
+
+    }
+
+    function populatePreviewTable(students) {
+        const previewTable = document.getElementById('previewStudentsTable');
+        previewTable.innerHTML = '';
+
+        students.forEach(student => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+            row.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${student.full_name}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${student.student_id}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${student.course_code}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${student.year_level}${getYearSuffix(student.year_level)}</td>
+            `;
+            previewTable.appendChild(row);
+        });
+    }
+
+    function closePreviewModal() {
+        document.getElementById('previewModal').classList.add('hidden');
+    }
+
+    function confirmBatchApproval() {
+        // In a real implementation, you would submit the form
+        document.querySelector('form').submit();
+    }
+
+    function viewBatchDetails(batchId) {
+        // In a real implementation, you would fetch batch details from the server
+        alert(`Viewing details for batch ${batchId}`);
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default filters
+        currentFilters = {
+            yearLevel: document.getElementById('year_level').value,
+            course: document.getElementById('course').value,
+            status: document.getElementById('status').value,
+            schoolYear: '{{ selected_school_year }}',
+            semester: '{{ selected_semester }}'
+        };
+
+        // Set default page size
+        pageSize = parseInt(document.getElementById('page_size').value);
+
+        // Auto-load students if there are default filters applied
+        if (currentFilters.yearLevel || currentFilters.course || currentFilters.status !== 'pending') {
+            fetchStudents();
+        }
+    });
+</script>

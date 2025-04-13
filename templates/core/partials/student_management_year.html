@@ -1,0 +1,223 @@
+{% load myfilters %}
+<!-- Filter by Year Level View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Filter by Year Level</h2>
+        </div>
+    </div>
+
+    <!-- Year Level Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- 1st Year -->
+        <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=1"
+           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '1' %}ring-2 ring-emerald-500{% endif %}">
+            <div class="p-5 bg-emerald-50 border-b border-emerald-100">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-emerald-800">1st Year</h3>
+                    <span class="text-2xl font-bold text-emerald-600">{{ year_counts.1|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">Students</span>
+                    <span class="text-emerald-600 font-medium">View All</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- 2nd Year -->
+        <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=2"
+           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '2' %}ring-2 ring-emerald-500{% endif %}">
+            <div class="p-5 bg-blue-50 border-b border-blue-100">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-blue-800">2nd Year</h3>
+                    <span class="text-2xl font-bold text-blue-600">{{ year_counts.2|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">Students</span>
+                    <span class="text-blue-600 font-medium">View All</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- 3rd Year -->
+        <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=3"
+           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '3' %}ring-2 ring-emerald-500{% endif %}">
+            <div class="p-5 bg-purple-50 border-b border-purple-100">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-purple-800">3rd Year</h3>
+                    <span class="text-2xl font-bold text-purple-600">{{ year_counts.3|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">Students</span>
+                    <span class="text-purple-600 font-medium">View All</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- 4th Year -->
+        <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=4"
+           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '4' %}ring-2 ring-emerald-500{% endif %}">
+            <div class="p-5 bg-amber-50 border-b border-amber-100">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-amber-800">4th Year</h3>
+                    <span class="text-2xl font-bold text-amber-600">{{ year_counts.4|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">Students</span>
+                    <span class="text-amber-600 font-medium">View All</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- 5th Year -->
+        <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=5"
+           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '5' %}ring-2 ring-emerald-500{% endif %}">
+            <div class="p-5 bg-red-50 border-b border-red-100">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-red-800">5th Year</h3>
+                    <span class="text-2xl font-bold text-red-600">{{ year_counts.5|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500">Students</span>
+                    <span class="text-red-600 font-medium">View All</span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Students List for Selected Year Level -->
+    {% if request.GET.year_level %}
+    <div class="bg-white rounded-lg shadow overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    {{ request.GET.year_level }}{% if request.GET.year_level == '1' %}st{% elif request.GET.year_level == '2' %}nd{% elif request.GET.year_level == '3' %}rd{% else %}th{% endif %} Year Students
+                </h3>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-500">Total: {{ year_students.count }}</span>
+
+                    <form method="get" action="{% url 'staff_dashboard' %}" class="flex items-center gap-2">
+                        <input type="hidden" name="view" value="student_management_year">
+                        <input type="hidden" name="year_level" value="{{ request.GET.year_level }}">
+
+                        <label for="page_size" class="text-sm text-gray-500">Show:</label>
+                        <select id="page_size" name="page_size" onchange="this.form.submit()"
+                                class="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            {% for size in page_sizes %}
+                            <option value="{{ size }}" {% if request.GET.page_size == size|stringformat:"i" %}selected{% endif %}>
+                                {{ size }}
+                            </option>
+                            {% empty %}
+                            <option value="10" {% if not request.GET.page_size or request.GET.page_size == '10' %}selected{% endif %}>10</option>
+                            <option value="25" {% if request.GET.page_size == '25' %}selected{% endif %}>25</option>
+                            <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50</option>
+                            <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+
+                    <a href="{% url 'staff_dashboard' %}?view=student_management_year" class="text-sm text-emerald-600 hover:text-emerald-800">
+                        Clear Selection
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if year_students %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in year_students %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 font-medium">
+                                        {{ student.user.get_full_name|slice:":2"|upper }}
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ student.user.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ student.student_id }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 text-sm text-emerald-700 bg-emerald-100 rounded-full">
+                                {{ student.course.code }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.contact_number|default:"Not provided" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if student.has_complete_clearance %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Cleared
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_view&student_id={{ student.id }}"
+                               class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if year_students.has_other_pages %}
+            {% with page_obj=year_students %}
+                {% include 'components/pagination.html' %}
+            {% endwith %}
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No Students Found</h3>
+            <p class="mt-1 text-sm text-gray-500">There are no students in this year level.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>

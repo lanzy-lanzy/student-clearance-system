@@ -1,0 +1,389 @@
+{% load myfilters %}
+<!-- Student Management Analytics View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Clearance Analytics</h2>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+        <form method="get" action="{% url 'staff_dashboard' %}" class="flex flex-wrap gap-4">
+            <input type="hidden" name="view" value="student_management_analytics">
+
+            <div class="flex-1 min-w-[200px]">
+                <label for="school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="school_year" name="school_year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    {% for year in available_years %}
+                        <option value="{{ year }}" {% if year == selected_school_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[200px]">
+                <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="semester" name="semester" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    {% for semester_choice in semester_choices %}
+                    <option value="{{ semester_choice.0 }}" {% if semester_choice.0 == current_semester %}selected{% endif %}>{{ semester_choice.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[200px]">
+                <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                <select id="course" name="course" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:'i' %}selected{% endif %}>{{ course.code }} - {{ course.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-end">
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Total Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Total Students</h3>
+                    <span class="text-2xl font-bold text-white">{{ total_students|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ school_year }}</span>
+                    <span class="text-sm text-gray-500">{{ current_semester_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cleared Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Cleared</h3>
+                    <span class="text-2xl font-bold text-white">{{ cleared_count|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ cleared_percentage|default:"0" }}% of total</span>
+                    <span class="text-sm text-green-600 font-medium">
+                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Pending</h3>
+                    <span class="text-2xl font-bold text-white">{{ pending_count|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ pending_percentage|default:"0" }}% of total</span>
+                    <span class="text-sm text-yellow-600 font-medium">
+                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Time -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-purple-500 to-purple-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Avg. Processing</h3>
+                    <span class="text-2xl font-bold text-white">{{ avg_processing_days|default:"0" }} days</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">From request to approval</span>
+                    <span class="text-sm text-purple-600 font-medium">
+                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clearance Progress Chart -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Clearance Progress Over Time</h3>
+        </div>
+        <div class="p-6">
+            <div class="h-80">
+                <canvas id="clearanceProgressChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Comparison -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Clearance Status by Course</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="h-80">
+                    <canvas id="courseComparisonChart"></canvas>
+                </div>
+                <div class="overflow-y-auto max-h-80">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for course in courses %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ course.code }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ course_stats|get_item:course.id|get_item:'total'|default:"0" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ course_stats|get_item:course.id|get_item:'cleared'|default:"0" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ course_stats|get_item:course.id|get_item:'pending'|default:"0" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-emerald-600 h-2.5 rounded-full" style="width: {{ course_stats|get_item:course.id|get_item:'cleared_percentage'|default:"0" }}%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">{{ course_stats|get_item:course.id|get_item:'cleared_percentage'|default:"0" }}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Year Level Comparison -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Clearance Status by Year Level</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="h-80">
+                    <canvas id="yearLevelChart"></canvas>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    {% for year in year_levels %}
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium text-gray-800">{{ year }}{% if year == 1 %}st{% elif year == 2 %}nd{% elif year == 3 %}rd{% else %}th{% endif %} Year</h4>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">Total: {{ year_stats|get_item:year|get_item:'total'|default:"0" }}</span>
+                                <span class="text-sm text-green-600">Cleared: {{ year_stats|get_item:year|get_item:'cleared'|default:"0" }}</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                            <div class="bg-emerald-600 h-2.5 rounded-full" style="width: {{ year_stats|get_item:year|get_item:'cleared_percentage'|default:"0" }}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>0%</span>
+                            <span>{{ year_stats|get_item:year|get_item:'cleared_percentage'|default:"0" }}%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- JavaScript for Charts -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sample data for demonstration
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const currentMonth = new Date().getMonth();
+        const lastSixMonths = months.slice(Math.max(0, currentMonth - 5), currentMonth + 1);
+
+        // Clearance Progress Chart
+        const progressCtx = document.getElementById('clearanceProgressChart').getContext('2d');
+        new Chart(progressCtx, {
+            type: 'line',
+            data: {
+                labels: lastSixMonths,
+                datasets: [
+                    {
+                        label: 'Cleared Students',
+                        data: [12, 19, 25, 31, 42, 56],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Total Students',
+                        data: [30, 45, 55, 60, 70, 80],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Students'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Course Comparison Chart
+        const courseCtx = document.getElementById('courseComparisonChart').getContext('2d');
+        new Chart(courseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['BSCS', 'BSIT', 'BSECE', 'BSCE', 'BSA'],
+                datasets: [
+                    {
+                        label: 'Cleared',
+                        data: [42, 35, 28, 31, 22],
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    },
+                    {
+                        label: 'Pending',
+                        data: [18, 15, 12, 9, 8],
+                        backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Students'
+                        }
+                    },
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Course'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Year Level Chart
+        const yearCtx = document.getElementById('yearLevelChart').getContext('2d');
+        new Chart(yearCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>

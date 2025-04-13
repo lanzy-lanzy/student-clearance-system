@@ -627,6 +627,11 @@ def staff_dashboard(request):
     school_year = f"{current_year}-{current_year + 1}"
     semester = get_current_semester()
 
+    # Check if we're in a student management view
+    view = request.GET.get('view', '')
+    if 'student_management' in view:
+        return handle_student_management(request, staff, school_year, semester)
+
     # Get recent requests for this office
     recent_requests = ClearanceRequest.objects.filter(
         office=staff.office
@@ -649,14 +654,653 @@ def staff_dashboard(request):
         reviewed_date__date=today
     ).count()
 
+    # Get total processed count
+    total_processed = ClearanceRequest.objects.filter(
+        office=staff.office,
+        status__in=['approved', 'denied']
+    ).count()
+
     return render(request, 'core/staff_dashboard.html', {
         'recent_requests': recent_requests,
         'pending_requests_count': pending_requests_count,
         'approved_today_count': approved_today_count,
+        'total_processed': total_processed,
         'school_year': school_year,
         'current_semester': semester,
         'office': staff.office,
     })
+
+@login_required
+def handle_student_management(request, staff, default_school_year, default_semester):
+    view = request.GET.get('view', '')
+
+    # Get selected school year and semester from request or use defaults
+    selected_school_year = request.GET.get('school_year', default_school_year)
+    selected_semester = request.GET.get('semester', default_semester)
+
+    # Generate available years (current year and 4 years back)
+    current_year = timezone.now().year
+    available_years = [f"{year}-{year + 1}" for year in range(current_year - 4, current_year + 1)]
+
+    # Common data for all student management views
+    context = {
+        'school_year': default_school_year,
+        'current_semester': default_semester,
+        'selected_school_year': selected_school_year,
+        'selected_semester': selected_semester,
+        'available_years': available_years,
+        'office': staff.office,
+        'semester_choices': SEMESTER_CHOICES,
+    }
+
+    # Get all courses for filtering
+    courses = Course.objects.all().order_by('code')
+    context['courses'] = courses
+
+    # Handle specific student management views
+    if view == 'student_management_all':
+        # Get all students with pagination
+        students_list = Student.objects.select_related('user', 'course').all()
+
+        # Apply filters if provided
+        search_query = request.GET.get('search', '')
+        year_level = request.GET.get('year_level', '')
+        course_id = request.GET.get('course', '')
+        page_size = request.GET.get('page_size', 10)
+
+        if search_query:
+            students_list = students_list.filter(
+                Q(user__first_name__icontains=search_query) |
+                Q(user__last_name__icontains=search_query) |
+                Q(student_id__icontains=search_query) |
+                Q(contact_number__icontains=search_query)
+            )
+
+        if year_level:
+            students_list = students_list.filter(year_level=year_level)
+
+        if course_id:
+            students_list = students_list.filter(course_id=course_id)
+
+        # Paginate results
+        paginator = Paginator(students_list, int(page_size))
+        page = request.GET.get('page', 1)
+        students = paginator.get_page(page)
+
+        context['students'] = students
+        context['page_sizes'] = [10, 25, 50, 100]
+
+    elif view == 'student_management_search':
+        # Handle search functionality
+        search_term = request.GET.get('search_term', '')
+        search_type = request.GET.get('search_type', 'all')
+        year_level = request.GET.get('year_level', '')
+        course_id = request.GET.get('course', '')
+        clearance_status = request.GET.get('clearance_status', '')
+        page_size = request.GET.get('page_size', 10)
+
+        # Check if search was performed
+        search_performed = bool(search_term or year_level or course_id or clearance_status)
+        context['search_performed'] = search_performed
+
+        if search_performed:
+            # Start with all students
+            search_results = Student.objects.select_related('user', 'course').all()
+
+            # Apply search term filter based on search type
+            if search_term:
+                if search_type == 'name':
+                    search_results = search_results.filter(
+                        Q(user__first_name__icontains=search_term) |
+                        Q(user__last_name__icontains=search_term)
+                    )
+                elif search_type == 'id':
+                    search_results = search_results.filter(student_id__icontains=search_term)
+                elif search_type == 'email':
+                    search_results = search_results.filter(user__email__icontains=search_term)
+                elif search_type == 'contact':
+                    search_results = search_results.filter(contact_number__icontains=search_term)
+                else:  # 'all'
+                    search_results = search_results.filter(
+                        Q(user__first_name__icontains=search_term) |
+                        Q(user__last_name__icontains=search_term) |
+                        Q(student_id__icontains=search_term) |
+                        Q(user__email__icontains=search_term) |
+                        Q(contact_number__icontains=search_term)
+                    )
+
+            # Apply additional filters
+            if year_level:
+                search_results = search_results.filter(year_level=year_level)
+
+            if course_id:
+                search_results = search_results.filter(course_id=course_id)
+
+            if clearance_status:
+                # Get current clearances for the current school year and semester
+                if clearance_status == 'cleared':
+                    search_results = search_results.filter(
+                        clearances__school_year=selected_school_year,
+                        clearances__semester=selected_semester,
+                        clearances__is_cleared=True
+                    ).distinct()
+                else:  # 'pending'
+                    search_results = search_results.filter(
+                        Q(clearances__school_year=selected_school_year, clearances__semester=selected_semester, clearances__is_cleared=False) |
+                        ~Q(clearances__school_year=selected_school_year, clearances__semester=selected_semester)
+                    ).distinct()
+
+            # Paginate results
+            paginator = Paginator(search_results, int(page_size))
+            page = request.GET.get('page', 1)
+            paginated_results = paginator.get_page(page)
+
+            context['search_results'] = paginated_results
+            context['page_sizes'] = [10, 25, 50, 100]
+
+    elif view == 'student_management_year':
+        # Get student counts by year level
+        year_counts = {}
+        for year in range(1, 6):  # 1st to 5th year
+            year_counts[year] = Student.objects.filter(year_level=year).count()
+
+        context['year_counts'] = year_counts
+
+        # If a year level is selected, get students for that year
+        selected_year = request.GET.get('year_level')
+        page_size = request.GET.get('page_size', 10)
+
+        if selected_year:
+            # Get all students for the selected year
+            year_students_list = Student.objects.filter(year_level=selected_year).select_related('user', 'course')
+
+            # Paginate results
+            paginator = Paginator(year_students_list, int(page_size))
+            page = request.GET.get('page', 1)
+            year_students = paginator.get_page(page)
+
+            context['year_students'] = year_students
+            context['page_sizes'] = [10, 25, 50, 100]
+
+    elif view == 'student_management_course':
+        # Get student counts by course
+        course_counts = {}
+        for course in courses:
+            course_counts[course.id] = Student.objects.filter(course=course).count()
+
+        context['course_counts'] = course_counts
+
+        # If a course is selected, get students for that course
+        selected_course_id = request.GET.get('course_id')
+        page_size = request.GET.get('page_size', 10)
+
+        if selected_course_id:
+            try:
+                selected_course = Course.objects.get(id=selected_course_id)
+                course_students_list = Student.objects.filter(course=selected_course).select_related('user')
+
+                # Paginate results
+                paginator = Paginator(course_students_list, int(page_size))
+                page = request.GET.get('page', 1)
+                course_students = paginator.get_page(page)
+
+                context['selected_course'] = selected_course
+                context['course_students'] = course_students
+                context['page_sizes'] = [10, 25, 50, 100]
+            except Course.DoesNotExist:
+                pass
+
+    elif view == 'student_management_clearance':
+        # Get clearance statistics
+        total_students = Student.objects.count()
+        cleared_students = Student.objects.filter(
+            clearances__school_year=selected_school_year,
+            clearances__semester=selected_semester,
+            clearances__is_cleared=True
+        ).distinct().count()
+
+        pending_students = total_students - cleared_students
+
+        # Calculate percentages
+        cleared_percentage = int((cleared_students / total_students) * 100) if total_students > 0 else 0
+        pending_percentage = 100 - cleared_percentage
+
+        # Get course-specific clearance stats
+        course_stats = {}
+        for course in courses:
+            course_total = Student.objects.filter(course=course).count()
+            course_cleared = Student.objects.filter(
+                course=course,
+                clearances__school_year=selected_school_year,
+                clearances__semester=selected_semester,
+                clearances__is_cleared=True
+            ).distinct().count()
+
+            course_pending = course_total - course_cleared
+            course_cleared_percentage = int((course_cleared / course_total) * 100) if course_total > 0 else 0
+
+            course_stats[course.id] = {
+                'total': course_total,
+                'cleared': course_cleared,
+                'pending': course_pending,
+                'cleared_percentage': course_cleared_percentage
+            }
+
+        context.update({
+            'total_students': total_students,
+            'cleared_count': cleared_students,
+            'pending_count': pending_students,
+            'cleared_percentage': cleared_percentage,
+            'pending_percentage': pending_percentage,
+            'course_stats': course_stats
+        })
+
+        # If a status is selected, get students with that status
+        status = request.GET.get('status')
+        page_size = request.GET.get('page_size', 10)
+
+        if status:
+            if status == 'cleared':
+                status_students_list = Student.objects.filter(
+                    clearances__school_year=selected_school_year,
+                    clearances__semester=selected_semester,
+                    clearances__is_cleared=True
+                ).select_related('user', 'course').distinct()
+            else:  # 'pending'
+                # Get students who either have a non-cleared clearance or no clearance for the current period
+                status_students_list = Student.objects.filter(
+                    Q(clearances__school_year=selected_school_year, clearances__semester=selected_semester, clearances__is_cleared=False) |
+                    ~Q(clearances__school_year=selected_school_year, clearances__semester=selected_semester)
+                ).select_related('user', 'course').distinct()
+
+            # Paginate results
+            paginator = Paginator(status_students_list, int(page_size))
+            page = request.GET.get('page', 1)
+            status_students = paginator.get_page(page)
+
+            context['status_students'] = status_students
+            context['page_sizes'] = [10, 25, 50, 100]
+
+    elif view == 'student_management_export':
+        # Get available school years for export
+        available_school_years = Clearance.objects.values_list('school_year', flat=True).distinct()
+        context['available_school_years'] = available_school_years
+
+        # Handle export form submissions
+        if request.method == 'POST':
+            action = request.POST.get('action')
+
+            if action == 'export_all_students':
+                # Logic for exporting all students
+                export_format = request.POST.get('export_format', 'csv')
+                # This would typically generate a file and return it as a response
+                messages.success(request, f'All students exported successfully as {export_format.upper()}')
+
+            elif action == 'export_filtered_students':
+                # Logic for exporting filtered students
+                year_level = request.POST.get('year_level')
+                course_id = request.POST.get('course')
+                clearance_status = request.POST.get('clearance_status')
+                export_format = request.POST.get('export_format', 'csv')
+
+                # This would typically generate a filtered file and return it
+                messages.success(request, f'Filtered students exported successfully as {export_format.upper()}')
+
+            elif action == 'export_clearance_report':
+                # Logic for exporting clearance report
+                report_school_year = request.POST.get('school_year', selected_school_year)
+                report_semester = request.POST.get('semester', selected_semester)
+                export_format = request.POST.get('export_format', 'pdf')
+
+                # This would typically generate a report and return it
+                messages.success(request, f'Clearance report for {report_school_year} {report_semester} exported successfully as {export_format.upper()}')
+
+        # Mock recent exports for demonstration
+        recent_exports = [
+            {
+                'filename': f'All_Students_{selected_school_year}_{selected_semester}.csv',
+                'type': 'csv',
+                'date_generated': timezone.now().strftime('%b %d, %Y'),
+                'size': '42 KB',
+                'download_url': '#'
+            },
+            {
+                'filename': f'Clearance_Report_{selected_school_year}_{selected_semester}.pdf',
+                'type': 'pdf',
+                'date_generated': timezone.now().strftime('%b %d, %Y'),
+                'size': '156 KB',
+                'download_url': '#'
+            }
+        ]
+
+        context['recent_exports'] = recent_exports
+
+    elif view == 'student_management_batch_approval':
+        # Handle AJAX requests for batch approval
+        if request.GET.get('ajax') == '1':
+            # Get filter parameters
+            year_level = request.GET.get('year_level', '')
+            course_id = request.GET.get('course', '')
+            status = request.GET.get('status', 'pending')
+            school_year = request.GET.get('school_year', selected_school_year)
+            semester = request.GET.get('semester', selected_semester)
+
+            # Get pagination parameters
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+
+            # Start with all students
+            students = Student.objects.select_related('user', 'course').all()
+
+            # Apply filters
+            if year_level:
+                students = students.filter(year_level=year_level)
+
+            if course_id:
+                students = students.filter(course_id=course_id)
+
+            # Filter by clearance status
+            if status == 'pending':
+                students = students.filter(
+                    Q(clearances__school_year=school_year, clearances__semester=semester, clearances__is_cleared=False) |
+                    ~Q(clearances__school_year=school_year, clearances__semester=semester)
+                ).distinct()
+            elif status == 'cleared':
+                students = students.filter(
+                    clearances__school_year=school_year,
+                    clearances__semester=semester,
+                    clearances__is_cleared=True
+                ).distinct()
+
+            # Get total count for pagination
+            total_count = students.count()
+            total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
+
+            # Apply pagination
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+            paginated_students = students[start_index:end_index]
+
+            # Prepare data for JSON response
+            students_data = []
+            for student in paginated_students:
+                clearance = Clearance.objects.filter(
+                    student=student,
+                    school_year=school_year,
+                    semester=semester
+                ).first()
+
+                students_data.append({
+                    'id': student.id,
+                    'full_name': student.user.get_full_name(),
+                    'email': student.user.email,
+                    'student_id': student.student_id,
+                    'course_code': student.course.code if student.course else '',
+                    'year_level': student.year_level,
+                    'is_cleared': clearance.is_cleared if clearance else False
+                })
+
+            # Return paginated data with pagination metadata
+            return JsonResponse({
+                'students': students_data,
+                'pagination': {
+                    'total_count': total_count,
+                    'total_pages': total_pages,
+                    'current_page': page,
+                    'page_size': page_size,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                }
+            })
+
+        # Handle AJAX requests for preview
+        elif request.GET.get('ajax') == '2':
+            selected_students = request.GET.get('selected_students', '')
+            if selected_students:
+                student_ids = [int(id) for id in selected_students.split(',')]
+                students = Student.objects.filter(id__in=student_ids).select_related('user', 'course')
+
+                # Prepare data for JSON response
+                students_data = [{
+                    'id': student.id,
+                    'full_name': student.user.get_full_name(),
+                    'student_id': student.student_id,
+                    'course_code': student.course.code if student.course else '',
+                    'year_level': student.year_level
+                } for student in students]
+
+                return JsonResponse({'students': students_data})
+            return JsonResponse({'students': []})
+
+        # Handle POST request for batch approval
+        if request.method == 'POST' and request.POST.get('action') == 'batch_approve':
+            selected_students = request.POST.getlist('selected_students[]')
+            approval_type = request.POST.get('approval_type')
+            semester = request.POST.get('semester')
+            comments = request.POST.get('comments')
+
+            if selected_students:
+                # Process batch approval
+                approved_count = 0
+                for student_id in selected_students:
+                    try:
+                        student = Student.objects.get(id=student_id)
+                        clearance, created = Clearance.objects.get_or_create(
+                            student=student,
+                            school_year=selected_school_year,
+                            semester=semester,
+                            defaults={'is_cleared': False}
+                        )
+
+                        if approval_type == 'full':
+                            # Full clearance - mark all requests as approved
+                            clearance_requests = ClearanceRequest.objects.filter(
+                                clearance=clearance,
+                                status='pending'
+                            )
+
+                            for req in clearance_requests:
+                                req.status = 'approved'
+                                req.reviewed_by = staff
+                                req.reviewed_date = timezone.now()
+                                req.notes = comments if comments else None
+                                req.save()
+
+                            clearance.is_cleared = True
+                            clearance.cleared_date = timezone.now()
+                            clearance.save()
+                            approved_count += 1
+
+                        elif approval_type == 'partial':
+                            # Partial clearance - mark only this office's requests as approved
+                            clearance_request = ClearanceRequest.objects.filter(
+                                clearance=clearance,
+                                office=staff.office,
+                                status='pending'
+                            ).first()
+
+                            if clearance_request:
+                                clearance_request.status = 'approved'
+                                clearance_request.reviewed_by = staff
+                                clearance_request.reviewed_date = timezone.now()
+                                clearance_request.notes = comments if comments else None
+                                clearance_request.save()
+
+                                # Check if all requests are now approved
+                                pending_requests = ClearanceRequest.objects.filter(
+                                    clearance=clearance,
+                                    status='pending'
+                                ).exists()
+
+                                if not pending_requests:
+                                    clearance.is_cleared = True
+                                    clearance.cleared_date = timezone.now()
+                                    clearance.save()
+
+                                approved_count += 1
+
+                    except Student.DoesNotExist:
+                        continue
+
+                # Create a record of this batch approval
+                batch_approval = {
+                    'id': str(timezone.now().timestamp()),
+                    'date': timezone.now(),
+                    'approved_by': staff.user.get_full_name(),
+                    'student_count': approved_count,
+                    'type': 'Full Clearance' if approval_type == 'full' else 'Partial Clearance',
+                    'semester': dict(SEMESTER_CHOICES).get(semester, semester),
+                    'school_year': selected_school_year,
+                    'comments': comments
+                }
+
+                # Store batch approval in session
+                batch_approvals = request.session.get('batch_approvals', [])
+                batch_approvals.insert(0, batch_approval)
+                request.session['batch_approvals'] = batch_approvals[:10]  # Keep only the 10 most recent
+
+                messages.success(request, f'Successfully approved {approved_count} students.')
+                return redirect('staff_dashboard')
+
+        # Get recent batch approvals from session
+        recent_batch_approvals = request.session.get('batch_approvals', [])
+        context['recent_batch_approvals'] = recent_batch_approvals
+
+    elif view == 'student_management_clearance_review':
+        # Get pending clearance requests for this staff member's office
+        pending_requests = ClearanceRequest.objects.filter(
+            office=staff.office,
+            status='pending'
+        ).select_related('student__user', 'student__course').order_by('-request_date')
+
+        # Get recent activities
+        recent_activities = ClearanceRequest.objects.filter(
+            office=staff.office,
+            status__in=['approved', 'denied']
+        ).select_related('student__user', 'reviewed_by').order_by('-reviewed_date')[:10]
+
+        context.update({
+            'pending_requests': pending_requests,
+            'recent_activities': recent_activities
+        })
+
+    elif view == 'student_management_analytics':
+        # Get clearance statistics
+        total_students = Student.objects.count()
+        cleared_students = Student.objects.filter(
+            clearances__school_year=selected_school_year,
+            clearances__semester=selected_semester,
+            clearances__is_cleared=True
+        ).distinct().count()
+
+        pending_students = total_students - cleared_students
+
+        # Calculate percentages
+        cleared_percentage = int((cleared_students / total_students) * 100) if total_students > 0 else 0
+        pending_percentage = 100 - cleared_percentage
+
+        # Get course-specific clearance stats
+        course_stats = {}
+        for course in courses:
+            course_total = Student.objects.filter(course=course).count()
+            course_cleared = Student.objects.filter(
+                course=course,
+                clearances__school_year=selected_school_year,
+                clearances__semester=selected_semester,
+                clearances__is_cleared=True
+            ).distinct().count()
+
+            course_pending = course_total - course_cleared
+            course_cleared_percentage = int((course_cleared / course_total) * 100) if course_total > 0 else 0
+
+            course_stats[course.id] = {
+                'total': course_total,
+                'cleared': course_cleared,
+                'pending': course_pending,
+                'cleared_percentage': course_cleared_percentage
+            }
+
+        # Get year level stats
+        year_stats = {}
+        year_levels = range(1, 6)  # 1st to 5th year
+        for year in year_levels:
+            year_total = Student.objects.filter(year_level=year).count()
+            year_cleared = Student.objects.filter(
+                year_level=year,
+                clearances__school_year=selected_school_year,
+                clearances__semester=selected_semester,
+                clearances__is_cleared=True
+            ).distinct().count()
+
+            year_pending = year_total - year_cleared
+            year_cleared_percentage = int((year_cleared / year_total) * 100) if year_total > 0 else 0
+
+            year_stats[year] = {
+                'total': year_total,
+                'cleared': year_cleared,
+                'pending': year_pending,
+                'cleared_percentage': year_cleared_percentage
+            }
+
+        # Calculate average processing time
+        avg_processing_days = 3  # Mock data - would be calculated from actual clearance requests
+
+        context.update({
+            'total_students': total_students,
+            'cleared_count': cleared_students,
+            'pending_count': pending_students,
+            'cleared_percentage': cleared_percentage,
+            'pending_percentage': pending_percentage,
+            'course_stats': course_stats,
+            'year_stats': year_stats,
+            'year_levels': year_levels,
+            'avg_processing_days': avg_processing_days,
+            'current_semester_display': dict(SEMESTER_CHOICES).get(selected_semester, selected_semester)
+        })
+
+    elif view == 'student_management_view':
+        # View a specific student's details
+        student_id = request.GET.get('student_id')
+        if student_id:
+            try:
+                student = Student.objects.select_related('user', 'course', 'program_chair', 'dormitory_owner').get(id=student_id)
+
+                # Get current clearance
+                current_clearance = Clearance.objects.filter(
+                    student=student,
+                    school_year=selected_school_year,
+                    semester=selected_semester
+                ).first()
+
+                # Get clearance requests if there's a current clearance
+                clearance_requests = []
+                clearance_percentage = 0
+                if current_clearance:
+                    clearance_requests = ClearanceRequest.objects.filter(
+                        clearance=current_clearance
+                    ).select_related('office', 'reviewed_by')
+
+                    # Calculate clearance percentage
+                    total_requests = clearance_requests.count()
+                    approved_requests = clearance_requests.filter(status='approved').count()
+                    clearance_percentage = int((approved_requests / total_requests) * 100) if total_requests > 0 else 0
+
+                # Get clearance history
+                clearance_history = Clearance.objects.filter(student=student).exclude(
+                    school_year=selected_school_year, semester=selected_semester
+                ).order_by('-school_year', '-semester')
+
+                context.update({
+                    'student': student,
+                    'current_clearance': current_clearance,
+                    'clearance_requests': clearance_requests,
+                    'clearance_percentage': clearance_percentage,
+                    'clearance_history': clearance_history
+                })
+            except Student.DoesNotExist:
+                messages.error(request, 'Student not found.')
+
+    return render(request, 'core/staff_student_management.html', context)
 
 # Dormitory Owner Views
 @login_required

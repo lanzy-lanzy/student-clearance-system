@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Student Management{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Custom styling for dropdown options */
+    select option {
+        color: #1F2937; /* text-gray-800 */
+        background-color: white;
+        padding: 8px 12px;
+    }
+
+    select option:hover, select option:focus {
+        background-color: #ECFDF5; /* bg-emerald-50 */
+    }
+
+    select option:checked {
+        background-color: #D1FAE5; /* bg-emerald-100 */
+    }
+</style>
+{% endblock %}
+
+{% block sidebar %}
+{% include "components/staff_sidenav.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl shadow-xl mb-8 p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between">
+                <div class="mb-4 sm:mb-0">
+                    <h1 class="text-3xl font-bold text-white mb-2">Student Management</h1>
+                    <p class="text-emerald-100">
+                        {% if request.GET.view == 'student_management_all' %}
+                            View and manage all students
+                        {% elif request.GET.view == 'student_management_search' %}
+                            Search for specific students
+                        {% elif request.GET.view == 'student_management_year' %}
+                            Filter students by year level
+                        {% elif request.GET.view == 'student_management_course' %}
+                            Filter students by course
+                        {% elif request.GET.view == 'student_management_clearance' %}
+                            View student clearance status
+                        {% elif request.GET.view == 'student_management_export' %}
+                            Export student data
+                        {% else %}
+                            Comprehensive student management tools
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <!-- Semester/Year Selector -->
+                    <form method="get" action="{% url 'staff_dashboard' %}" class="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2">
+                        <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+
+                        <!-- Preserve existing query parameters -->
+                        {% for key, value in request.GET.items %}
+                            {% if key != 'school_year' and key != 'semester' %}
+                                <input type="hidden" name="{{ key }}" value="{{ value }}">
+                            {% endif %}
+                        {% endfor %}
+
+                        <select name="school_year" onchange="this.form.submit()" class="bg-transparent text-white border-0 focus:ring-0 py-0 pl-0 pr-6 cursor-pointer [&>option]:text-gray-800 [&>option]:bg-white [&>option:hover]:bg-emerald-50 [&>option:checked]:bg-emerald-100">
+                            {% for year in available_years %}
+                                <option value="{{ year }}" {% if year == selected_school_year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <span class="text-white">|</span>
+
+                        <select name="semester" onchange="this.form.submit()" class="bg-transparent text-white border-0 focus:ring-0 py-0 pl-0 pr-6 cursor-pointer [&>option]:text-gray-800 [&>option]:bg-white [&>option:hover]:bg-emerald-50 [&>option:checked]:bg-emerald-100">
+                            {% for sem_value, sem_name in semester_choices %}
+                                <option value="{{ sem_value }}" {% if sem_value == selected_semester %}selected{% endif %}>{{ sem_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6">
+                {% if request.GET.view == 'student_management_all' %}
+                    {% include "core/partials/student_management_all.html" %}
+                {% elif request.GET.view == 'student_management_search' %}
+                    {% include "core/partials/student_management_search.html" %}
+                {% elif request.GET.view == 'student_management_year' %}
+                    {% include "core/partials/student_management_year.html" %}
+                {% elif request.GET.view == 'student_management_course' %}
+                    {% include "core/partials/student_management_course.html" %}
+                {% elif request.GET.view == 'student_management_clearance' %}
+                    {% include "core/partials/student_management_clearance.html" %}
+                {% elif request.GET.view == 'student_management_clearance_review' %}
+                    {% include "core/partials/student_management_clearance_review.html" %}
+                {% elif request.GET.view == 'student_management_batch_approval' %}
+                    {% include "core/partials/student_management_batch_approval.html" %}
+                {% elif request.GET.view == 'student_management_analytics' %}
+                    {% include "core/partials/student_management_analytics.html" %}
+                {% elif request.GET.view == 'student_management_export' %}
+                    {% include "core/partials/student_management_export.html" %}
+                {% else %}
+                    <!-- Default View -->
+                    <div class="text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">Select a Student Management Option</h3>
+                        <p class="mt-1 text-sm text-gray-500">Choose an option from the Student Management menu to get started.</p>
+
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Student Directory Section -->
+                            <div class="col-span-full mb-2">
+                                <h3 class="text-lg font-semibold text-emerald-700 border-b border-emerald-200 pb-2">Student Directory</h3>
+                            </div>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_all" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span class="font-medium">View All Students</span>
+                            </a>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_search" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <span class="font-medium">Search Students</span>
+                            </a>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_year" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                                <span class="font-medium">Filter by Year Level</span>
+                            </a>
+
+                            <!-- Clearance Management Section -->
+                            <div class="col-span-full mt-6 mb-2">
+                                <h3 class="text-lg font-semibold text-emerald-700 border-b border-emerald-200 pb-2">Clearance Management</h3>
+                            </div>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_clearance" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="font-medium">Clearance Status</span>
+                            </a>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_clearance_review" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                </svg>
+                                <span class="font-medium">Review Clearances</span>
+                            </a>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_batch_approval" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="font-medium">Batch Approval</span>
+                            </a>
+
+                            <!-- Reports & Analytics Section -->
+                            <div class="col-span-full mt-6 mb-2">
+                                <h3 class="text-lg font-semibold text-emerald-700 border-b border-emerald-200 pb-2">Reports & Analytics</h3>
+                            </div>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_analytics" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                <span class="font-medium">Analytics</span>
+                            </a>
+
+                            <a href="{% url 'staff_dashboard' %}?view=student_management_export" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-200 transition-colors">
+                                <svg class="w-8 h-8 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span class="font-medium">Export Data</span>
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Ensure dropdown text is visible when dropdown is open
+    document.addEventListener('DOMContentLoaded', function() {
+        const selects = document.querySelectorAll('select');
+
+        selects.forEach(select => {
+            // Add event listener for when dropdown is opened
+            select.addEventListener('mousedown', function() {
+                // Add a class to the body to indicate a dropdown is open
+                document.body.classList.add('dropdown-open');
+            });
+
+            // Add event listener for when dropdown is closed
+            select.addEventListener('change', function() {
+                document.body.classList.remove('dropdown-open');
+            });
+
+            // Add event listener for when focus is lost
+            select.addEventListener('blur', function() {
+                document.body.classList.remove('dropdown-open');
+            });
+        });
+    });
+</script>
+{% endblock %}

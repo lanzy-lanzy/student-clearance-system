@@ -1,0 +1,267 @@
+{% load myfilters %}
+<!-- Clearance Review View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Review Student Clearances</h2>
+        </div>
+    </div>
+
+    <!-- Pending Clearance Requests -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-800">Pending Clearance Requests</h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">Total: {{ pending_requests.count|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if pending_requests %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for request in pending_requests %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 font-medium">
+                                        {{ request.student.user.get_full_name|slice:":2"|upper }}
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ request.student.user.get_full_name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ request.student.user.email }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ request.student.student_id }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ request.student.course.code }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ request.student.year_level }}{% if request.student.year_level == 1 %}st{% elif request.student.year_level == 2 %}nd{% elif request.student.year_level == 3 %}rd{% else %}th{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ request.created_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button onclick="openReviewModal('{{ request.id }}')" class="text-emerald-600 hover:text-emerald-900">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                                <button onclick="approveRequest('{{ request.id }}')" class="text-green-600 hover:text-green-900">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                                <button onclick="denyRequest('{{ request.id }}')" class="text-red-600 hover:text-red-900">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No pending requests</h3>
+            <p class="mt-1 text-sm text-gray-500">There are no pending clearance requests at this time.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+        </div>
+
+        {% if recent_activities %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for activity in recent_activities %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ activity.student.user.get_full_name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ activity.student.student_id }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ activity.action }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ activity.timestamp|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if activity.status == 'approved' %}bg-green-100 text-green-800
+                                {% elif activity.status == 'denied' %}bg-red-100 text-red-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ activity.status|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ activity.processed_by.get_full_name }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
+            <p class="mt-1 text-sm text-gray-500">There has been no recent clearance activity.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-800">Review Clearance Request</h3>
+            <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Student</h4>
+                    <p id="modalStudentName" class="text-gray-900 font-medium"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Student ID</h4>
+                    <p id="modalStudentId" class="text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Course</h4>
+                    <p id="modalCourse" class="text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Request Details</h4>
+                    <p id="modalRequestDetails" class="text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Comments</h4>
+                    <textarea id="modalComments" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Add your comments here..."></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closeReviewModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="denyRequestWithComment()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    Deny
+                </button>
+                <button onclick="approveRequestWithComment()" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    Approve
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Modal Functionality -->
+<script>
+    let currentRequestId = null;
+
+    function openReviewModal(requestId) {
+        currentRequestId = requestId;
+
+        // In a real implementation, you would fetch the request details from the server
+        // For now, we'll just populate with placeholder data
+        document.getElementById('modalStudentName').textContent = "John Doe";
+        document.getElementById('modalStudentId').textContent = "2023-12345";
+        document.getElementById('modalCourse').textContent = "BS Computer Science";
+        document.getElementById('modalRequestDetails').textContent = "Requesting clearance for the current semester.";
+        document.getElementById('modalComments').value = "";
+
+        document.getElementById('reviewModal').classList.remove('hidden');
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').classList.add('hidden');
+        currentRequestId = null;
+    }
+
+    function approveRequest(requestId) {
+        // In a real implementation, you would send an AJAX request to approve
+        alert(`Approving request ${requestId}`);
+    }
+
+    function denyRequest(requestId) {
+        // In a real implementation, you would send an AJAX request to deny
+        alert(`Denying request ${requestId}`);
+    }
+
+    function approveRequestWithComment() {
+        const comment = document.getElementById('modalComments').value;
+        // In a real implementation, you would send an AJAX request with the comment
+        alert(`Approving request ${currentRequestId} with comment: ${comment}`);
+        closeReviewModal();
+    }
+
+    function denyRequestWithComment() {
+        const comment = document.getElementById('modalComments').value;
+        // In a real implementation, you would send an AJAX request with the comment
+        alert(`Denying request ${currentRequestId} with comment: ${comment}`);
+        closeReviewModal();
+    }
+</script>
