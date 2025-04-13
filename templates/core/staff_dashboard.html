@@ -7,6 +7,10 @@
 {% include "components/staff_sidenav.html" %}
 {% endblock %}
 
+{% block sidebar_mobile %}
+{% include "components/staff_sidenav_mobile.html" %}
+{% endblock %}
+
 {% block content %}
 <!-- Denial Modal -->
 <div id="denialModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -15,12 +19,12 @@
             <h3 class="text-lg font-medium text-gray-900">Enter Denial Reason</h3>
             <form id="denialForm" method="POST" class="mt-2">
                 {% csrf_token %}
-                <textarea name="reason" class="w-full p-2 border rounded-md" rows="4" required 
+                <textarea name="reason" class="w-full p-2 border rounded-md" rows="4" required
                           placeholder="Please provide a reason for denial"></textarea>
                 <div class="mt-4 flex justify-end gap-2">
-                    <button type="button" onclick="closeDenialModal()" 
+                    <button type="button" onclick="closeDenialModal()"
                             class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button>
-                    <button type="submit" 
+                    <button type="submit"
                             class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Deny Request</button>
                 </div>
             </form>
@@ -47,7 +51,7 @@
         </div>
 
         <!-- Statistics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
             <!-- Pending Requests -->
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <div class="flex items-center">
@@ -106,54 +110,56 @@
                     </div>
                     <span class="text-sm text-gray-500">Last updated: {% now "F j, Y H:i" %}</span>
                 </div>
-                
-                <div class="overflow-x-auto">
+
+                <div class="overflow-x-auto -mx-4 sm:mx-0">
                     {% if recent_requests %}
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead>
-                                <tr class="bg-gray-50">
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                        <div class="inline-block min-w-full align-middle">
+                            <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Course</th>
+                                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
                                 {% for request in recent_requests %}
                                 <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                    <td class="px-6 py-4">
+                                    <td class="px-3 sm:px-6 py-3 sm:py-4">
                                         <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                                                <span class="text-emerald-600 font-medium">
+                                            <div class="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                                <span class="text-emerald-600 font-medium text-xs sm:text-sm">
                                                     {{ request.student.user.get_full_name|slice:":2"|upper }}
                                                 </span>
                                             </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">
+                                            <div class="ml-3 sm:ml-4">
+                                                <div class="text-xs sm:text-sm font-medium text-gray-900">
                                                     {{ request.student.user.get_full_name }}
                                                 </div>
-                                                <div class="text-sm text-gray-500">
+                                                <div class="text-xs sm:text-sm text-gray-500">
                                                     {{ request.student.student_id }}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-3 py-1 text-sm text-emerald-700 bg-emerald-100 rounded-full">
+                                    <td class="px-3 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                                        <span class="px-2 sm:px-3 py-1 text-xs text-emerald-700 bg-emerald-100 rounded-full">
                                             {{ request.student.course.code }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
+                                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                                        <div class="text-xs sm:text-sm text-gray-900">
                                             {{ request.request_date|date:"M d, Y" }}
                                         </div>
                                         <div class="text-xs text-gray-500">
                                             {{ request.request_date|time:"g:i A" }}
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                                        <span class="px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                                             {% if request.status == 'approved' %}
                                                 bg-green-100 text-green-800
                                             {% elif request.status == 'pending' %}
@@ -164,8 +170,8 @@
                                             {{ request.status|title }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="{% url 'view_request' request.id %}" 
+                                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                                        <a href="{% url 'view_request' request.id %}"
                                            class="text-emerald-600 hover:text-emerald-900 flex items-center">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -176,8 +182,10 @@
                                     </td>
                                 </tr>
                                 {% endfor %}
-                            </tbody>
-                        </table>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     {% else %}
                         <div class="text-center py-12">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

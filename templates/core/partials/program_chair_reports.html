@@ -1,0 +1,600 @@
+{% load myfilters %}
+<!-- Reports & Statistics View -->
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Reports & Statistics</h2>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="w-full sm:w-auto">
+                <label for="report_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="report_school_year" name="school_year" onchange="updateReports()"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                    {% for year in available_years %}
+                        <option value="{{ year }}" {% if selected_school_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-full sm:w-auto">
+                <label for="report_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="report_semester" name="semester" onchange="updateReports()"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                    <option value="1ST" {% if selected_semester == '1ST' %}selected{% endif %}>1st Semester</option>
+                    <option value="2ND" {% if selected_semester == '2ND' %}selected{% endif %}>2nd Semester</option>
+                    <option value="SUMMER" {% if selected_semester == 'SUMMER' %}selected{% endif %}>Summer</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Total Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Total Students</h3>
+                    <span class="text-2xl font-bold text-white">{{ total_students }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Under your supervision</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cleared Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Cleared</h3>
+                    <span class="text-2xl font-bold text-white">{{ cleared_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ cleared_percentage }}% of total</span>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ cleared_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Students -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Pending</h3>
+                    <span class="text-2xl font-bold text-white">{{ pending_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ pending_percentage }}% of total</span>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-yellow-600 h-2.5 rounded-full" style="width: {{ pending_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permits Issued -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-purple-500 to-purple-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Permits Issued</h3>
+                    <span class="text-2xl font-bold text-white">{{ permits_issued }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ permits_percentage }}% of cleared students</span>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-purple-600 h-2.5 rounded-full" style="width: {{ permits_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <!-- Clearance Progress Chart -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Clearance Progress by Year Level</h3>
+            </div>
+            <div class="p-6">
+                <canvas id="yearLevelChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Clearance Timeline Chart -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Clearance Timeline</h3>
+            </div>
+            <div class="p-6">
+                <canvas id="timelineChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports Section -->
+    <div class="bg-white rounded-lg shadow overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Detailed Reports</h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-6">
+                <!-- Report Type Selector -->
+                <div class="flex flex-wrap gap-2 sm:gap-4">
+                    <button id="btn-year-level" onclick="showReport('year_level')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
+                        By Year Level
+                    </button>
+                    <button id="btn-course" onclick="showReport('course')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
+                        By Course
+                    </button>
+                    <button id="btn-office" onclick="showReport('office')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
+                        By Office
+                    </button>
+                    <button id="btn-timeline" onclick="showReport('timeline')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
+                        Timeline
+                    </button>
+                </div>
+
+                <!-- Report Content -->
+                <div id="reportContent" class="mt-6">
+                    <!-- Report content will be loaded here -->
+                    <div class="text-center py-8 text-gray-500">
+                        Select a report type to view detailed statistics
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="flex flex-wrap justify-end gap-2 sm:gap-3 mt-6">
+                    <button onclick="exportReport('pdf')" class="px-3 sm:px-4 py-2 bg-red-600 text-white text-sm sm:text-base rounded-md hover:bg-red-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9h4m-2-2v6"></path>
+                        </svg>
+                        <span class="whitespace-nowrap">Export as PDF</span>
+                    </button>
+                    <button onclick="exportReport('excel')" class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-md hover:bg-green-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="whitespace-nowrap">Export as Excel</span>
+                    </button>
+                </div>
+
+                <!-- Export Instructions -->
+                <div class="mt-4 p-3 sm:p-4 bg-blue-50 text-blue-800 rounded-md">
+                    <div class="flex items-start">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium">Export Instructions:</p>
+                            <ol class="text-xs mt-1 list-decimal list-inside">
+                                <li>Select a report type (Year Level, Course, Office, or Timeline)</li>
+                                <li>Wait for the report to load</li>
+                                <li>Click on either "Export as PDF" or "Export as Excel"</li>
+                                <li>The report will download automatically</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- JavaScript for Charts and Reports -->
+<script>
+    // Sample data for charts - in a real implementation, this would come from the server
+    const yearLevelData = {
+        labels: ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'],
+        datasets: [
+            {
+                label: 'Cleared',
+                data: [65, 75, 80, 85, 90],
+                backgroundColor: 'rgba(16, 185, 129, 0.7)',
+            },
+            {
+                label: 'Pending',
+                data: [25, 20, 15, 10, 5],
+                backgroundColor: 'rgba(245, 158, 11, 0.7)',
+            },
+            {
+                label: 'Not Started',
+                data: [10, 5, 5, 5, 5],
+                backgroundColor: 'rgba(156, 163, 175, 0.7)',
+            }
+        ]
+    };
+
+    const timelineData = {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+        datasets: [{
+            label: 'Clearances Completed',
+            data: [12, 25, 45, 65, 80, 95],
+            borderColor: 'rgba(16, 185, 129, 1)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+
+    // Initialize charts when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+    });
+
+    function initializeCharts() {
+        // Year Level Chart
+        const yearLevelCtx = document.getElementById('yearLevelChart').getContext('2d');
+        const yearLevelChart = new Chart(yearLevelCtx, {
+            type: 'bar',
+            data: yearLevelData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Timeline Chart
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        const timelineChart = new Chart(timelineCtx, {
+            type: 'line',
+            data: timelineData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    function updateReports() {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+
+        // Redirect to the same page with updated parameters
+        window.location.href = `{% url 'program_chair_dashboard' %}?view=reports&school_year=${schoolYear}&semester=${semester}`;
+    }
+
+    function showReport(reportType) {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const reportContent = document.getElementById('reportContent');
+
+        // Update active button
+        const allButtons = document.querySelectorAll('#btn-year-level, #btn-course, #btn-office, #btn-timeline');
+        allButtons.forEach(btn => {
+            btn.classList.remove('bg-emerald-700');
+            btn.classList.add('bg-emerald-600');
+        });
+
+        // Highlight the active button
+        const activeButton = document.getElementById(`btn-${reportType.replace('_', '-')}`);
+        if (activeButton) {
+            activeButton.classList.remove('bg-emerald-600');
+            activeButton.classList.add('bg-emerald-700');
+        }
+
+        // Show loading state
+        reportContent.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="animate-spin h-8 w-8 text-emerald-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-600">Loading report data...</p>
+            </div>
+        `;
+
+        // Enable export buttons
+        document.querySelectorAll('.flex.justify-end.space-x-3 button').forEach(btn => {
+            btn.disabled = false;
+        });
+
+        // Fetch report data from the server
+        fetch(`/api/program-chair/reports/${reportType}/?school_year=${schoolYear}&semester=${semester}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Render the appropriate report based on type
+                    switch (reportType) {
+                        case 'year_level':
+                            renderYearLevelReport(data.data);
+                            break;
+                        case 'course':
+                            renderCourseReport(data.data);
+                            break;
+                        case 'office':
+                            renderOfficeReport(data.data);
+                            break;
+                        case 'timeline':
+                            renderTimelineReport(data.data);
+                            break;
+                        default:
+                            reportContent.innerHTML = '<div class="text-center py-8 text-gray-500">Invalid report type selected</div>';
+                    }
+                } else {
+                    reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error loading report data'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching report data:', error);
+                reportContent.innerHTML = `<div class="text-center py-8 text-red-500">Error loading report data: ${error.message}</div>`;
+            });
+    }
+
+    function renderYearLevelReport(data) {
+        const reportContent = document.getElementById('reportContent');
+
+        let tableRows = '';
+        data.forEach(item => {
+            const clearanceRate = ((item.cleared / item.total) * 100).toFixed(1);
+            tableRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.year_level}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.cleared}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.not_started}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
+                            </div>
+                            <span class="text-xs sm:text-sm text-gray-700">${clearanceRate}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        reportContent.innerHTML = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Year Level</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Started</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCourseReport(data) {
+        const reportContent = document.getElementById('reportContent');
+
+        let tableRows = '';
+        data.forEach(item => {
+            const clearanceRate = ((item.cleared / item.total) * 100).toFixed(1);
+            tableRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.course_code}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.course_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.cleared}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
+                            </div>
+                            <span class="text-xs sm:text-sm text-gray-700">${clearanceRate}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        reportContent.innerHTML = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Course</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderOfficeReport(data) {
+        const reportContent = document.getElementById('reportContent');
+
+        let tableRows = '';
+        data.forEach(item => {
+            const approvalRate = ((item.approved / item.total) * 100).toFixed(1);
+            tableRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.office_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.approved}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.average_days.toFixed(1)} d</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${approvalRate}%"></div>
+                            </div>
+                            <span class="text-xs sm:text-sm text-gray-700">${approvalRate}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        reportContent.innerHTML = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Office</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requests</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Time</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTimelineReport(data) {
+        const reportContent = document.getElementById('reportContent');
+
+        let tableRows = '';
+        data.forEach(item => {
+            tableRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.date}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.new_clearances}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.completed_clearances}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.permits_issued}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.completion_rate}%</td>
+                </tr>
+            `;
+        });
+
+        reportContent.innerHTML = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Timeline</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permits</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function exportReport(format) {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+
+        // Get the currently active report type
+        let reportType = 'year_level'; // Default
+
+        // Find which report is currently displayed
+        const reportContent = document.getElementById('reportContent');
+        if (reportContent.querySelector('h4')) {
+            const reportTitle = reportContent.querySelector('h4').textContent.trim().toLowerCase();
+            if (reportTitle.includes('year level')) reportType = 'year_level';
+            else if (reportTitle.includes('course')) reportType = 'course';
+            else if (reportTitle.includes('office')) reportType = 'office';
+            else if (reportTitle.includes('timeline')) reportType = 'timeline';
+        } else {
+            // If no report is displayed, show a message
+            alert('Please select a report type first before exporting.');
+            return;
+        }
+
+        // Show loading indicator
+        const exportBtn = document.querySelector(`button[onclick="exportReport('${format}')"]`);
+        const originalText = exportBtn.textContent;
+        exportBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Exporting...
+        `;
+        exportBtn.disabled = true;
+
+        // Redirect to export endpoint
+        window.location.href = `/api/program-chair/reports/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=${reportType}`;
+
+        // Reset button after a delay (since we're navigating away)
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 3000);
+    }
+</script>

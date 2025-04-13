@@ -7,6 +7,10 @@
 {% include "components/staff_sidenav.html" %}
 {% endblock %}
 
+{% block sidebar_mobile %}
+{% include "components/staff_sidenav_mobile.html" %}
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-3xl mx-auto">
@@ -16,11 +20,11 @@
                 <div class="flex items-center space-x-6">
                     <!-- Profile Picture Section -->
                     <div class="relative">
-                        <img src="{% if staff.profile_picture %}{{ staff.profile_picture.url }}{% else %}{% static 'img/default-profile.png' %}{% endif %}" 
-                             alt="Profile Picture" 
+                        <img src="{% if staff.profile_picture %}{{ staff.profile_picture.url }}{% else %}{% static 'img/default-profile.png' %}{% endif %}"
+                             alt="Profile Picture"
                              class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
                              onerror="this.src='{% static 'img/default-profile.png' %}'">
-                        
+
                         <!-- Profile Picture Upload Form -->
                         <form action="{% url 'update_profile_picture' %}" method="POST" enctype="multipart/form-data" class="absolute bottom-0 right-0">
                             {% csrf_token %}
@@ -107,13 +111,13 @@
                     <form method="POST" class="space-y-4">
                         {% csrf_token %}
                         <div class="flex space-x-4">
-                            <input type="text" 
-                                   name="role" 
-                                   placeholder="Enter new role" 
+                            <input type="text"
+                                   name="role"
+                                   placeholder="Enter new role"
                                    value="{{ staff.role|default:'' }}"
                                    class="flex-1 rounded-lg border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
-                            <button type="submit" 
-                                    name="update_role" 
+                            <button type="submit"
+                                    name="update_role"
                                     class="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors duration-200">
                                 Update Role
                             </button>
@@ -125,7 +129,7 @@
 
         <!-- Back to Dashboard Button -->
         <div class="mt-6 text-right">
-            <a href="{% url 'staff_dashboard' %}" 
+            <a href="{% url 'staff_dashboard' %}"
                class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>

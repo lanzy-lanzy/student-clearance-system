@@ -480,38 +480,364 @@ def student_clearance_history(request):
 @user_passes_test(is_program_chair)
 def program_chair_dashboard(request):
     program_chair = request.user.programchair
+    view = request.GET.get('view', '')
+
+    # Get current school year and semester
+    current_year = timezone.now().year
+    selected_school_year = request.GET.get('school_year', f"{current_year}-{current_year + 1}")
+    selected_semester = request.GET.get('semester', "1ST")
+
+    # Generate available years (current year and 4 years back)
+    available_years = [f"{year}-{year + 1}" for year in range(current_year - 4, current_year + 1)]
+
+    # Get all students under this program chair's dean
     students = Student.objects.filter(course__dean=program_chair.dean)
 
-    current_year = timezone.now().year
-    school_year = f"{current_year}-{current_year + 1}"
-    semester = "1ST"
-
+    # Basic statistics for dashboard
     total_students = students.count()
-    cleared_students = students.filter(
-        clearances__is_cleared=True,
-        clearances__school_year=school_year,
-        clearances__semester=semester
-    ).count()
-    pending_clearances = students.filter(
-        clearances__is_cleared=False,
-        clearances__school_year=school_year,
-        clearances__semester=semester
-    ).count()
 
-    paginator = Paginator(students, 10)
-    page = request.GET.get('page')
-    students_page = paginator.get_page(page)
+    # Get clearances for the selected school year and semester
+    clearances = Clearance.objects.filter(
+        student__in=students,
+        school_year=selected_school_year,
+        semester=selected_semester
+    )
 
-    return render(request, 'core/program_chair_dashboard.html', {
+    cleared_students = clearances.filter(is_cleared=True).count()
+    pending_clearances = clearances.filter(is_cleared=False).count()
+
+    # Handle POST requests for batch approvals
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'batch_approve':
+            selected_students = request.POST.getlist('selected_students')
+            approval_type = request.POST.get('approval_type')
+            comments = request.POST.get('comments', '')
+
+            if not selected_students:
+                messages.error(request, "No students selected for batch approval.")
+                return redirect(f"?view={view}&school_year={selected_school_year}&semester={selected_semester}")
+
+            # Count for success message
+            approved_count = 0
+
+            # Get the batch of students
+            batch_students = Student.objects.filter(id__in=selected_students)
+
+            for student in batch_students:
+                clearance = Clearance.objects.filter(
+                    student=student,
+                    school_year=selected_school_year,
+                    semester=selected_semester
+                ).first()
+
+                if not clearance:
+                    continue  # Skip if no clearance exists
+
+                if approval_type == 'final':
+                    # For final approval, we only need to mark the clearance as program_chair_approved
+                    # if it's already cleared by all offices
+                    if clearance.is_cleared:
+                        clearance.program_chair_approved = True
+                        clearance.save()
+                        approved_count += 1
+
+                elif approval_type == 'permit':
+                    # For permit issuance, we need to ensure the clearance is cleared and approved
+                    if clearance.is_cleared:
+                        # Mark as program chair approved (which indicates permit issuance)
+                        clearance.program_chair_approved = True
+                        clearance.save()
+
+                        # Here you would create a Permit record if you have a Permit model
+                        # For now, we'll just count it as approved
+                        approved_count += 1
+
+            # Create a record of this batch approval (in a real implementation)
+            # BatchApproval.objects.create(
+            #     approved_by=request.user,
+            #     approval_type=approval_type,
+            #     school_year=selected_school_year,
+            #     semester=selected_semester,
+            #     comments=comments,
+            #     student_count=approved_count
+            # )
+
+            if approved_count > 0:
+                messages.success(request, f"Successfully approved {approved_count} students.")
+            else:
+                messages.warning(request, "No eligible students were found for approval.")
+
+            return redirect(f"?view={view}&school_year={selected_school_year}&semester={selected_semester}")
+
+        elif action == 'batch_print_permits':
+            # Handle batch permit printing
+            course_id = request.POST.get('course')
+            year_level = request.POST.get('year_level')
+            status = request.POST.get('status')
+
+            # Filter students based on criteria
+            permit_students = students
+            if course_id:
+                permit_students = permit_students.filter(course_id=course_id)
+            if year_level:
+                permit_students = permit_students.filter(year_level=year_level)
+
+            # Further filter based on clearance status
+            eligible_students = []
+            for student in permit_students:
+                clearance = Clearance.objects.filter(
+                    student=student,
+                    school_year=selected_school_year,
+                    semester=selected_semester,
+                    is_cleared=True
+                ).first()
+
+                if clearance:
+                    eligible_students.append(student.id)
+
+            if eligible_students:
+                # Store eligible students in session for batch printing
+                request.session['batch_print_students'] = eligible_students
+                return redirect('batch_print_permits')
+            else:
+                messages.error(request, "No eligible students found for batch permit printing.")
+
+    # Common context data for all views
+    context = {
         'program_chair': program_chair,
-        'students': students_page,
         'total_students': total_students,
         'cleared_students': cleared_students,
         'pending_clearances': pending_clearances,
-        'school_year': school_year,
-        'semester': semester,
-        'page_obj': students_page,
-    })
+        'selected_school_year': selected_school_year,
+        'selected_semester': selected_semester,
+        'available_years': available_years,
+    }
+
+    # Handle different views
+    if view == 'clearance_management':
+        status_filter = request.GET.get('status', '')
+        search_query = request.GET.get('search', '')
+
+        # Calculate statistics for clearance management
+        total_clearances = clearances.count() or 1  # Avoid division by zero
+        cleared_count = clearances.filter(is_cleared=True).count()
+        pending_count = clearances.filter(is_cleared=False).count()
+        not_started_count = total_students - (cleared_count + pending_count)
+
+        cleared_percentage = int((cleared_count / total_clearances) * 100) if total_clearances > 0 else 0
+        pending_percentage = int((pending_count / total_clearances) * 100) if total_clearances > 0 else 0
+        not_started_percentage = int((not_started_count / total_students) * 100) if total_students > 0 else 0
+
+        # Filter students based on clearance status
+        filtered_students = students
+        if status_filter == 'cleared':
+            student_ids = clearances.filter(is_cleared=True).values_list('student_id', flat=True)
+            filtered_students = filtered_students.filter(id__in=student_ids)
+        elif status_filter == 'pending':
+            student_ids = clearances.filter(is_cleared=False).values_list('student_id', flat=True)
+            filtered_students = filtered_students.filter(id__in=student_ids)
+        elif status_filter == 'not_started':
+            student_ids = clearances.values_list('student_id', flat=True)
+            filtered_students = filtered_students.exclude(id__in=student_ids)
+
+        # Apply search filter if provided
+        if search_query:
+            filtered_students = filtered_students.filter(
+                Q(user__first_name__icontains=search_query) |
+                Q(user__last_name__icontains=search_query) |
+                Q(student_id__icontains=search_query)
+            )
+
+        # Paginate the results
+        paginator = Paginator(filtered_students, 10)
+        page = request.GET.get('page')
+        students_page = paginator.get_page(page)
+
+        # Add clearance management specific context
+        context.update({
+            'students': students_page,
+            'cleared_count': cleared_count,
+            'pending_count': pending_count,
+            'not_started_count': not_started_count,
+            'cleared_percentage': cleared_percentage,
+            'pending_percentage': pending_percentage,
+            'not_started_percentage': not_started_percentage,
+        })
+
+    elif view == 'batch_approval':
+        # Get students eligible for batch approval
+        # Filter by year level if provided
+        year_level = request.GET.get('year_level', '')
+        filtered_students = students
+        if year_level:
+            filtered_students = filtered_students.filter(year_level=year_level)
+
+        # Get all students with clearances for the selected school year and semester
+        eligible_students = []
+        clearance_status_counts = {'cleared': 0, 'pending': 0, 'not_started': 0}
+
+        for student in filtered_students:
+            clearance = Clearance.objects.filter(
+                student=student,
+                school_year=selected_school_year,
+                semester=selected_semester
+            ).first()
+
+            if clearance:
+                if clearance.is_cleared:
+                    clearance_status_counts['cleared'] += 1
+                else:
+                    clearance_status_counts['pending'] += 1
+                eligible_students.append(student)
+            else:
+                clearance_status_counts['not_started'] += 1
+
+        # Get recent batch approvals (last 10)
+        # In a real implementation, this would come from a BatchApproval model
+        # For now, we'll create a placeholder with sample data
+        recent_batch_approvals = [
+            {
+                'id': 1,
+                'date': timezone.now() - timezone.timedelta(days=1),
+                'approved_by': request.user,
+                'student_count': 15,
+                'type': 'final'
+            },
+            {
+                'id': 2,
+                'date': timezone.now() - timezone.timedelta(days=3),
+                'approved_by': request.user,
+                'student_count': 8,
+                'type': 'permit'
+            }
+        ]
+
+        # Calculate percentages for the filter info
+        total_students = len(filtered_students)
+        if total_students > 0:
+            cleared_percentage = int((clearance_status_counts['cleared'] / total_students) * 100)
+            pending_percentage = int((clearance_status_counts['pending'] / total_students) * 100)
+            not_started_percentage = int((clearance_status_counts['not_started'] / total_students) * 100)
+        else:
+            cleared_percentage = pending_percentage = not_started_percentage = 0
+
+        # Add batch approval specific context
+        context.update({
+            'eligible_students': eligible_students,
+            'recent_batch_approvals': recent_batch_approvals,
+            'year_level': year_level,
+            'cleared_count': clearance_status_counts['cleared'],
+            'pending_count': clearance_status_counts['pending'],
+            'not_started_count': clearance_status_counts['not_started'],
+            'cleared_percentage': cleared_percentage,
+            'pending_percentage': pending_percentage,
+            'not_started_percentage': not_started_percentage,
+            'total_students': total_students,
+        })
+
+    elif view == 'reports':
+        # Calculate statistics for reports
+        total_clearances = clearances.count() or 1  # Avoid division by zero
+        cleared_count = clearances.filter(is_cleared=True).count()
+        pending_count = clearances.filter(is_cleared=False).count()
+        permits_issued = clearances.filter(is_cleared=True, program_chair_approved=True).count()
+
+        cleared_percentage = int((cleared_count / total_clearances) * 100) if total_clearances > 0 else 0
+        pending_percentage = int((pending_count / total_clearances) * 100) if total_clearances > 0 else 0
+        permits_percentage = int((permits_issued / cleared_count) * 100) if cleared_count > 0 else 0
+
+        # Add reports specific context
+        context.update({
+            'cleared_count': cleared_count,
+            'pending_count': pending_count,
+            'permits_issued': permits_issued,
+            'cleared_percentage': cleared_percentage,
+            'pending_percentage': pending_percentage,
+            'permits_percentage': permits_percentage,
+        })
+
+    elif view == 'permit_printing':
+        filter_type = request.GET.get('filter', '')
+        search_query = request.GET.get('search', '')
+
+        # Get all cleared students
+        cleared_student_ids = clearances.filter(is_cleared=True).values_list('student_id', flat=True)
+        cleared_students_qs = students.filter(id__in=cleared_student_ids)
+
+        # Get students with permits issued
+        permit_issued_ids = clearances.filter(
+            is_cleared=True,
+            program_chair_approved=True
+        ).values_list('student_id', flat=True)
+
+        # Calculate permit statistics
+        eligible_count = cleared_students_qs.count()
+        issued_count = len(permit_issued_ids)
+        pending_permit_count = eligible_count - issued_count
+
+        issued_percentage = int((issued_count / eligible_count) * 100) if eligible_count > 0 else 0
+        pending_permit_percentage = int((pending_permit_count / eligible_count) * 100) if eligible_count > 0 else 0
+
+        # Filter students based on permit status
+        filtered_students = students
+        if filter_type == 'eligible':
+            filtered_students = cleared_students_qs
+        elif filter_type == 'issued':
+            filtered_students = students.filter(id__in=permit_issued_ids)
+        elif filter_type == 'pending':
+            filtered_students = cleared_students_qs.exclude(id__in=permit_issued_ids)
+
+        # Apply search filter if provided
+        if search_query:
+            filtered_students = filtered_students.filter(
+                Q(user__first_name__icontains=search_query) |
+                Q(user__last_name__icontains=search_query) |
+                Q(student_id__icontains=search_query)
+            )
+
+        # Get courses for the filter dropdown
+        courses = Course.objects.filter(dean=program_chair.dean)
+
+        # Get recent permits
+        recent_permits = []  # This would come from a Permit model if implemented
+
+        # Paginate the results
+        paginator = Paginator(filtered_students, 10)
+        page = request.GET.get('page')
+        students_page = paginator.get_page(page)
+
+        # Add permit printing specific context
+        context.update({
+            'students': students_page,
+            'eligible_count': eligible_count,
+            'issued_count': issued_count,
+            'pending_permit_count': pending_permit_count,
+            'issued_percentage': issued_percentage,
+            'pending_permit_percentage': pending_permit_percentage,
+            'courses': courses,
+            'recent_permits': recent_permits,
+        })
+
+    else:
+        # Default dashboard view
+        # Get recent activities
+        recent_activities = []  # This would come from an Activity model if implemented
+
+        # Paginate students for the default view
+        paginator = Paginator(students, 10)
+        page = request.GET.get('page')
+        students_page = paginator.get_page(page)
+
+        # Add default dashboard specific context
+        context.update({
+            'students': students_page,
+            'recent_activities': recent_activities,
+            'page_obj': students_page,
+        })
+
+    return render(request, 'core/program_chair_dashboard.html', context)
 
 @login_required
 @user_passes_test(is_program_chair)
@@ -3632,6 +3958,29 @@ def print_permit(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     return render(request, 'core/print_permit.html', {
         'student': student,
+        'logo_url': 'images/logo.png',
+    })
+
+@login_required
+@user_passes_test(is_program_chair)
+def batch_print_permits(request):
+    """View to handle batch printing of permits"""
+    # Get student IDs from session
+    student_ids = request.session.get('batch_print_students', [])
+
+    if not student_ids:
+        messages.error(request, "No students selected for batch permit printing.")
+        return redirect('program_chair_dashboard')
+
+    # Get the students
+    students = Student.objects.filter(id__in=student_ids)
+
+    # Clear the session data
+    if 'batch_print_students' in request.session:
+        del request.session['batch_print_students']
+
+    return render(request, 'core/batch_print_permits.html', {
+        'students': students,
         'logo_url': 'images/logo.png',
     })
 

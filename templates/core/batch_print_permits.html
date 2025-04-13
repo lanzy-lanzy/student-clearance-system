@@ -1,0 +1,79 @@
+{% extends 'base_print.html' %}
+{% load myfilters %}
+
+{% block title %}Batch Print Permits{% endblock %}
+
+{% block content %}
+<div class="print-container">
+    {% for student in students %}
+    <div class="permit-page">
+        <div class="permit-header">
+            <img src="{{ logo_url }}" alt="School Logo" class="permit-logo">
+            <div class="permit-title">
+                <h1>STUDENT CLEARANCE PERMIT</h1>
+                <h2>School Year {{ student.get_current_clearance.school_year }}, {{ student.get_current_clearance.semester|semester_display }}</h2>
+            </div>
+        </div>
+        
+        <div class="permit-body">
+            <div class="student-info">
+                <div class="info-row">
+                    <div class="info-label">Student Name:</div>
+                    <div class="info-value">{{ student.user.get_full_name }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Student ID:</div>
+                    <div class="info-value">{{ student.student_id }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Course:</div>
+                    <div class="info-value">{{ student.course.name }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Year Level:</div>
+                    <div class="info-value">{{ student.year_level }}</div>
+                </div>
+            </div>
+            
+            <div class="clearance-status">
+                <h3>CLEARANCE STATUS: <span class="status-approved">APPROVED</span></h3>
+                <p>This student has been cleared by all required offices and is authorized to:</p>
+                <ul>
+                    <li>Enroll for the next semester</li>
+                    <li>Access all school facilities and services</li>
+                    <li>Participate in school activities and events</li>
+                </ul>
+            </div>
+            
+            <div class="approval-section">
+                <div class="approval-date">
+                    <p>Date Issued: {{ student.get_current_clearance.cleared_date|date:"F d, Y" }}</p>
+                </div>
+                
+                <div class="signature-section">
+                    <div class="signature-line"></div>
+                    <p class="signature-name">{{ student.program_chair.get_full_name }}</p>
+                    <p class="signature-title">{{ student.program_chair.get_title }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="permit-footer">
+            <p>This permit is valid for the current semester only. A new permit must be obtained for each semester.</p>
+            <p>Keep this permit for your records. Present when requested by school authorities.</p>
+        </div>
+    </div>
+    
+    {% if not forloop.last %}
+    <div class="page-break"></div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+    // Auto-print when the page loads
+    window.onload = function() {
+        window.print();
+    };
+</script>
+{% endblock %}

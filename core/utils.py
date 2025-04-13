@@ -1,6 +1,7 @@
 import logging
 import http.client
 import json
+from django.utils import timezone
 
 # Keep Twilio imports for backward compatibility
 try:
@@ -226,3 +227,46 @@ def send_sms(to_number, message, test_mode=False):
 
     # Use Infobip as the primary SMS provider
     return send_sms_infobip(to_number, message, test_mode)
+
+
+# Program Chair Helper Functions
+def is_program_chair(user):
+    """Check if the user is a program chair"""
+    if not user.is_authenticated:
+        return False
+    return hasattr(user, 'programchair')
+
+def get_current_school_year():
+    """Get the current school year in format YYYY-YYYY"""
+    current_year = timezone.now().year
+    return f"{current_year}-{current_year + 1}"
+
+def get_current_semester():
+    """Get the current semester based on the current month"""
+    month = timezone.now().month
+    if 1 <= month <= 5:  # January to May
+        return "2ND"
+    elif 6 <= month <= 10:  # June to October
+        return "1ST"
+    else:  # November to December
+        return "SUM"
+
+def get_semester_display(semester_code):
+    """Convert semester code to display text"""
+    semester_map = {
+        "1ST": "First Semester",
+        "2ND": "Second Semester",
+        "SUM": "Summer"
+    }
+    return semester_map.get(semester_code, semester_code)
+
+def get_year_level_display(year_level):
+    """Convert year level number to display text"""
+    if year_level == 1:
+        return "1st Year"
+    elif year_level == 2:
+        return "2nd Year"
+    elif year_level == 3:
+        return "3rd Year"
+    else:
+        return f"{year_level}th Year"

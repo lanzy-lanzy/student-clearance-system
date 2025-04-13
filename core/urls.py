@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api_views
 
 urlpatterns = [
     # Basic Routes
@@ -23,6 +24,7 @@ urlpatterns = [
     path('program-chair/students/', views.ManageStudentsView.as_view(), name='manage_students'),
     path('program-chair/students/<int:pk>/', views.StudentDetailView.as_view(), name='student_detail'),
     path('program-chair/print-permit/<int:student_id>/', views.print_permit, name='print_permit'),
+    path('program-chair/batch-print-permits/', views.batch_print_permits, name='batch_print_permits'),
     path('profile/program-chair/', views.program_chair_profile, name='program_chair_profile'),
     path('clearance/<int:clearance_id>/delete/', views.delete_clearance, name='delete_clearance'),
 
@@ -94,4 +96,13 @@ urlpatterns = [
     path('dashboard/admin/dormitory-owners/assign-students/', views.assign_students, name='assign_students'),
     path('api/program-chair/<int:program_chair_id>/', views.get_program_chair_details, name='get_program_chair_details'),
     path('api/courses/<int:dean_id>/', views.get_courses, name='get_courses'),  # Remove any login_required decorator
+
+    # Program Chair API Routes
+    path('api/student/<int:student_id>/clearance-details/', api_views.student_clearance_details, name='api_student_clearance_details'),
+    path('api/clearance/approve/', api_views.approve_clearance, name='api_approve_clearance'),
+    path('api/clearance/deny/', api_views.deny_clearance, name='api_deny_clearance'),
+    path('api/students/batch-details/', api_views.students_batch_details, name='api_students_batch_details'),
+    path('api/batch-approval/<int:batch_id>/', api_views.batch_approval_details, name='api_batch_approval_details'),
+    path('api/program-chair/reports/<str:report_type>/', api_views.program_chair_reports, name='api_program_chair_reports'),
+    path('api/program-chair/reports/export/<str:format_type>/', api_views.export_program_chair_report, name='api_export_program_chair_report'),
 ]

@@ -1,0 +1,359 @@
+{% load myfilters %}
+<!-- Permit Printing View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Permit Printing</h2>
+        </div>
+        
+        <!-- Filter Controls -->
+        <div class="flex items-center gap-4">
+            <div>
+                <label for="permit_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="permit_school_year" name="school_year" onchange="this.form.submit()" 
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                    {% for year in available_years %}
+                        <option value="{{ year }}" {% if selected_school_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="permit_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="permit_semester" name="semester" onchange="this.form.submit()" 
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                    <option value="1ST" {% if selected_semester == '1ST' %}selected{% endif %}>1st Semester</option>
+                    <option value="2ND" {% if selected_semester == '2ND' %}selected{% endif %}>2nd Semester</option>
+                    <option value="SUMMER" {% if selected_semester == 'SUMMER' %}selected{% endif %}>Summer</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permit Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Eligible for Permit -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Eligible for Permit</h3>
+                    <span class="text-2xl font-bold text-white">{{ eligible_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Students with cleared status</span>
+                    <a href="{% url 'program_chair_dashboard' %}?view=permit_printing&filter=eligible"
+                       class="text-sm text-blue-600 font-medium hover:text-blue-800">
+                        View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permits Issued -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Permits Issued</h3>
+                    <span class="text-2xl font-bold text-white">{{ issued_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ issued_percentage }}% of eligible students</span>
+                    <a href="{% url 'program_chair_dashboard' %}?view=permit_printing&filter=issued"
+                       class="text-sm text-green-600 font-medium hover:text-green-800">
+                        View All
+                    </a>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ issued_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Permits -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Pending Permits</h3>
+                    <span class="text-2xl font-bold text-white">{{ pending_permit_count }}</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">{{ pending_permit_percentage }}% of eligible students</span>
+                    <a href="{% url 'program_chair_dashboard' %}?view=permit_printing&filter=pending"
+                       class="text-sm text-yellow-600 font-medium hover:text-yellow-800">
+                        View All
+                    </a>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-yellow-600 h-2.5 rounded-full" style="width: {{ pending_permit_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Permit Table -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mt-6">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-800">Student Permits</h3>
+                
+                <!-- Search Form -->
+                <form method="get" class="flex items-center">
+                    <input type="hidden" name="view" value="permit_printing">
+                    <input type="hidden" name="school_year" value="{{ selected_school_year }}">
+                    <input type="hidden" name="semester" value="{{ selected_semester }}">
+                    <div class="relative">
+                        <input type="text" name="search" placeholder="Search students..." value="{{ request.GET.search }}"
+                               class="w-64 px-4 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
+                        <button type="submit" class="absolute right-0 top-0 h-full px-3 text-gray-500 hover:text-emerald-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permit Status</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in students %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ student.get_profile_picture_url }}" alt="{{ student.user.get_full_name }}">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ student.user.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.student_id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.course.code }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.year_level }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% with clearance=student.get_current_clearance %}
+                                {% if clearance and clearance.is_cleared %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Cleared
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Pending
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% with permit=student.get_current_permit %}
+                                {% if permit %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Issued
+                                    </span>
+                                {% else %}
+                                    {% with clearance=student.get_current_clearance %}
+                                        {% if clearance and clearance.is_cleared %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                Ready to Print
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                Not Eligible
+                                            </span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            {% with clearance=student.get_current_clearance %}
+                                {% if clearance and clearance.is_cleared %}
+                                    <a href="{% url 'print_permit' student.id %}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <span class="inline-flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            </svg>
+                                            Print Permit
+                                        </span>
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">Not Available</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No students found matching the criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if students.has_other_pages %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ students.start_index }}</span> to <span class="font-medium">{{ students.end_index }}</span> of <span class="font-medium">{{ students.paginator.count }}</span> results
+                </div>
+                <div class="flex space-x-2">
+                    {% if students.has_previous %}
+                    <a href="?view=permit_printing&page={{ students.previous_page_number }}&school_year={{ selected_school_year }}&semester={{ selected_semester }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}" 
+                       class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    {% if students.has_next %}
+                    <a href="?view=permit_printing&page={{ students.next_page_number }}&school_year={{ selected_school_year }}&semester={{ selected_semester }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}" 
+                       class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Batch Printing Section -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Batch Permit Printing</h3>
+        </div>
+        <div class="p-6">
+            <form method="post" action="{% url 'program_chair_dashboard' %}" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="batch_print_permits">
+                <input type="hidden" name="view" value="permit_printing">
+                <input type="hidden" name="school_year" value="{{ selected_school_year }}">
+                <input type="hidden" name="semester" value="{{ selected_semester }}">
+
+                <!-- Filter Options -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        <select id="course" name="course" 
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.code }} - {{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                        <select id="year_level" name="year_level" 
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">All Year Levels</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                            <option value="5">5th Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="status" name="status" 
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="eligible">Eligible for Permit</option>
+                            <option value="not_printed">Not Yet Printed</option>
+                            <option value="all_cleared">All Cleared Students</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                        Generate Batch Permits
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Permit Activity -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Recent Permit Activity</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued By</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for permit in recent_permits %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ permit.created_at|date:"M d, Y H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8">
+                                    <img class="h-8 w-8 rounded-full object-cover" src="{{ permit.student.get_profile_picture_url }}" alt="{{ permit.student.user.get_full_name }}">
+                                </div>
+                                <div class="ml-3">
+                                    <div class="text-sm font-medium text-gray-900">{{ permit.student.user.get_full_name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ permit.student.student_id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ permit.student.course.code }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ permit.issued_by.get_full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'print_permit' permit.student.id %}" class="text-blue-600 hover:text-blue-900">
+                                <span class="inline-flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Reprint
+                                </span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No recent permit activity found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
