@@ -1,7 +1,7 @@
 {% load myfilters %}
 <!-- Reports & Statistics View -->
 <div class="space-y-6">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <div class="flex items-center gap-3">
             <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -10,8 +10,8 @@
         </div>
 
         <!-- Filter Controls -->
-        <div class="flex items-center gap-4">
-            <div>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="w-full sm:w-auto">
                 <label for="report_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
                 <select id="report_school_year" name="school_year" onchange="updateReports()"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
@@ -20,7 +20,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div>
+            <div class="w-full sm:w-auto">
                 <label for="report_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
                 <select id="report_semester" name="semester" onchange="updateReports()"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
@@ -135,17 +135,17 @@
         <div class="p-6">
             <div class="space-y-6">
                 <!-- Report Type Selector -->
-                <div class="flex space-x-4">
-                    <button id="btn-year-level" onclick="showReport('year_level')" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                <div class="flex flex-wrap gap-2 sm:gap-4">
+                    <button id="btn-year-level" onclick="showReport('year_level')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
                         By Year Level
                     </button>
-                    <button id="btn-course" onclick="showReport('course')" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    <button id="btn-course" onclick="showReport('course')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
                         By Course
                     </button>
-                    <button id="btn-office" onclick="showReport('office')" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    <button id="btn-office" onclick="showReport('office')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
                         By Office
                     </button>
-                    <button id="btn-timeline" onclick="showReport('timeline')" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                    <button id="btn-timeline" onclick="showReport('timeline')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
                         Timeline
                     </button>
                 </div>
@@ -159,30 +159,30 @@
                 </div>
 
                 <!-- Export Options -->
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button onclick="exportReport('pdf')" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <div class="flex flex-wrap justify-end gap-2 sm:gap-3 mt-6">
+                    <button onclick="exportReport('pdf')" class="px-3 sm:px-4 py-2 bg-red-600 text-white text-sm sm:text-base rounded-md hover:bg-red-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9h4m-2-2v6"></path>
                         </svg>
-                        Export as PDF
+                        <span class="whitespace-nowrap">Export as PDF</span>
                     </button>
-                    <button onclick="exportReport('excel')" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <button onclick="exportReport('excel')" class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-md hover:bg-green-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        Export as Excel
+                        <span class="whitespace-nowrap">Export as Excel</span>
                     </button>
                 </div>
 
                 <!-- Export Instructions -->
-                <div class="mt-4 p-4 bg-blue-50 text-blue-800 rounded-md">
+                <div class="mt-4 p-3 sm:p-4 bg-blue-50 text-blue-800 rounded-md">
                     <div class="flex items-start">
-                        <svg class="w-5 h-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <div>
-                            <p class="text-sm font-medium">Export Instructions:</p>
+                            <p class="text-xs sm:text-sm font-medium">Export Instructions:</p>
                             <ol class="text-xs mt-1 list-decimal list-inside">
                                 <li>Select a report type (Year Level, Course, Office, or Timeline)</li>
                                 <li>Wait for the report to load</li>
@@ -369,17 +369,17 @@
             const clearanceRate = ((item.cleared / item.total) * 100).toFixed(1);
             tableRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.year_level}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.total}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.cleared}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.pending}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.not_started}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.year_level}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.cleared}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.not_started}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                                <div class="bg-emerald-600 h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
                             </div>
-                            <span class="text-sm text-gray-700">${clearanceRate}%</span>
+                            <span class="text-xs sm:text-sm text-gray-700">${clearanceRate}%</span>
                         </div>
                     </td>
                 </tr>
@@ -388,22 +388,26 @@
 
         reportContent.innerHTML = `
             <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Year Level</h4>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Started</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${tableRows}
-                    </tbody>
-                </table>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Started</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -416,17 +420,17 @@
             const clearanceRate = ((item.cleared / item.total) * 100).toFixed(1);
             tableRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.course_code}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.course_name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.total}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.cleared}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.pending}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.course_code}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.course_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.cleared}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                                <div class="bg-emerald-600 h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
                             </div>
-                            <span class="text-sm text-gray-700">${clearanceRate}%</span>
+                            <span class="text-xs sm:text-sm text-gray-700">${clearanceRate}%</span>
                         </div>
                     </td>
                 </tr>
@@ -435,22 +439,26 @@
 
         reportContent.innerHTML = `
             <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Course</h4>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Code</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Name</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${tableRows}
-                    </tbody>
-                </table>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -463,17 +471,17 @@
             const approvalRate = ((item.approved / item.total) * 100).toFixed(1);
             tableRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.office_name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.total}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.approved}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.pending}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.average_days.toFixed(1)} days</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.office_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.approved}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.average_days.toFixed(1)} d</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                                <div class="bg-emerald-600 h-2.5 rounded-full" style="width: ${approvalRate}%"></div>
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${approvalRate}%"></div>
                             </div>
-                            <span class="text-sm text-gray-700">${approvalRate}%</span>
+                            <span class="text-xs sm:text-sm text-gray-700">${approvalRate}%</span>
                         </div>
                     </td>
                 </tr>
@@ -482,22 +490,26 @@
 
         reportContent.innerHTML = `
             <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Office</h4>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Requests</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Processing Time</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approval Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${tableRows}
-                    </tbody>
-                </table>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requests</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Time</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -509,32 +521,36 @@
         data.forEach(item => {
             tableRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.new_clearances}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.completed_clearances}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.permits_issued}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.completion_rate}%</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.date}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.new_clearances}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.completed_clearances}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.permits_issued}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.completion_rate}%</td>
                 </tr>
             `;
         });
 
         reportContent.innerHTML = `
             <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Timeline</h4>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New Clearances</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed Clearances</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permits Issued</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${tableRows}
-                    </tbody>
-                </table>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permits</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         `;
     }

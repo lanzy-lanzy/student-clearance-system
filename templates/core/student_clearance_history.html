@@ -7,6 +7,10 @@
 {% include "components/student_sidenav.html" %}
 {% endblock %}
 
+{% block sidebar_mobile %}
+{% include "components/student_sidenav_mobile.html" %}
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -89,33 +93,40 @@
             </div>
 
             {% if clearance_requests %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School Year</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviewed Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviewed By</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">School Year</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Semester</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Request Date</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Reviewed Date</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Reviewed By</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
                         {% for request in clearance_requests %}
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ request.office.name }}</div>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                                <div class="text-xs sm:text-sm font-medium text-gray-900">{{ request.office.name }}</div>
+                                <!-- Mobile-only info -->
+                                <div class="flex flex-col sm:hidden mt-1">
+                                    <div class="text-xs text-gray-500">{{ request.school_year }} - {{ request.get_semester_display }}</div>
+                                    <div class="text-xs text-gray-500 mt-1">{{ request.request_date|date:"M d, Y" }}</div>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ request.school_year }}</div>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
+                                <div class="text-xs sm:text-sm text-gray-900">{{ request.school_year }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ request.get_semester_display }}</div>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
+                                <div class="text-xs sm:text-sm text-gray-900">{{ request.get_semester_display }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                     {% if request.status == 'approved' %}
                                         bg-green-100 text-green-800
@@ -127,20 +138,20 @@
                                     {{ request.status|title }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ request.request_date|date:"M d, Y" }}</div>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
+                                <div class="text-xs sm:text-sm text-gray-900">{{ request.request_date|date:"M d, Y" }}</div>
                                 <div class="text-xs text-gray-500">{{ request.request_date|time:"g:i A" }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
                                 {% if request.reviewed_date %}
-                                    <div class="text-sm text-gray-900">{{ request.reviewed_date|date:"M d, Y" }}</div>
+                                    <div class="text-xs sm:text-sm text-gray-900">{{ request.reviewed_date|date:"M d, Y" }}</div>
                                     <div class="text-xs text-gray-500">{{ request.reviewed_date|time:"g:i A" }}</div>
                                 {% else %}
-                                    <span class="text-sm text-gray-500">Pending</span>
+                                    <span class="text-xs sm:text-sm text-gray-500">Pending</span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
+                                <div class="text-xs sm:text-sm text-gray-900">
                                     {% if request.reviewed_by %}
                                         {{ request.reviewed_by.user.get_full_name }}
                                     {% else %}
@@ -148,28 +159,30 @@
                                     {% endif %}
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{% url 'view_clearance_details' clearance_id=request.clearance.id %}" class="text-emerald-600 hover:text-emerald-900">View Details</a>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                                <a href="{% url 'view_clearance_details' clearance_id=request.clearance.id %}" class="text-emerald-600 hover:text-emerald-900 block sm:inline-block">View Details</a>
                                 {% if request.status == 'denied' %}
-                                    <form method="post" action="{% url 'request_again' request_id=request.id %}" class="inline">
+                                    <form method="post" action="{% url 'request_again' request_id=request.id %}" class="inline-block mt-1 sm:mt-0">
                                         {% csrf_token %}
-                                        <button type="submit" class="ml-3 text-indigo-600 hover:text-indigo-900">Request Again</button>
+                                        <button type="submit" class="sm:ml-3 text-indigo-600 hover:text-indigo-900">Request Again</button>
                                     </form>
                                 {% endif %}
                             </td>
                         </tr>
                         {% if request.remarks %}
                         <tr class="bg-gray-50">
-                            <td class="px-6 py-4" colspan="8">
-                                <div class="text-sm text-gray-700">
+                            <td class="px-3 sm:px-6 py-3 sm:py-4" colspan="8">
+                                <div class="text-xs sm:text-sm text-gray-700">
                                     <span class="font-medium">Remarks:</span> {{ request.remarks }}
                                 </div>
                             </td>
                         </tr>
                         {% endif %}
                         {% endfor %}
-                    </tbody>
-                </table>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Pagination -->

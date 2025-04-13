@@ -10,8 +10,12 @@ Program Chair Dashboard
 {% include 'components/program_chair_sidenav.html' %}
 {% endblock sidebar %}
 
+{% block sidebar_mobile %}
+{% include 'components/program_chair_sidenav_mobile.html' %}
+{% endblock sidebar_mobile %}
+
 {% block content %}
-<div class="container mx-auto p-6">
+<div class="w-full">
   {% if request.GET.view == 'clearance_management' %}
     {% include 'core/partials/program_chair_clearance_management.html' %}
   {% elif request.GET.view == 'batch_approval' %}

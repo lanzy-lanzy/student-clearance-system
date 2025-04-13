@@ -1,8 +1,8 @@
 <!-- Navbar -->
 {% load static %}
-<header class="bg-white shadow-lg p-4 flex justify-between items-center border-b border-gray-100 sticky top-0 z-50">
+<header class="bg-white shadow-lg p-4 flex justify-between items-center border-b border-gray-100 sticky top-0 z-30">
     <div class="flex items-center">
-        <button id="menu-toggle" class="text-emerald-700 md:hidden hover:bg-emerald-50 p-2 rounded-lg transition-all duration-200">
+        <button @click="sidebarOpen = true" class="text-emerald-700 md:hidden hover:bg-emerald-50 p-2 rounded-lg transition-all duration-200">
             <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
             </svg>
@@ -18,12 +18,12 @@
                 </div>
             </a>
         </h1>    </div>
-    
+
     <div class="flex items-center">
         {% if user.is_authenticated %}
             <div class="bg-white rounded-lg shadow-sm border border-emerald-100 hover:shadow-md transition-all duration-200">
-                <div class="flex items-center space-x-4 p-2">
-                    <div class="flex flex-col items-end">
+                <div class="flex items-center space-x-2 sm:space-x-4 p-2">
+                    <div class="hidden sm:flex flex-col items-end">
                         <span class="font-semibold text-lg text-emerald-800">
                             {% if user.programchair %}
                                 {{ user.programchair.user.get_full_name }}
@@ -49,36 +49,36 @@
                             {% endif %}
                         </span>
                     </div>
-                    <div class="border-l border-gray-200 h-12"></div>
+                    <div class="hidden sm:block border-l border-gray-200 h-12"></div>
                     <!-- Profile Picture and Dropdown -->
                     <div class="relative group">
                         {% if user.student %}
-                            <img src="{{ user.student.get_profile_picture_url }}" 
-                                 alt="Profile" 
+                            <img src="{{ user.student.get_profile_picture_url }}"
+                                 alt="Profile"
                                  class="w-10 h-10 rounded-full object-cover">
                         {% elif user.programchair %}
-                            <img src="{{ user.programchair.get_profile_picture_url }}" 
-                                 alt="Profile" 
+                            <img src="{{ user.programchair.get_profile_picture_url }}"
+                                 alt="Profile"
                                  class="w-10 h-10 rounded-full object-cover">
                         {% elif user.staff %}
-                            <img src="{{ user.staff.get_profile_picture_url }}" 
-                                 alt="Profile" 
+                            <img src="{{ user.staff.get_profile_picture_url }}"
+                                 alt="Profile"
                                  class="w-10 h-10 rounded-full object-cover">
                         {% elif user.is_superuser %}
                             {% if user.userprofile %}
-                                <img src="{{ user.userprofile.get_profile_picture_url }}" 
-                                     alt="Profile" 
+                                <img src="{{ user.userprofile.get_profile_picture_url }}"
+                                     alt="Profile"
                                      class="w-10 h-10 rounded-full object-cover">
                             {% else %}
-                                <img src="{% static 'img/default-profile.png' %}" 
-                                     alt="Profile" 
+                                <img src="{% static 'img/default-profile.png' %}"
+                                     alt="Profile"
                                      class="w-10 h-10 rounded-full object-cover">
                             {% endif %}
                         {% endif %}
                         <!-- Dropdown Menu -->
                         <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
                             {% if user.student %}
-                                <a href="{% url 'student_profile' %}" 
+                                <a href="{% url 'student_profile' %}"
                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-t-lg transition-colors">
                                     <div class="flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@
                                     </div>
                                 </a>
                             {% elif user.programchair %}
-                                <a href="{% url 'program_chair_profile' %}" 
+                                <a href="{% url 'program_chair_profile' %}"
                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-t-lg transition-colors">
                                     <div class="flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@
                                     </div>
                                 </a>
                             {% elif user.staff %}
-                                <a href="{% url 'staff_profile' %}" 
+                                <a href="{% url 'staff_profile' %}"
                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-t-lg transition-colors">
                                     <div class="flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,7 +108,7 @@
                                     </div>
                                 </a>
                             {% elif user.is_superuser %}
-                                <a href="{% url 'admin_profile' %}" 
+                                <a href="{% url 'admin_profile' %}"
                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-t-lg transition-colors">
                                     <div class="flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,14 +135,14 @@
             </div>
         {% else %}
             <div class="flex items-center space-x-4">
-                <a href="{% url 'login' %}" 
+                <a href="{% url 'login' %}"
                    class="flex items-center px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                     </svg>
                     <span class="font-medium">Login</span>
                 </a>
-                <a href="{% url 'register' %}" 
+                <a href="{% url 'register' %}"
                    class="flex items-center px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-sm">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
@@ -159,7 +159,7 @@
         background-size: 100%;
         -webkit-background-clip: text;
         -moz-background-clip: text;
-        -webkit-text-fill-color: transparent; 
+        -webkit-text-fill-color: transparent;
         -moz-text-fill-color: transparent;
     }
 </style>
