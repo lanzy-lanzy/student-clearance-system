@@ -1,9 +1,9 @@
-<nav x-data="{ isOpen: true }" 
-     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col" 
+<nav x-data="{ isOpen: true, activeSection: null }"
+     class="bg-emerald-900 sticky top-0 h-screen transition-all duration-300 flex flex-col overflow-y-auto"
      :class="isOpen ? 'w-64' : 'w-20'">
-    
+
     <div class="p-6 flex-grow" :class="isOpen ? '' : 'px-4'">
- 
+
         <div class="flex items-center gap-3 mb-8" :class="isOpen ? '' : 'justify-center'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
@@ -11,10 +11,12 @@
             <h2 x-show="isOpen" class="text-2xl font-bold text-white">PC Portal</h2>
         </div>
 
-        <ul class="space-y-4">
+        <!-- Main Navigation -->
+        <ul class="space-y-2">
+            <!-- Dashboard -->
             <li>
-                <a href="{% url 'program_chair_dashboard' %}" 
-                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
+                <a href="{% url 'program_chair_dashboard' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_dashboard' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Dashboard' }"
                    @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
@@ -26,8 +28,15 @@
                     <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Dashboard</div>
                 </a>
             </li>
+
+            <!-- Student Management Section -->
+            <li class="mt-6">
+                <div x-show="isOpen" class="px-4 py-2">
+                    <h3 class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Student Management</h3>
+                </div>
+            </li>
             <li>
-                <a href="{% url 'manage_students' %}" 
+                <a href="{% url 'manage_students' %}"
                    class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'manage_students' %}bg-emerald-800 text-white{% endif %}"
                    :class="isOpen ? '' : 'justify-center px-2'"
                    x-data="{ tooltip: 'Manage Students' }"
@@ -40,12 +49,98 @@
                     <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Manage Students</div>
                 </a>
             </li>
+            <li>
+                <a href="{% url 'program_chair_dashboard' %}?view=clearance_management"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_dashboard' and request.GET.view == 'clearance_management' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'Clearance Management' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Clearance Management</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Clearance Management</div>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'program_chair_dashboard' %}?view=batch_approval"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_dashboard' and request.GET.view == 'batch_approval' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'Batch Approval' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Batch Approval</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Batch Approval</div>
+                </a>
+            </li>
+
+            <!-- Reports & Analytics Section -->
+            <li class="mt-6">
+                <div x-show="isOpen" class="px-4 py-2">
+                    <h3 class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Reports & Analytics</h3>
+                </div>
+            </li>
+            <li>
+                <a href="{% url 'program_chair_dashboard' %}?view=reports"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_dashboard' and request.GET.view == 'reports' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'Reports & Statistics' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                        <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                    </svg>
+                    <span x-show="isOpen">Reports & Statistics</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Reports & Statistics</div>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'program_chair_dashboard' %}?view=permit_printing"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_dashboard' and request.GET.view == 'permit_printing' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'Permit Printing' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">Permit Printing</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Permit Printing</div>
+                </a>
+            </li>
+
+            <!-- Settings Section -->
+            <li class="mt-6">
+                <div x-show="isOpen" class="px-4 py-2">
+                    <h3 class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Settings</h3>
+                </div>
+            </li>
+            <li>
+                <a href="{% url 'program_chair_profile' %}"
+                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_profile' %}bg-emerald-800 text-white{% endif %}"
+                   :class="isOpen ? '' : 'justify-center px-2'"
+                   x-data="{ tooltip: 'My Profile' }"
+                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
+                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                    </svg>
+                    <span x-show="isOpen">My Profile</span>
+                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">My Profile</div>
+                </a>
+            </li>
         </ul>
     </div>
 
     <!-- Toggle Button -->
     <div class="p-6" :class="isOpen ? '' : 'px-4'">
-        <button @click="isOpen = !isOpen" 
+        <button @click="isOpen = !isOpen"
                 class="w-full flex items-center justify-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="isOpen ? 'transform rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
@@ -56,7 +151,7 @@
 
     <!-- Logout Section -->
     <div class="p-6 border-t border-emerald-800" :class="isOpen ? '' : 'px-4'">
-        <a href="{% url 'logout' %}" 
+        <a href="{% url 'logout' %}"
            class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200"
            :class="isOpen ? '' : 'justify-center px-2'"
            x-data="{ tooltip: 'Logout' }"

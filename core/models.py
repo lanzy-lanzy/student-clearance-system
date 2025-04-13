@@ -167,6 +167,25 @@ class Student(models.Model):
 
         return clearance is not None
 
+    def get_current_clearance(self):
+        """Get the current clearance for the student based on the current school year and semester"""
+        current_year = timezone.now().year
+        school_year = f"{current_year}-{current_year + 1}"
+
+        # Determine current semester based on month
+        month = timezone.now().month
+        if 1 <= month <= 5:  # January to May
+            semester = "2ND"
+        elif 6 <= month <= 10:  # June to October
+            semester = "1ST"
+        else:  # November to December
+            semester = "SUM"
+
+        return self.clearances.filter(
+            school_year=school_year,
+            semester=semester
+        ).first()
+
     def __str__(self):
         return f"{self.get_full_name()} ({self.student_id})"
 

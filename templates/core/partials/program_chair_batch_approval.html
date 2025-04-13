@@ -1,0 +1,775 @@
+{% load myfilters %}
+<!-- Batch Approval View -->
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <h2 class="text-lg font-bold text-gray-900">Batch Approval</h2>
+        </div>
+    </div>
+
+    <!-- Batch Approval Form -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Select Students for Batch Approval</h3>
+        </div>
+        <div class="p-6">
+            <form method="post" action="{% url 'program_chair_dashboard' %}" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="batch_approve">
+                <input type="hidden" name="view" value="batch_approval">
+
+                <!-- Filter Options -->
+                <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                    <h4 class="text-base font-medium text-gray-800 mb-4">Filter Students</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                            <select id="school_year" name="school_year"
+                                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                {% for year in available_years %}
+                                    <option value="{{ year }}" {% if selected_school_year == year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                            <select id="semester" name="semester"
+                                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                <option value="1ST" {% if selected_semester == '1ST' %}selected{% endif %}>1st Semester</option>
+                                <option value="2ND" {% if selected_semester == '2ND' %}selected{% endif %}>2nd Semester</option>
+                                <option value="SUMMER" {% if selected_semester == 'SUMMER' %}selected{% endif %}>Summer</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                            <select id="year_level" name="year_level"
+                                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                <option value="">All Year Levels</option>
+                                <option value="1" {% if year_level == '1' %}selected{% endif %}>1st Year</option>
+                                <option value="2" {% if year_level == '2' %}selected{% endif %}>2nd Year</option>
+                                <option value="3" {% if year_level == '3' %}selected{% endif %}>3rd Year</option>
+                                <option value="4" {% if year_level == '4' %}selected{% endif %}>4th Year</option>
+                                <option value="5" {% if year_level == '5' %}selected{% endif %}>5th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button type="button" id="apply-filters-btn" onclick="applyFilters()"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+
+                    <!-- Current Filter Info -->
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-500 mb-2">
+                            <p>Currently showing:
+                                <span class="font-medium">{{ selected_school_year }}</span>,
+                                <span class="font-medium">{% if selected_semester == '1ST' %}1st Semester{% elif selected_semester == '2ND' %}2nd Semester{% else %}Summer{% endif %}</span>
+                                {% if year_level %}, <span class="font-medium">{{ year_level }}{% if year_level == '1' %}st{% elif year_level == '2' %}nd{% elif year_level == '3' %}rd{% else %}th{% endif %} Year</span>{% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Filter Statistics -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                            <div class="bg-green-50 p-3 rounded-md">
+                                <div class="flex items-center">
+                                    <div class="rounded-full bg-green-100 p-2 mr-3">
+                                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Cleared</p>
+                                        <p class="text-xs text-gray-500">{{ cleared_count }} students ({{ cleared_percentage }}%)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-yellow-50 p-3 rounded-md">
+                                <div class="flex items-center">
+                                    <div class="rounded-full bg-yellow-100 p-2 mr-3">
+                                        <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Pending</p>
+                                        <p class="text-xs text-gray-500">{{ pending_count }} students ({{ pending_percentage }}%)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-md">
+                                <div class="flex items-center">
+                                    <div class="rounded-full bg-gray-100 p-2 mr-3">
+                                        <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Not Started</p>
+                                        <p class="text-xs text-gray-500">{{ not_started_count }} students ({{ not_started_percentage }}%)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Student Selection Table -->
+                <div class="mt-6">
+                    <!-- Search Box -->
+                    <div class="mb-4 flex items-center">
+                        <div class="relative flex-grow">
+                            <input type="text" id="student-search" placeholder="Search by name, ID, or course..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                                   oninput="filterStudents()">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <button type="button" id="select-filtered-btn" onclick="selectFilteredStudents()"
+                                    class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                                Select Filtered
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Student Count Info -->
+                    <div class="mb-2 flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            <span id="filtered-count">0</span> students filtered out of <span id="total-count">0</span> total
+                        </div>
+                        <div>
+                            <button type="button" onclick="toggleAllStudents(document.getElementById('select-all'))"
+                                    class="text-sm text-emerald-600 hover:text-emerald-800">
+                                <span id="select-all-text">Select All</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="select-all" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                   onchange="toggleAllStudents(this)">
+                                            <label for="select-all" class="ml-2">Select All</label>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="student-table-body">
+                                {% for student in eligible_students %}
+                                <tr class="hover:bg-gray-50 transition-colors duration-150 student-row"
+                                    data-student-name="{{ student.user.get_full_name|lower }}"
+                                    data-student-id="{{ student.student_id|lower }}"
+                                    data-student-course="{{ student.course.code|lower }}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" name="selected_students" value="{{ student.id }}"
+                                               class="student-checkbox h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ student.get_profile_picture_url }}" alt="{{ student.user.get_full_name }}">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ student.user.get_full_name }}</div>
+                                                <div class="text-sm text-gray-500">{{ student.user.email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.student_id }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.course.code }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.year_level }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% with clearance=student.get_current_clearance %}
+                                            {% if clearance %}
+                                                {% if clearance.is_cleared %}
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        Cleared
+                                                    </span>
+                                                {% else %}
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                        Pending
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                    Not Started
+                                                </span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr id="no-students-row">
+                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No eligible students found for batch approval.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- No Results Message (Hidden by default) -->
+                    <div id="no-results-message" class="hidden mt-4 p-4 text-center text-sm text-gray-500 bg-gray-50 rounded-md">
+                        No students match your search criteria. Try a different search term.
+                    </div>
+                </div>
+
+                <!-- Approval Options -->
+                <div class="bg-gray-50 p-6 rounded-lg mt-6">
+                    <h4 class="text-base font-medium text-gray-800 mb-4">Approval Options</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="approval_type" class="block text-sm font-medium text-gray-700 mb-1">Approval Type</label>
+                            <select id="approval_type" name="approval_type"
+                                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                <option value="final">Final Clearance Approval</option>
+                                <option value="permit">Permit Issuance</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Comments (Optional)</label>
+                            <textarea id="comments" name="comments" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Add any comments about this batch approval..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="previewApproval()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Preview
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                        Approve Selected
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Batch Approvals -->
+    <div class="bg-white rounded-lg shadow overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Recent Batch Approvals</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved By</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for approval in recent_batch_approvals %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ approval.date|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ approval.approved_by.get_full_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ approval.student_count }} students
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                {{ approval.type|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="#" onclick="viewBatchDetails('{{ approval.id }}')" class="text-emerald-600 hover:text-emerald-900">View Details</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No recent batch approvals found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-800">Preview Batch Approval</h3>
+            <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Approval Type</h4>
+                    <p id="previewApprovalType" class="text-base font-medium text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">School Year & Semester</h4>
+                    <p id="previewSchoolYearSemester" class="text-base font-medium text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Selected Students</h4>
+                    <p id="previewStudentCount" class="text-base font-medium text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Comments</h4>
+                    <p id="previewComments" class="text-base text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Students to be Approved</h4>
+                    <div id="previewStudentList" class="mt-2 max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2">
+                        <!-- Student list will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+            <button onclick="closePreviewModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Cancel
+            </button>
+            <button onclick="submitBatchApproval()" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium">
+                Confirm Approval
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Details Modal -->
+<div id="batchDetailsModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-800">Batch Approval Details</h3>
+            <button onclick="closeBatchDetailsModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Approval Date</h4>
+                        <p id="detailsDate" class="text-base font-medium text-gray-900"></p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Approved By</h4>
+                        <p id="detailsApprovedBy" class="text-base font-medium text-gray-900"></p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Approval Type</h4>
+                        <p id="detailsType" class="text-base font-medium text-gray-900"></p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">School Year & Semester</h4>
+                        <p id="detailsSchoolYearSemester" class="text-base font-medium text-gray-900"></p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Comments</h4>
+                    <p id="detailsComments" class="text-base text-gray-900"></p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Approved Students</h4>
+                    <div class="mt-2 overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailsStudentList" class="bg-white divide-y divide-gray-200">
+                                <!-- Student list will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+            <button onclick="closeBatchDetailsModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Functionality -->
+<script>
+    // Initialize student counts when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        updateStudentCounts();
+    });
+
+    // Toggle all visible student checkboxes
+    function toggleAllStudents(checkbox) {
+        const visibleCheckboxes = document.querySelectorAll('.student-row:not(.hidden) .student-checkbox');
+        visibleCheckboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+
+        // Update the select all button text
+        updateSelectAllText(checkbox.checked);
+    }
+
+    // Update the text of the select all button
+    function updateSelectAllText(isChecked) {
+        const selectAllText = document.getElementById('select-all-text');
+        selectAllText.textContent = isChecked ? 'Deselect All' : 'Select All';
+    }
+
+    // Filter students based on search input
+    function filterStudents() {
+        const searchTerm = document.getElementById('student-search').value.toLowerCase().trim();
+        const studentRows = document.querySelectorAll('.student-row');
+        const noResultsMessage = document.getElementById('no-results-message');
+        const noStudentsRow = document.getElementById('no-students-row');
+
+        let visibleCount = 0;
+
+        // If we have the no students row, handle it differently
+        if (noStudentsRow) {
+            if (searchTerm === '') {
+                noStudentsRow.classList.remove('hidden');
+                noResultsMessage.classList.add('hidden');
+            } else {
+                noStudentsRow.classList.add('hidden');
+                noResultsMessage.classList.remove('hidden');
+            }
+            return;
+        }
+
+        studentRows.forEach(row => {
+            const studentName = row.getAttribute('data-student-name');
+            const studentId = row.getAttribute('data-student-id');
+            const studentCourse = row.getAttribute('data-student-course');
+
+            // Check if the search term matches any of the student data
+            if (searchTerm === '' ||
+                studentName.includes(searchTerm) ||
+                studentId.includes(searchTerm) ||
+                studentCourse.includes(searchTerm)) {
+                row.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        // Show/hide no results message
+        if (visibleCount === 0 && searchTerm !== '') {
+            noResultsMessage.classList.remove('hidden');
+        } else {
+            noResultsMessage.classList.add('hidden');
+        }
+
+        // Update the filtered count
+        document.getElementById('filtered-count').textContent = visibleCount;
+
+        // Reset the select all checkbox
+        document.getElementById('select-all').checked = false;
+        updateSelectAllText(false);
+    }
+
+    // Select all filtered (visible) students
+    function selectFilteredStudents() {
+        const visibleCheckboxes = document.querySelectorAll('.student-row:not(.hidden) .student-checkbox');
+
+        if (visibleCheckboxes.length === 0) {
+            alert('No students match your current filter criteria.');
+            return;
+        }
+
+        visibleCheckboxes.forEach(cb => {
+            cb.checked = true;
+        });
+
+        // Update the select all checkbox
+        document.getElementById('select-all').checked = true;
+        updateSelectAllText(true);
+
+        // Show a confirmation message
+        const count = visibleCheckboxes.length;
+        alert(`Selected ${count} student${count !== 1 ? 's' : ''}.`);
+    }
+
+    // Update the student counts
+    function updateStudentCounts() {
+        const totalStudents = document.querySelectorAll('.student-row').length;
+        document.getElementById('total-count').textContent = totalStudents;
+        document.getElementById('filtered-count').textContent = totalStudents;
+    }
+
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Apply filters and reload the page with the selected filters
+    function applyFilters() {
+        const schoolYear = document.getElementById('school_year').value;
+        const semester = document.getElementById('semester').value;
+        const yearLevel = document.getElementById('year_level').value;
+
+        // Show loading indicator
+        const applyButton = document.getElementById('apply-filters-btn');
+        const originalText = applyButton.textContent;
+        applyButton.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading...
+        `;
+        applyButton.disabled = true;
+
+        // Build the URL with the selected filters
+        let url = `?view=batch_approval&school_year=${encodeURIComponent(schoolYear)}&semester=${encodeURIComponent(semester)}`;
+        if (yearLevel) {
+            url += `&year_level=${encodeURIComponent(yearLevel)}`;
+        }
+
+        // Redirect to the filtered view
+        window.location.href = url;
+    }
+
+    function previewApproval() {
+        const selectedStudents = document.querySelectorAll('input[name="selected_students"]:checked');
+
+        if (selectedStudents.length === 0) {
+            alert('Please select at least one student for batch approval.');
+            return;
+        }
+
+        // Get form values
+        const approvalType = document.getElementById('approval_type').value;
+        const approvalTypeText = document.getElementById('approval_type').options[document.getElementById('approval_type').selectedIndex].text;
+        const schoolYear = document.getElementById('school_year').value;
+        const semester = document.getElementById('semester').value;
+        const comments = document.getElementById('comments').value;
+
+        // Update preview modal
+        document.getElementById('previewApprovalType').textContent = approvalTypeText;
+        document.getElementById('previewSchoolYearSemester').textContent = `${schoolYear}, ${semester} Semester`;
+        document.getElementById('previewStudentCount').textContent = `${selectedStudents.length} students selected`;
+        document.getElementById('previewComments').textContent = comments || 'No comments provided';
+
+        // Populate student list
+        const studentListContainer = document.getElementById('previewStudentList');
+        studentListContainer.innerHTML = '<p class="text-sm text-gray-500 p-2">Loading student details...</p>';
+
+        // Collect student IDs
+        const studentIds = Array.from(selectedStudents).map(cb => cb.value);
+
+        // Show preview modal immediately while data loads
+        document.getElementById('previewModal').classList.remove('hidden');
+
+        // Fetch student details
+        fetch('/api/students/batch-details/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                student_ids: studentIds,
+                school_year: schoolYear,
+                semester: semester
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.students && data.students.length > 0) {
+                studentListContainer.innerHTML = '';
+                data.students.forEach(student => {
+                    const statusClass =
+                        student.status === 'Cleared' ? 'bg-green-100 text-green-800' :
+                        student.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800';
+
+                    studentListContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-2 border-b border-gray-100">
+                            <div class="flex items-center">
+                                <img src="${student.profile_picture || '/static/img/default-profile.png'}" alt="${student.full_name}" class="h-8 w-8 rounded-full mr-3">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">${student.full_name}</p>
+                                    <p class="text-xs text-gray-500">${student.student_id} - ${student.course}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded-full ${statusClass}">
+                                ${student.status}
+                            </span>
+                        </div>
+                    `;
+                });
+            } else {
+                studentListContainer.innerHTML = '<p class="text-sm text-gray-500 p-2">No student details available or error loading data.</p>';
+                console.error('API returned success=false or no students:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching student details:', error);
+            studentListContainer.innerHTML = `<p class="text-sm text-red-500 p-2">Error loading student details: ${error.message}</p>`;
+        });
+    }
+
+    function closePreviewModal() {
+        document.getElementById('previewModal').classList.add('hidden');
+    }
+
+    function submitBatchApproval() {
+        // Submit the form
+        document.querySelector('form').submit();
+    }
+
+    function viewBatchDetails(batchId) {
+        // Show loading state in the modal
+        document.getElementById('detailsStudentList').innerHTML = `
+            <tr>
+                <td colspan="4" class="px-4 py-3 text-center text-sm text-gray-500">
+                    <div class="flex justify-center items-center space-x-2">
+                        <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Loading student details...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        // Show the modal immediately
+        document.getElementById('batchDetailsModal').classList.remove('hidden');
+
+        // Fetch batch details
+        fetch(`/api/batch-approval/${batchId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update modal with batch details
+                document.getElementById('detailsDate').textContent = new Date(data.date).toLocaleString();
+                document.getElementById('detailsApprovedBy').textContent = data.approved_by;
+                document.getElementById('detailsType').textContent = data.type;
+                document.getElementById('detailsSchoolYearSemester').textContent = `${data.school_year}, ${data.semester} Semester`;
+                document.getElementById('detailsComments').textContent = data.comments || 'No comments provided';
+
+                // Populate student list
+                const studentListContainer = document.getElementById('detailsStudentList');
+                studentListContainer.innerHTML = '';
+
+                if (data.students && data.students.length > 0) {
+                    data.students.forEach(student => {
+                        studentListContainer.innerHTML += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8">
+                                            <img class="h-8 w-8 rounded-full object-cover" src="${student.profile_picture || '/static/img/default-profile.png'}" alt="${student.full_name}">
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-gray-900">${student.full_name}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.student_id}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.course}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.year_level}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    studentListContainer.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-4 py-3 text-center text-sm text-gray-500">
+                                No student details available.
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching batch details:', error);
+                document.getElementById('detailsStudentList').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-4 py-3 text-center text-sm text-red-500">
+                            Error loading batch details: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function closeBatchDetailsModal() {
+        document.getElementById('batchDetailsModal').classList.add('hidden');
+    }
+
+    // Helper function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>

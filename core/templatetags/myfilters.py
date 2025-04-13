@@ -42,3 +42,16 @@ def get_item(dictionary, key):
         key = int(key)
 
     return dictionary.get(key)
+
+@register.filter(name='semester_display')
+def semester_display(semester_code):
+    """
+    Convert semester code to display text
+    Usage: {{ semester_code|semester_display }}
+    """
+    semester_map = {
+        "1ST": "First Semester",
+        "2ND": "Second Semester",
+        "SUM": "Summer"
+    }
+    return semester_map.get(semester_code, semester_code)
