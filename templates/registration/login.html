@@ -15,25 +15,25 @@
                 transform: translateY(0);
             }
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .input-focus-effect:focus {
             box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
             border-color: #10B981;
         }
-        
+
         .loading-spinner {
             display: none;
             animation: spin 1s linear infinite;
         }
-        
+
         .btn-loading .loading-spinner {
             display: inline-block;
         }
-        
+
         .btn-loading .btn-text {
             display: none;
         }
@@ -44,19 +44,19 @@
 {% block navbar %}{% endblock %}
 
 {% block content %}
-{% include 'components/navbar.html' %}
-<div class="min-h-screen bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full">
+{% include 'components/public_navbar.html' %}
+<div class="min-h-screen bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full mx-auto">
         <div class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-[fadeInUp_0.5s_ease-out] hover:shadow-3xl transition-shadow duration-300">
-            <div class="bg-emerald-600 py-8 px-8 relative overflow-hidden">
+            <div class="bg-emerald-600 py-6 sm:py-8 px-4 sm:px-8 relative overflow-hidden">
                 <div class="absolute inset-0 bg-emerald-700 opacity-50 transform -skew-y-12"></div>
-                <h2 class="text-3xl font-bold text-white text-center relative z-10">
+                <h2 class="text-2xl sm:text-3xl font-bold text-white text-center relative z-10">
                     <i class="fas fa-sign-in-alt mr-2 transform hover:rotate-12 transition-transform duration-300"></i>Login
                 </h2>
                 <p class="mt-2 text-center text-teal-100 relative z-10">Sign in to access your account</p>
             </div>
-            
-            <div class="py-8 px-8">
+
+            <div class="py-6 sm:py-8 px-4 sm:px-8">
                 {% if messages %}
                     <div class="mb-6 space-y-2">
                         {% for message in messages %}
@@ -66,7 +66,7 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                
+
                 <form method="POST" class="space-y-6" id="loginForm" onsubmit="return handleSubmit(event)">
                     {% csrf_token %}
                     <!-- Username -->
@@ -75,7 +75,7 @@
                             <i class="fas fa-user text-emerald-600 mr-2"></i>Username
                         </label>
                         <input type="text" name="username" id="username" required
-                               class="input-focus-effect mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all duration-200">
+                               class="input-focus-effect mt-1 block w-full px-3 sm:px-4 py-2 sm:py-3 text-base border border-gray-300 rounded-lg focus:outline-none transition-all duration-200">
                     </div>
 
                     <!-- Password -->
@@ -84,13 +84,13 @@
                             <i class="fas fa-lock text-emerald-600 mr-2"></i>Password
                         </label>
                         <input type="password" name="password" id="password" required
-                               class="input-focus-effect mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all duration-200">
+                               class="input-focus-effect mt-1 block w-full px-3 sm:px-4 py-2 sm:py-3 text-base border border-gray-300 rounded-lg focus:outline-none transition-all duration-200">
                     </div>
 
                     <!-- Submit Button -->
                     <div class="transform hover:scale-102 transition-transform duration-200">
                         <button type="submit" id="submitBtn"
-                                class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300">
+                                class="w-full flex justify-center items-center py-2 sm:py-3 px-3 sm:px-4 border border-transparent rounded-lg shadow-md text-sm sm:text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300">
                             <span class="btn-text flex items-center">
                                 <i class="fas fa-sign-in-alt mr-2"></i>Sign In
                             </span>
@@ -102,7 +102,7 @@
                     </div>
 
                     <!-- Register Link -->
-                    <div class="text-center text-sm transform hover:scale-102 transition-transform duration-200">
+                    <div class="text-center text-xs sm:text-sm transform hover:scale-102 transition-transform duration-200 mt-4">
                         <span class="text-gray-600">Don't have an account?</span>
                         <a href="{% url 'register' %}" class="font-medium text-emerald-600 hover:text-emerald-500 transition-colors duration-200">
                             Register here
@@ -119,7 +119,7 @@ function handleSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const submitBtn = document.getElementById('submitBtn');
-    
+
     // Add loading state
     submitBtn.classList.add('btn-loading');
     submitBtn.disabled = true;
@@ -149,16 +149,16 @@ style.textContent = `
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
-    
+
     .loading-spinner {
         display: none;
         animation: spin 1s linear infinite;
     }
-    
+
     .btn-loading .loading-spinner {
         display: inline-block;
     }
-    
+
     .btn-loading .btn-text {
         display: none;
     }
