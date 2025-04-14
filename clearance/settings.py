@@ -122,19 +122,26 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email Configuration for Gmail
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Updated to use the email from your memories
-EMAIL_HOST_PASSWORD = 'brfxwxpsbwolhvis'  # You may need to update this with the correct app password
-EMAIL_TIMEOUT = 180  # Increased timeout to 3 minutes
+# Email Configuration
+# For development, use the console backend to see emails in the console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production, uncomment these lines and use SMTP
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 465  # Using port 465 for SSL
+# EMAIL_USE_TLS = False  # Disabled TLS since we're using SSL
+# EMAIL_USE_SSL = True  # Enabled SSL
+# EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Your email address
+# EMAIL_HOST_PASSWORD = 'brfxwxpsbwolhvis'  # Your app password
+# EMAIL_TIMEOUT = 60  # Timeout in seconds
+
+# Use a default sender email for both backends
+EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Your email address
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 
 # Additional Email Settings
-EMAIL_USE_SSL = False
 EMAIL_SSL_CERTFILE = None
 EMAIL_SSL_KEYFILE = None
 
