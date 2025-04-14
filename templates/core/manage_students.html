@@ -9,7 +9,7 @@
         <div class="flex space-x-4">
             <!-- Filter Dropdown -->
             <form method="get" class="flex space-x-4">
-                <select name="year_level" onchange="this.form.submit()" 
+                <select name="year_level" onchange="this.form.submit()"
                         class="bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <option value="">All Year Levels</option>
                     <option value="1" {% if request.GET.year_level == '1' %}selected{% endif %}>1st Year</option>
@@ -19,7 +19,7 @@
                 </select>
                 <!-- Search Bar -->
                 <div class="relative">
-                    <input type="text" name="search" placeholder="Search students..." 
+                    <input type="text" name="search" placeholder="Search students..."
                            value="{{ request.GET.search }}"
                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button type="submit" class="absolute left-3 top-2.5 text-gray-400">
@@ -75,7 +75,7 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        {% with clearance=student.clearances.last %}
+                        {% with clearance=student.get_current_clearance %}
                             {% if clearance %}
                                 {% if clearance.is_cleared %}
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -95,19 +95,12 @@
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-2">
-                            {% if student.has_complete_clearance %}
-                                <a href="{% url 'print_permit' student.id %}" 
-                                   class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-200">
-                                    <i class="fas fa-print mr-2"></i> Print Permit
-                                </a>
-                            {% else %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-gray-500 bg-gray-200 cursor-not-allowed"
-                                      title="Complete all clearance requirements to print permit">
-                                    <i class="fas fa-print mr-2"></i> Print Permit
-                                </span>
-                            {% endif %}
-                            <a href="{% url 'student_detail' student.id %}" 
-                               class="text-blue-600 hover:text-blue-900" 
+                            <a href="{% url 'print_permit' student.id %}"
+                               class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-200">
+                                <i class="fas fa-print mr-2"></i> Print Permit
+                            </a>
+                            <a href="{% url 'student_detail' student.id %}"
+                               class="text-blue-600 hover:text-blue-900"
                                title="View Details">
                                 <i class="fas fa-eye"></i>
                             </a>
@@ -116,8 +109,8 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="approve">
                                     <input type="hidden" name="student_id" value="{{ student.id }}">
-                                    <button type="submit" 
-                                            class="text-green-600 hover:text-green-900" 
+                                    <button type="submit"
+                                            class="text-green-600 hover:text-green-900"
                                             title="Approve Student">
                                         <i class="fas fa-check"></i>
                                     </button>
@@ -127,8 +120,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="student_id" value="{{ student.id }}">
-                                <button type="submit" 
-                                        class="text-red-600 hover:text-red-900" 
+                                <button type="submit"
+                                        class="text-red-600 hover:text-red-900"
                                         title="Delete Student">
                                     <i class="fas fa-trash"></i>
                                 </button>

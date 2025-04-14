@@ -63,21 +63,7 @@
                     <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Clearance Management</div>
                 </a>
             </li>
-            <li>
-                <a href="{% url 'program_chair_dashboard' %}?view=batch_approval"
-                   class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-emerald-800 hover:text-white rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'program_chair_dashboard' and request.GET.view == 'batch_approval' %}bg-emerald-800 text-white{% endif %}"
-                   :class="isOpen ? '' : 'justify-center px-2'"
-                   x-data="{ tooltip: 'Batch Approval' }"
-                   @mouseenter="if(!isOpen) $el.querySelector('.tooltip').classList.remove('hidden')"
-                   @mouseleave="if(!isOpen) $el.querySelector('.tooltip').classList.add('hidden')">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                    <span x-show="isOpen">Batch Approval</span>
-                    <div x-show="!isOpen" class="tooltip hidden absolute left-20 bg-emerald-900 text-white px-2 py-1 rounded text-sm">Batch Approval</div>
-                </a>
-            </li>
+
 
             <!-- Reports & Analytics Section -->
             <li class="mt-6">

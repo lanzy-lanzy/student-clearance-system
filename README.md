@@ -7,7 +7,7 @@ A comprehensive Django-based system for managing student clearances in education
 - Student registration and approval system
 - Dynamic clearance request and approval workflow
 - Role-based access control (Admin, Staff, Program Chairs, Students)
-- SMS notifications via Infobip integration
+- SMS notifications via Twilio integration
 - PDF permit generation
 - Comprehensive reporting and analytics
 - Responsive UI with Tailwind CSS
@@ -85,13 +85,15 @@ Staff members can:
 
 ### SMS Notifications
 
-The system uses Infobip for SMS notifications. Configure your API credentials in `core/utils.py`:
+The system uses Twilio for SMS notifications. Configure your Twilio credentials in `core/utils.py`:
 
 ```python
-INFOBIP_API_HOST = 'your-api-host'
-INFOBIP_API_KEY = 'your-api-key'
-INFOBIP_SENDER = 'your-sender-number'
+TWILIO_ACCOUNT_SID = 'your-account-sid'
+TWILIO_AUTH_TOKEN = 'your-auth-token'
+TWILIO_PHONE_NUMBER = 'your-twilio-phone-number'
 ```
+
+For Philippines numbers, the system follows Twilio's Philippines SMS guidelines. However, with a trial account, SMS to Philippines numbers will be simulated due to geographic restrictions. In production with a paid Twilio account, the system will send real SMS messages to all numbers.
 
 ## License
 

@@ -59,7 +59,7 @@
 					<div>
 						<label class="block text-sm font-medium text-emerald-700">Status</label>
 						<div class="mt-1">
-							{% if student.clearance.is_cleared %}
+							{% if current_clearance and current_clearance.is_cleared %}
 							<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
 								<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -76,10 +76,10 @@
 							{% endif %}
 						</div>
 					</div>
-					{% if student.clearance.cleared_date %}
+					{% if current_clearance and current_clearance.cleared_date %}
 					<div>
 						<label class="block text-sm font-medium text-emerald-700">Cleared Date</label>
-						<p class="mt-1 text-lg text-gray-900">{{ student.clearance.cleared_date|date:"F d, Y" }}</p>
+						<p class="mt-1 text-lg text-gray-900">{{ current_clearance.cleared_date|date:"F d, Y" }}</p>
 					</div>
 					{% endif %}
 					<div>
@@ -104,7 +104,7 @@
 						</tr>
 					</thead>
 					<tbody class="bg-white divide-y divide-gray-200">
-						{% for request in student.clearance_requests.all %}
+						{% for request in clearance_requests %}
 						<tr>
 							<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ request.office.name }}</td>
 							<td class="px-6 py-4 whitespace-nowrap">

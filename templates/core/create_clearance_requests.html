@@ -34,12 +34,6 @@
                 {% endfor %}
             {% endif %}
 
-            {% if not student.program_chair %}
-                <div class="mb-6 p-4 rounded-lg bg-amber-100 text-amber-700">
-                    <strong>Warning:</strong> You don't have an assigned program chair. Please contact your administrator to assign a program chair to your account before creating a clearance request.
-                </div>
-            {% endif %}
-
             <!-- Current Details Card -->
             <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-800 mb-3">Current Details</h3>
@@ -119,7 +113,7 @@
                         <li>You can only create one clearance request per semester</li>
                         <li>Make sure to select the correct school year and semester</li>
                         <li>All required offices will be automatically included</li>
-                        <li>You can only request clearance from your assigned program chair</li>
+                        <li>Offices with program chairs assigned to them are excluded from clearance requests</li>
                         <li>You can track the status of your clearance in the dashboard</li>
                     </ul>
                 </div>

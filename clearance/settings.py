@@ -121,6 +121,47 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email Configuration for Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Updated to use the email from your memories
+EMAIL_HOST_PASSWORD = 'brfxwxpsbwolhvis'  # You may need to update this with the correct app password
+EMAIL_TIMEOUT = 180  # Increased timeout to 3 minutes
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+
+# Additional Email Settings
+EMAIL_USE_SSL = False
+EMAIL_SSL_CERTFILE = None
+EMAIL_SSL_KEYFILE = None
+
+# Connection retry settings
+EMAIL_MAX_RETRIES = 3  # Number of retries for sending emails
+EMAIL_RETRY_DELAY = 5  # Delay between retries in seconds
+
+# SMTP Debug Settings (remove in production)
+DEBUG_SMTP = True
+if DEBUG_SMTP:
+    import logging
+    logging.getLogger('django.mail').setLevel(logging.DEBUG)
+    logging.getLogger('django.mail.backends').setLevel(logging.DEBUG)
+
+# Import local settings if they exist
+try:
+    import os
+    local_settings_path = os.path.join(os.path.dirname(__file__), 'local_settings.py')
+    if os.path.exists(local_settings_path):
+        with open(local_settings_path) as f:
+            exec(f.read())
+        print("Local settings imported successfully.")
+    else:
+        print(f"Local settings file not found at {local_settings_path}")
+except Exception as e:
+    print(f"Error importing local settings: {e}")
+
 import os
 
 INSTALLED_APPS.append('core')

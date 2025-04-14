@@ -4057,24 +4057,22 @@ def print_permit(request, student_id):
     else:  # November to December
         semester = "SUM"
 
-    # Get or create a clearance record
-    clearance, created = Clearance.objects.get_or_create(
+    # Get the clearance record - don't modify its status
+    clearance = Clearance.objects.filter(
         student=student,
         school_year=school_year,
-        semester=semester,
-        defaults={
-            "is_cleared": True,
-            "cleared_date": timezone.now(),
-            "program_chair_approved": True
-        }
-    )
+        semester=semester
+    ).first()
 
-    # If the clearance already existed, ensure it's marked as cleared and approved
-    if not created and (not clearance.is_cleared or not clearance.program_chair_approved):
-        clearance.is_cleared = True
-        clearance.cleared_date = timezone.now()
-        clearance.program_chair_approved = True
-        clearance.save()
+    # If no clearance exists, create one but don't force it to be cleared
+    if not clearance:
+        clearance = Clearance.objects.create(
+            student=student,
+            school_year=school_year,
+            semester=semester
+        )
+        # Check if all requests are approved to determine if it should be cleared
+        clearance.check_clearance()
 
     return render(request, 'core/print_permit.html', {
         'student': student,
@@ -4108,26 +4106,6 @@ def batch_print_permits(request):
         semester = "1ST"
     else:  # November to December
         semester = "SUM"
-
-    # Create or update clearance records for all students
-    for student in students:
-        clearance, created = Clearance.objects.get_or_create(
-            student=student,
-            school_year=school_year,
-            semester=semester,
-            defaults={
-                "is_cleared": True,
-                "cleared_date": timezone.now(),
-                "program_chair_approved": True
-            }
-        )
-
-        # If the clearance already existed, ensure it's marked as cleared and approved
-        if not created and (not clearance.is_cleared or not clearance.program_chair_approved):
-            clearance.is_cleared = True
-            clearance.cleared_date = timezone.now()
-            clearance.program_chair_approved = True
-            clearance.save()
 
     # Clear the session data
     if 'batch_print_students' in request.session:
@@ -4449,7 +4427,7 @@ def approve_student(request, student_id):
         # Parse request body for notes
         data = json.loads(request.body)
         notes = data.get('notes', '')
-        send_sms_notification = data.get('send_sms', True)  # Default to True
+        send_email_notification = data.get('send_email', True)  # Default to True
 
         student = Student.objects.get(id=student_id)
         student.approve_student(request.user)
@@ -4463,50 +4441,31 @@ def approve_student(request, student_id):
             # student.approval_notes = notes
             # student.save()
 
-        # Send SMS notification if requested and contact number exists
-        sms_status = None
-        if send_sms_notification and student.contact_number:
-            from core.utils import send_sms
+        # Send email notification if requested
+        email_status = None
+        if send_email_notification:
+            from core.email_utils import send_approval_email
 
-            # Prepare the message
-            student_name = student.user.get_full_name()
-            message = f"Hello {student_name}, your registration for {student.course.code} has been approved. You can now log in to the system."
-
-            # Add notes if provided
-            if notes:
-                message += f" Note: {notes}"
-
-            # Use the actual Twilio service
-            # Set to False to make real API calls to Twilio
-            use_test_mode = False
-
-            # Send the SMS
-            success, result, details = send_sms(student.contact_number, message, test_mode=use_test_mode)
+            # Send the email
+            success, result, details = send_approval_email(student, notes)
 
             if success:
-                sms_status = {
+                email_status = {
                     'sent': True,
-                    'message_id': result,
-                    'test_mode': use_test_mode
+                    'message': result
                 }
-                if use_test_mode:
-                    logging.info(f"[TEST MODE] Approval SMS would be sent to student {student.student_id} at {student.contact_number}")
-                else:
-                    logging.info(f"Approval SMS sent to student {student.student_id} at {student.contact_number}")
+                logging.info(f"Approval email sent to student {student.student_id} at {student.user.email}")
             else:
                 error_message = details.get('message', result) if isinstance(details, dict) else result
-                sms_status = {
+                email_status = {
                     'sent': False,
                     'error': error_message,
                     'error_type': details.get('error_type') if isinstance(details, dict) else 'UNKNOWN_ERROR',
                     'error_code': details.get('error_code') if isinstance(details, dict) else None
                 }
-                logging.warning(f"Failed to send approval SMS to student {student.student_id}: {error_message}")
-        elif send_sms_notification and not student.contact_number:
-            sms_status = {'sent': False, 'error': 'No contact number available'}
-            logging.warning(f"Cannot send approval SMS to student {student.student_id}: No contact number available")
+                logging.warning(f"Failed to send approval email to student {student.student_id}: {error_message}")
 
-        return JsonResponse({'success': True, 'sms_status': sms_status})
+        return JsonResponse({'success': True, 'email_status': email_status})
     except Student.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Student not found'}, status=404)
     except Exception as e:
@@ -4522,7 +4481,7 @@ def reject_student(request, student_id):
     try:
         data = json.loads(request.body)
         reason = data.get('reason')
-        send_sms_notification = data.get('send_sms', True)  # Default to True
+        send_email_notification = data.get('send_email', True)  # Default to True
 
         if not reason:
             return JsonResponse({'success': False, 'error': 'Reason is required'}, status=400)
@@ -4533,46 +4492,31 @@ def reject_student(request, student_id):
         # Log the rejection
         logging.info(f"Student {student.student_id} rejected. Reason: {reason}")
 
-        # Send SMS notification if requested and contact number exists
-        sms_status = None
-        if send_sms_notification and student.contact_number:
-            from core.utils import send_sms
+        # Send email notification if requested
+        email_status = None
+        if send_email_notification:
+            from core.email_utils import send_rejection_email
 
-            # Prepare the message
-            student_name = student.user.get_full_name()
-            message = f"Hello {student_name}, your registration for {student.course.code} has been rejected. Reason: {reason}"
-
-            # Use the actual Twilio service
-            # Set to False to make real API calls to Twilio
-            use_test_mode = False
-
-            # Send the SMS
-            success, result, details = send_sms(student.contact_number, message, test_mode=use_test_mode)
+            # Send the email
+            success, result, details = send_rejection_email(student, reason)
 
             if success:
-                sms_status = {
+                email_status = {
                     'sent': True,
-                    'message_id': result,
-                    'test_mode': use_test_mode
+                    'message': result
                 }
-                if use_test_mode:
-                    logging.info(f"[TEST MODE] Rejection SMS would be sent to student {student.student_id} at {student.contact_number}")
-                else:
-                    logging.info(f"Rejection SMS sent to student {student.student_id} at {student.contact_number}")
+                logging.info(f"Rejection email sent to student {student.student_id} at {student.user.email}")
             else:
                 error_message = details.get('message', result) if isinstance(details, dict) else result
-                sms_status = {
+                email_status = {
                     'sent': False,
                     'error': error_message,
                     'error_type': details.get('error_type') if isinstance(details, dict) else 'UNKNOWN_ERROR',
                     'error_code': details.get('error_code') if isinstance(details, dict) else None
                 }
-                logging.warning(f"Failed to send rejection SMS to student {student.student_id}: {error_message}")
-        elif send_sms_notification and not student.contact_number:
-            sms_status = {'sent': False, 'error': 'No contact number available'}
-            logging.warning(f"Cannot send rejection SMS to student {student.student_id}: No contact number available")
+                logging.warning(f"Failed to send rejection email to student {student.student_id}: {error_message}")
 
-        return JsonResponse({'success': True, 'sms_status': sms_status})
+        return JsonResponse({'success': True, 'email_status': email_status})
     except Student.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Student not found'}, status=404)
     except Exception as e:

@@ -50,13 +50,13 @@
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Profile Information</h3>
-                
+
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Email</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ user.email }}</dd>
                     </div>
-                    
+
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Office</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ staff.office.name }}</dd>
@@ -66,14 +66,14 @@
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Role</dt>
                         <dd class="mt-1 text-sm text-gray-900">Dormitory Owner</dd>
-                        
+
                         {% if assigned_students %}
                         <div class="mt-4">
                             <h4 class="text-sm font-medium text-gray-500">Assigned Students</h4>
                             <ul class="mt-2 divide-y divide-gray-200">
                                 {% for student in assigned_students %}
                                 <li class="py-2">
-                                    <p class="text-sm text-gray-900">{{ student.full_name }}</p>
+                                    <p class="text-sm text-gray-900">{{ student.get_full_name }}</p>
                                     <p class="text-sm text-gray-500">{{ student.student_id }}</p>
                                 </li>
                                 {% endfor %}

@@ -574,8 +574,8 @@ class ProgramChairAdmin(admin.ModelAdmin):
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('student_id', 'get_full_name', 'user_email', 'course', 'year_level',
-                   'contact_number', 'is_boarder', 'is_approved', 'clearance_status', 'profile_picture_preview')
-    list_filter = ('course', 'year_level', 'is_boarder', 'is_approved', 'created_at')
+                   'contact_number', 'is_boarder', 'approval_status', 'clearance_status', 'profile_picture_preview')
+    list_filter = ('course', 'year_level', 'is_boarder', 'user__is_active', 'created_at')
     search_fields = ('student_id', 'user__username', 'user__first_name', 'user__last_name',
                     'user__email', 'contact_number')
     raw_id_fields = ('user', 'course', 'program_chair', 'dormitory_owner')
@@ -591,6 +591,13 @@ class StudentAdmin(admin.ModelAdmin):
     def user_email(self, obj):
         return obj.user.email
     user_email.short_description = 'Email'
+
+    def approval_status(self, obj):
+        if obj.user.is_active:
+            return format_html('<span style="color: green;">Approved</span>')
+        else:
+            return format_html('<span style="color: red;">Pending</span>')
+    approval_status.short_description = 'Approval Status'
 
     def clearance_status(self, obj):
         current_year = timezone.now().year
