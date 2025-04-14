@@ -3,9 +3,9 @@ from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
 # Twilio credentials
-TWILIO_ACCOUNT_SID = 'AC6133d48f61383a9309ecab06e98c9b8f'
-TWILIO_AUTH_TOKEN = '0fb7984f841156fcd65f26bdf18624df'
-VERIFY_SERVICE_SID = 'VA28508c25ebbc58bccd88d260438c0712'  # The service SID created in our test
+TWILIO_ACCOUNT_SID = 'YOUR_TWILIO_ACCOUNT_SID'
+TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN'
+VERIFY_SERVICE_SID = 'YOUR_VERIFY_SERVICE_SID'  # The service SID created in our test
 
 def send_verification_message(to_number, message=None):
     """

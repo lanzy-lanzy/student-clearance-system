@@ -20,14 +20,14 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.colors import HexColor
 
 # Twilio credentials - should be loaded from environment variables in production
-TWILIO_ACCOUNT_SID = 'AC6133d48f61383a9309ecab06e98c9b8f'  # Replace with environment variable in production
-TWILIO_AUTH_TOKEN = '0fb7984f841156fcd65f26bdf18624df'  # Replace with environment variable in production
-TWILIO_PHONE_NUMBER = '+15418033069'  # Replace with environment variable in production
+TWILIO_ACCOUNT_SID = 'YOUR_TWILIO_ACCOUNT_SID'  # Replace with environment variable in production
+TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN'  # Replace with environment variable in production
+TWILIO_PHONE_NUMBER = '+15555555555'  # Replace with environment variable in production
 
 # Infobip credentials - should be loaded from environment variables in production
-INFOBIP_API_HOST = 'ypejm9.api.infobip.com'  # Replace with environment variable in production
-INFOBIP_API_KEY = 'a3169c60a19754c3df10cf1dd3de3f94-191444f9-cc43-426f-811e-84af9998698f'  # Replace with environment variable in production
-INFOBIP_SENDER = '447491163443'  # Replace with environment variable in production
+INFOBIP_API_HOST = 'your-api-host.infobip.com'  # Replace with environment variable in production
+INFOBIP_API_KEY = 'YOUR_INFOBIP_API_KEY'  # Replace with environment variable in production
+INFOBIP_SENDER = '447777777777'  # Replace with environment variable in production
 
 # For production, use environment variables:
 # import os

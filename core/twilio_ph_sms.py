@@ -3,9 +3,9 @@ from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
 # Twilio credentials
-TWILIO_ACCOUNT_SID = 'AC6133d48f61383a9309ecab06e98c9b8f'
-TWILIO_AUTH_TOKEN = '0fb7984f841156fcd65f26bdf18624df'
-TWILIO_PHONE_NUMBER = '+15418033069'
+TWILIO_ACCOUNT_SID = 'YOUR_TWILIO_ACCOUNT_SID'
+TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN'
+TWILIO_PHONE_NUMBER = '+15555555555'
 
 # Verified number for testing
 VERIFIED_NUMBER = '+639510440202'
