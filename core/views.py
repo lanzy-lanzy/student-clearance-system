@@ -303,14 +303,8 @@ def create_clearance_requests(request):
                 is_cleared=False
             )
 
-            # Get the student's assigned program chair and their associated dean
-            student_program_chair = student.program_chair
-            student_program_chair_dean = student_program_chair.dean if student_program_chair else None
-
-            logger.info(f"Creating clearance for student {student.id} with program chair {student_program_chair.id if student_program_chair else 'None'}")
-
-            # Get all program chairs and their associated deans
-            all_program_chairs = ProgramChair.objects.select_related('dean').all()
+            # Log student information
+            logger.info(f"Creating clearance for student {student.id}")
 
             # Get basic offices (non-program chair offices)
             required_offices = Office.objects.filter(
@@ -327,41 +321,22 @@ def create_clearance_requests(request):
                 required_offices = required_offices.exclude(name="DORMITORY")
                 logger.info(f"Excluded DORMITORY office for non-boarder student {student.id}")
 
-            # Collect all program chair offices to exclude
-            program_chair_offices_to_exclude = []
-            student_program_chair_office = None
+            # Exclude all offices that have program chairs assigned to them
+            # First, get all program chair users
+            program_chair_users = ProgramChair.objects.all().values_list('user_id', flat=True)
 
-            # Find all program chair offices
-            for pc in all_program_chairs:
-                try:
-                    # Get the staff record for this program chair
-                    pc_staff = Staff.objects.get(user=pc.user)
+            # Then, find all offices that have staff with these users
+            program_chair_offices = Office.objects.filter(staff__user_id__in=program_chair_users)
 
-                    # If this is the student's program chair, save their office
-                    if student_program_chair and pc.id == student_program_chair.id:
-                        student_program_chair_office = pc_staff.office
-                        logger.info(f"Found student's program chair office: {student_program_chair_office.name} (ID: {student_program_chair_office.id})")
-                    else:
-                        # Otherwise, add to exclusion list
-                        program_chair_offices_to_exclude.append(pc_staff.office.id)
-                        logger.info(f"Adding program chair office to exclude: {pc_staff.office.name} (ID: {pc_staff.office.id})")
-                except Staff.DoesNotExist:
-                    # Program chair doesn't have a staff record
-                    logger.warning(f"Program chair {pc.id} doesn't have a staff record")
-                    continue
+            # Also exclude offices with 'PROGRAM CHAIR' in the name
+            program_chair_name_offices = Office.objects.filter(name__icontains="PROGRAM CHAIR")
 
-            # Exclude all other program chair offices
-            if program_chair_offices_to_exclude:
-                required_offices = required_offices.exclude(id__in=program_chair_offices_to_exclude)
-                logger.info(f"Excluded {len(program_chair_offices_to_exclude)} program chair offices")
+            # Combine the office IDs to exclude
+            offices_to_exclude = list(program_chair_offices.values_list('id', flat=True)) + list(program_chair_name_offices.values_list('id', flat=True))
 
-            # Add the student's program chair's office if it exists
-            if student_program_chair_office:
-                # Convert to list and add the specific office
-                required_offices = list(required_offices)
-                if student_program_chair_office not in required_offices:
-                    required_offices.append(student_program_chair_office)
-                    logger.info(f"Added student's program chair office: {student_program_chair_office.name}")
+            if offices_to_exclude:
+                required_offices = required_offices.exclude(id__in=offices_to_exclude)
+                logger.info(f"Excluded all offices with program chairs assigned to them")
 
             # Log the final list of offices
             office_names = [office.name for office in required_offices]
@@ -810,8 +785,24 @@ def program_chair_dashboard(request):
         # Get courses for the filter dropdown
         courses = Course.objects.filter(dean=program_chair.dean)
 
-        # Get recent permits
-        recent_permits = []  # This would come from a Permit model if implemented
+        # Get recent permits (clearances with program_chair_approved=True)
+        recent_permits = clearances.filter(
+            is_cleared=True,
+            program_chair_approved=True
+        ).select_related(
+            'student', 'student__user', 'student__course'
+        ).order_by('-cleared_date')[:10]
+
+        # Transform clearances into permit format for the template
+        formatted_permits = []
+        for clearance in recent_permits:
+            formatted_permits.append({
+                'created_at': clearance.cleared_date or clearance.created_at,
+                'student': clearance.student,
+                'issued_by': request.user,
+                'school_year': clearance.school_year,
+                'semester': clearance.semester
+            })
 
         # Paginate the results
         paginator = Paginator(filtered_students, 10)
@@ -827,13 +818,41 @@ def program_chair_dashboard(request):
             'issued_percentage': issued_percentage,
             'pending_permit_percentage': pending_permit_percentage,
             'courses': courses,
-            'recent_permits': recent_permits,
+            'recent_permits': formatted_permits,
         })
 
     else:
         # Default dashboard view
-        # Get recent activities
-        recent_activities = []  # This would come from an Activity model if implemented
+        # Get recent activities from ClearanceRequest model
+        # Get students under this program chair's dean
+        student_ids = students.values_list('id', flat=True)
+
+        # Get recent clearance requests for these students
+        recent_activities = ClearanceRequest.objects.filter(
+            student_id__in=student_ids,
+            status__in=['approved', 'denied']
+        ).select_related(
+            'student', 'student__user', 'office', 'reviewed_by'
+        ).order_by('-reviewed_date')[:10]
+
+        # Transform clearance requests into activity format for the template
+        activities = []
+        for clearance_req in recent_activities:
+            status = clearance_req.status
+            description = f"{clearance_req.office.name} clearance {status}"
+
+            # Add remarks if available
+            if clearance_req.remarks:
+                description += f": {clearance_req.remarks}"
+
+            activities.append({
+                'date': clearance_req.reviewed_date or clearance_req.request_date,
+                'student': clearance_req.student,
+                'description': description,
+                'status': status,
+                'office': clearance_req.office.name,
+                'reviewer': clearance_req.reviewed_by.get_full_name() if clearance_req.reviewed_by else 'System'
+            })
 
         # Paginate students for the default view
         paginator = Paginator(students, 10)
@@ -843,7 +862,7 @@ def program_chair_dashboard(request):
         # Add default dashboard specific context
         context.update({
             'students': students_page,
-            'recent_activities': recent_activities,
+            'recent_activities': activities,
             'page_obj': students_page,
         })
 
@@ -943,7 +962,24 @@ class StudentDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     def get_queryset(self):
         return Student.objects.filter(
             course__dean=self.request.user.programchair.dean
-        ).select_related('user', 'course')  # Remove 'program_chair' and 'program_chair__user'
+        ).select_related('user', 'course', 'program_chair', 'program_chair__user')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        student = self.object
+
+        # Get the current clearance
+        current_clearance = student.get_current_clearance()
+        context['current_clearance'] = current_clearance
+
+        # Get clearance requests for the current clearance
+        if current_clearance:
+            clearance_requests = ClearanceRequest.objects.filter(
+                clearance=current_clearance
+            ).select_related('office', 'reviewed_by')
+            context['clearance_requests'] = clearance_requests
+
+        return context
 
     def handle_no_permission(self):
         messages.error(self.request, "Permission denied.")
@@ -2813,7 +2849,6 @@ def admin_reassign_students(request):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
     pending_approvals = Student.objects.filter(
-        is_approved=False,
         user__is_active=False
     ).select_related('user', 'course').order_by('-user__date_joined')
 
@@ -2915,7 +2950,7 @@ def admin_students(request):
             elif status_filter == 'inactive':
                 students = students.filter(user__is_active=False)
             elif status_filter == 'pending':
-                students = students.filter(is_approved=False)
+                students = students.filter(user__is_active=False)
 
             if boarder_filter == '1':
                 students = students.filter(is_boarder=True)
@@ -4008,8 +4043,42 @@ def update_contact_number(request):
 @login_required
 def print_permit(request, student_id):
     student = get_object_or_404(Student, id=student_id)
+
+    # Get current school year and semester
+    current_year = timezone.now().year
+    school_year = f"{current_year}-{current_year + 1}"
+
+    # Determine current semester based on month
+    month = timezone.now().month
+    if 1 <= month <= 5:  # January to May
+        semester = "2ND"
+    elif 6 <= month <= 10:  # June to October
+        semester = "1ST"
+    else:  # November to December
+        semester = "SUM"
+
+    # Get or create a clearance record
+    clearance, created = Clearance.objects.get_or_create(
+        student=student,
+        school_year=school_year,
+        semester=semester,
+        defaults={
+            "is_cleared": True,
+            "cleared_date": timezone.now(),
+            "program_chair_approved": True
+        }
+    )
+
+    # If the clearance already existed, ensure it's marked as cleared and approved
+    if not created and (not clearance.is_cleared or not clearance.program_chair_approved):
+        clearance.is_cleared = True
+        clearance.cleared_date = timezone.now()
+        clearance.program_chair_approved = True
+        clearance.save()
+
     return render(request, 'core/print_permit.html', {
         'student': student,
+        'clearance': clearance,
         'logo_url': 'images/logo.png',
     })
 
@@ -4026,6 +4095,39 @@ def batch_print_permits(request):
 
     # Get the students
     students = Student.objects.filter(id__in=student_ids)
+
+    # Get current school year and semester
+    current_year = timezone.now().year
+    school_year = f"{current_year}-{current_year + 1}"
+
+    # Determine current semester based on month
+    month = timezone.now().month
+    if 1 <= month <= 5:  # January to May
+        semester = "2ND"
+    elif 6 <= month <= 10:  # June to October
+        semester = "1ST"
+    else:  # November to December
+        semester = "SUM"
+
+    # Create or update clearance records for all students
+    for student in students:
+        clearance, created = Clearance.objects.get_or_create(
+            student=student,
+            school_year=school_year,
+            semester=semester,
+            defaults={
+                "is_cleared": True,
+                "cleared_date": timezone.now(),
+                "program_chair_approved": True
+            }
+        )
+
+        # If the clearance already existed, ensure it's marked as cleared and approved
+        if not created and (not clearance.is_cleared or not clearance.program_chair_approved):
+            clearance.is_cleared = True
+            clearance.cleared_date = timezone.now()
+            clearance.program_chair_approved = True
+            clearance.save()
 
     # Clear the session data
     if 'batch_print_students' in request.session:

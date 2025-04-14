@@ -18,8 +18,6 @@ Program Chair Dashboard
 <div class="w-full">
   {% if request.GET.view == 'clearance_management' %}
     {% include 'core/partials/program_chair_clearance_management.html' %}
-  {% elif request.GET.view == 'batch_approval' %}
-    {% include 'core/partials/program_chair_batch_approval.html' %}
   {% elif request.GET.view == 'reports' %}
     {% include 'core/partials/program_chair_reports.html' %}
   {% elif request.GET.view == 'permit_printing' %}
@@ -43,7 +41,7 @@ Program Chair Dashboard
         </div>
         <p class="text-4xl font-bold text-white mt-4">{{ pending_clearances }}</p>
         <div class="mt-4">
-          <a href="{% url 'program_chair_dashboard' %}?view=clearance_management&status=pending" class="text-white text-sm hover:underline inline-flex items-center">
+          <a href="{% url 'program_chair_dashboard' %}?view=clearance_management&status=pending&school_year={{ selected_school_year }}&semester={{ selected_semester }}" class="text-white text-sm hover:underline inline-flex items-center">
             View Details
             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -62,7 +60,7 @@ Program Chair Dashboard
         </div>
         <p class="text-4xl font-bold text-white mt-4">{{ cleared_students }}</p>
         <div class="mt-4">
-          <a href="{% url 'program_chair_dashboard' %}?view=clearance_management&status=cleared" class="text-white text-sm hover:underline inline-flex items-center">
+          <a href="{% url 'program_chair_dashboard' %}?view=clearance_management&status=cleared&school_year={{ selected_school_year }}&semester={{ selected_semester }}" class="text-white text-sm hover:underline inline-flex items-center">
             View Details
             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -102,7 +100,7 @@ Program Chair Dashboard
           <h3 class="text-xl font-bold text-emerald-900">Clearance Management</h3>
         </div>
         <p class="text-gray-600 mb-4">Review and approve student clearance requests. Track clearance progress across different offices.</p>
-        <a href="{% url 'program_chair_dashboard' %}?view=clearance_management" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+        <a href="{% url 'program_chair_dashboard' %}?view=clearance_management&school_year={{ selected_school_year }}&semester={{ selected_semester }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
           Manage Clearances
           <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -118,8 +116,8 @@ Program Chair Dashboard
           </svg>
           <h3 class="text-xl font-bold text-emerald-900">Permit Printing</h3>
         </div>
-        <p class="text-gray-600 mb-4">Print permits for students who have completed their clearance requirements. Generate batch permits for multiple students.</p>
-        <a href="{% url 'program_chair_dashboard' %}?view=permit_printing" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+        <p class="text-gray-600 mb-4">Print permits for students who have completed their clearance requirements. Students can print permits as soon as all offices have approved their clearance requests.</p>
+        <a href="{% url 'program_chair_dashboard' %}?view=permit_printing&school_year={{ selected_school_year }}&semester={{ selected_semester }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
           Print Permits
           <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
