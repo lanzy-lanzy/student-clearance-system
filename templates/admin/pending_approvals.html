@@ -125,6 +125,26 @@
                 </p>
             </div>
 
+            <!-- Email sending status indicator (hidden by default) -->
+            <div id="email-retry-indicator" class="mb-4 p-3 bg-gray-100 rounded-md hidden">
+                <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-emerald-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="email-retry-text" class="text-sm text-gray-700">Sending email notification...</span>
+                </div>
+                <div class="mt-2">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="email-retry-progress" class="bg-emerald-600 h-2.5 rounded-full" style="width: 33%"></div>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span class="text-xs text-gray-500">Attempt: <span id="email-current-attempt">1</span></span>
+                        <span class="text-xs text-gray-500">Max retries: <span id="email-max-retries">3</span></span>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end space-x-2">
                 <button id="approve-button" onclick="approveStudent()"
                         class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 flex items-center justify-center">
@@ -194,6 +214,26 @@
                         <i class="fas fa-exclamation-circle mr-1"></i> Student has no email address
                     </span>
                 </p>
+            </div>
+
+            <!-- Email sending status indicator (hidden by default) -->
+            <div id="reject-email-retry-indicator" class="mb-4 p-3 bg-gray-100 rounded-md hidden">
+                <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-red-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="reject-email-retry-text" class="text-sm text-gray-700">Sending email notification...</span>
+                </div>
+                <div class="mt-2">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="reject-email-retry-progress" class="bg-red-600 h-2.5 rounded-full" style="width: 33%"></div>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span class="text-xs text-gray-500">Attempt: <span id="reject-email-current-attempt">1</span></span>
+                        <span class="text-xs text-gray-500">Max retries: <span id="reject-email-max-retries">3</span></span>
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-end space-x-2">
@@ -267,6 +307,33 @@ function approveStudent() {
     approveButton.disabled = true;
     approveSpinner.classList.remove('hidden');
 
+    // If sending email, show the email retry indicator
+    if (sendEmail) {
+        // Initialize the retry indicator
+        document.getElementById('email-current-attempt').textContent = '1';
+        document.getElementById('email-max-retries').textContent = '3';
+        document.getElementById('email-retry-progress').style.width = '33%';
+        document.getElementById('email-retry-text').textContent = 'Sending email notification...';
+        document.getElementById('email-retry-indicator').classList.remove('hidden');
+
+        // Start a timer to simulate retry attempts (this will be replaced by actual server responses)
+        let currentAttempt = 1;
+        const maxRetries = 3;
+        const retryInterval = setInterval(() => {
+            currentAttempt++;
+            if (currentAttempt <= maxRetries) {
+                document.getElementById('email-current-attempt').textContent = currentAttempt;
+                document.getElementById('email-retry-progress').style.width = `${(currentAttempt / maxRetries) * 100}%`;
+                document.getElementById('email-retry-text').textContent = `Retrying email (attempt ${currentAttempt}/${maxRetries})...`;
+            } else {
+                clearInterval(retryInterval);
+            }
+        }, 5000); // 5 seconds between retry attempts
+
+        // Store the interval ID so we can clear it when the response comes back
+        window.emailRetryInterval = retryInterval;
+    }
+
     // Set a timeout to re-enable the button if the request takes too long
     const timeoutId = setTimeout(() => {
         if (approveButton.disabled) {
@@ -313,6 +380,15 @@ function approveStudent() {
         // Clear the timeout since we got a response
         clearTimeout(timeoutId);
 
+        // Clear the retry interval if it exists
+        if (window.emailRetryInterval) {
+            clearInterval(window.emailRetryInterval);
+            window.emailRetryInterval = null;
+        }
+
+        // Hide the email retry indicator
+        document.getElementById('email-retry-indicator').classList.add('hidden');
+
         // Hide spinner and enable button
         const approveButton = document.getElementById('approve-button');
         const approveSpinner = document.getElementById('approve-spinner');
@@ -330,9 +406,19 @@ function approveStudent() {
             // Add email status if applicable
             if (data.email_status) {
                 if (data.email_status.sent) {
-                    notificationMessage += ' Email notification sent.';
+                    const attempts = data.email_status.attempts || 1;
+                    const maxRetries = data.email_status.max_retries || 3;
+
+                    if (attempts > 1) {
+                        notificationMessage += ` Email notification sent after ${attempts}/${maxRetries} attempts.`;
+                    } else {
+                        notificationMessage += ' Email notification sent.';
+                    }
                 } else {
-                    notificationMessage += ` Email notification failed: ${data.email_status.error}`;
+                    const attempts = data.email_status.attempts || 1;
+                    const maxRetries = data.email_status.max_retries || 3;
+
+                    notificationMessage += ` Email notification failed after ${attempts}/${maxRetries} attempts: ${data.email_status.error}`;
                     notificationType = 'warning'; // Change notification type to warning if email failed
                 }
             }
@@ -376,6 +462,15 @@ function approveStudent() {
     .catch(error => {
         // Clear the timeout since we got a response (even if it's an error)
         clearTimeout(timeoutId);
+
+        // Clear the retry interval if it exists
+        if (window.emailRetryInterval) {
+            clearInterval(window.emailRetryInterval);
+            window.emailRetryInterval = null;
+        }
+
+        // Hide the email retry indicator
+        document.getElementById('email-retry-indicator').classList.add('hidden');
 
         // Hide spinner and enable button on error
         const approveButton = document.getElementById('approve-button');
@@ -457,6 +552,33 @@ function rejectStudent() {
     rejectButton.disabled = true;
     rejectSpinner.classList.remove('hidden');
 
+    // If sending email, show the email retry indicator
+    if (sendEmail) {
+        // Initialize the retry indicator
+        document.getElementById('reject-email-current-attempt').textContent = '1';
+        document.getElementById('reject-email-max-retries').textContent = '3';
+        document.getElementById('reject-email-retry-progress').style.width = '33%';
+        document.getElementById('reject-email-retry-text').textContent = 'Sending email notification...';
+        document.getElementById('reject-email-retry-indicator').classList.remove('hidden');
+
+        // Start a timer to simulate retry attempts (this will be replaced by actual server responses)
+        let currentAttempt = 1;
+        const maxRetries = 3;
+        const retryInterval = setInterval(() => {
+            currentAttempt++;
+            if (currentAttempt <= maxRetries) {
+                document.getElementById('reject-email-current-attempt').textContent = currentAttempt;
+                document.getElementById('reject-email-retry-progress').style.width = `${(currentAttempt / maxRetries) * 100}%`;
+                document.getElementById('reject-email-retry-text').textContent = `Retrying email (attempt ${currentAttempt}/${maxRetries})...`;
+            } else {
+                clearInterval(retryInterval);
+            }
+        }, 5000); // 5 seconds between retry attempts
+
+        // Store the interval ID so we can clear it when the response comes back
+        window.rejectEmailRetryInterval = retryInterval;
+    }
+
     // Set a timeout to re-enable the button if the request takes too long
     const timeoutId = setTimeout(() => {
         if (rejectButton.disabled) {
@@ -503,6 +625,15 @@ function rejectStudent() {
         // Clear the timeout since we got a response
         clearTimeout(timeoutId);
 
+        // Clear the retry interval if it exists
+        if (window.rejectEmailRetryInterval) {
+            clearInterval(window.rejectEmailRetryInterval);
+            window.rejectEmailRetryInterval = null;
+        }
+
+        // Hide the email retry indicator
+        document.getElementById('reject-email-retry-indicator').classList.add('hidden');
+
         // Hide spinner and enable button
         const rejectButton = document.getElementById('reject-button');
         const rejectSpinner = document.getElementById('reject-spinner');
@@ -520,9 +651,19 @@ function rejectStudent() {
             // Add email status if applicable
             if (data.email_status) {
                 if (data.email_status.sent) {
-                    notificationMessage += ' Email notification sent.';
+                    const attempts = data.email_status.attempts || 1;
+                    const maxRetries = data.email_status.max_retries || 3;
+
+                    if (attempts > 1) {
+                        notificationMessage += ` Email notification sent after ${attempts}/${maxRetries} attempts.`;
+                    } else {
+                        notificationMessage += ' Email notification sent.';
+                    }
                 } else {
-                    notificationMessage += ` Email notification failed: ${data.email_status.error}`;
+                    const attempts = data.email_status.attempts || 1;
+                    const maxRetries = data.email_status.max_retries || 3;
+
+                    notificationMessage += ` Email notification failed after ${attempts}/${maxRetries} attempts: ${data.email_status.error}`;
                     notificationType = 'warning'; // Change notification type to warning if email failed
                 }
             }
@@ -568,6 +709,15 @@ function rejectStudent() {
     .catch(error => {
         // Clear the timeout since we got a response (even if it's an error)
         clearTimeout(timeoutId);
+
+        // Clear the retry interval if it exists
+        if (window.rejectEmailRetryInterval) {
+            clearInterval(window.rejectEmailRetryInterval);
+            window.rejectEmailRetryInterval = null;
+        }
+
+        // Hide the email retry indicator
+        document.getElementById('reject-email-retry-indicator').classList.add('hidden');
 
         // Hide spinner and enable button on error
         const rejectButton = document.getElementById('reject-button');

@@ -4452,18 +4452,22 @@ def approve_student(request, student_id):
             if success:
                 email_status = {
                     'sent': True,
-                    'message': result
+                    'message': result,
+                    'attempts': details.get('attempts', 1) if isinstance(details, dict) else 1,
+                    'max_retries': getattr(settings, 'EMAIL_MAX_RETRIES', 3)
                 }
-                logging.info(f"Approval email sent to student {student.student_id} at {student.user.email}")
+                logging.info(f"Approval email sent to student {student.student_id} at {student.user.email} after {details.get('attempts', 1)} attempts")
             else:
                 error_message = details.get('message', result) if isinstance(details, dict) else result
                 email_status = {
                     'sent': False,
                     'error': error_message,
                     'error_type': details.get('error_type') if isinstance(details, dict) else 'UNKNOWN_ERROR',
-                    'error_code': details.get('error_code') if isinstance(details, dict) else None
+                    'error_code': details.get('error_code') if isinstance(details, dict) else None,
+                    'attempts': details.get('attempts', 1) if isinstance(details, dict) else 1,
+                    'max_retries': getattr(settings, 'EMAIL_MAX_RETRIES', 3)
                 }
-                logging.warning(f"Failed to send approval email to student {student.student_id}: {error_message}")
+                logging.warning(f"Failed to send approval email to student {student.student_id} after {details.get('attempts', 1)} attempts: {error_message}")
 
         return JsonResponse({'success': True, 'email_status': email_status})
     except Student.DoesNotExist:
@@ -4503,18 +4507,22 @@ def reject_student(request, student_id):
             if success:
                 email_status = {
                     'sent': True,
-                    'message': result
+                    'message': result,
+                    'attempts': details.get('attempts', 1) if isinstance(details, dict) else 1,
+                    'max_retries': getattr(settings, 'EMAIL_MAX_RETRIES', 3)
                 }
-                logging.info(f"Rejection email sent to student {student.student_id} at {student.user.email}")
+                logging.info(f"Rejection email sent to student {student.student_id} at {student.user.email} after {details.get('attempts', 1)} attempts")
             else:
                 error_message = details.get('message', result) if isinstance(details, dict) else result
                 email_status = {
                     'sent': False,
                     'error': error_message,
                     'error_type': details.get('error_type') if isinstance(details, dict) else 'UNKNOWN_ERROR',
-                    'error_code': details.get('error_code') if isinstance(details, dict) else None
+                    'error_code': details.get('error_code') if isinstance(details, dict) else None,
+                    'attempts': details.get('attempts', 1) if isinstance(details, dict) else 1,
+                    'max_retries': getattr(settings, 'EMAIL_MAX_RETRIES', 3)
                 }
-                logging.warning(f"Failed to send rejection email to student {student.student_id}: {error_message}")
+                logging.warning(f"Failed to send rejection email to student {student.student_id} after {details.get('attempts', 1)} attempts: {error_message}")
 
         return JsonResponse({'success': True, 'email_status': email_status})
     except Student.DoesNotExist:
