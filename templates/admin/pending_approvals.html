@@ -267,6 +267,36 @@ function approveStudent() {
     approveButton.disabled = true;
     approveSpinner.classList.remove('hidden');
 
+    // Set a timeout to re-enable the button if the request takes too long
+    const timeoutId = setTimeout(() => {
+        if (approveButton.disabled) {
+            approveButton.disabled = false;
+            approveSpinner.classList.add('hidden');
+
+            // Show a warning notification that the request is taking longer than expected
+            const warningNotification = document.createElement('div');
+            warningNotification.className = 'fixed bottom-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md';
+            warningNotification.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">The approval request is taking longer than expected. The student has been approved, but the email notification may still be processing.</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(warningNotification);
+
+            // Remove warning notification after 5 seconds
+            setTimeout(() => {
+                warningNotification.remove();
+            }, 5000);
+        }
+    }, 10000); // 10 seconds timeout
+
     fetch(`/dashboard/admin/approve-student/${selectedStudentId}/`, {
         method: 'POST',
         headers: {
@@ -280,6 +310,9 @@ function approveStudent() {
     })
     .then(response => response.json())
     .then(data => {
+        // Clear the timeout since we got a response
+        clearTimeout(timeoutId);
+
         // Hide spinner and enable button
         const approveButton = document.getElementById('approve-button');
         const approveSpinner = document.getElementById('approve-spinner');
@@ -292,6 +325,7 @@ function approveStudent() {
 
             // Prepare notification message
             let notificationMessage = `Student ${selectedStudentName} approved successfully!`;
+            let notificationType = 'success';
 
             // Add email status if applicable
             if (data.email_status) {
@@ -299,17 +333,28 @@ function approveStudent() {
                     notificationMessage += ' Email notification sent.';
                 } else {
                     notificationMessage += ` Email notification failed: ${data.email_status.error}`;
+                    notificationType = 'warning'; // Change notification type to warning if email failed
                 }
             }
 
             // Show success notification
+            const notificationClass = notificationType === 'success'
+                ? 'fixed bottom-4 right-4 bg-emerald-100 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded shadow-md'
+                : 'fixed bottom-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md';
+
+            const iconPath = notificationType === 'success'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />';
+
+            const iconColor = notificationType === 'success' ? 'text-emerald-500' : 'text-yellow-500';
+
             const notification = document.createElement('div');
-            notification.className = 'fixed bottom-4 right-4 bg-emerald-100 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded shadow-md';
+            notification.className = notificationClass;
             notification.innerHTML = `
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        <svg class="h-5 w-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            ${iconPath}
                         </svg>
                     </div>
                     <div class="ml-3">
@@ -319,16 +364,19 @@ function approveStudent() {
             `;
             document.body.appendChild(notification);
 
-            // Remove notification after 3 seconds
+            // Remove notification after 5 seconds
             setTimeout(() => {
                 notification.remove();
                 location.reload();
-            }, 3000);
+            }, 5000);
         } else {
             alert(data.error || 'Failed to approve student');
         }
     })
     .catch(error => {
+        // Clear the timeout since we got a response (even if it's an error)
+        clearTimeout(timeoutId);
+
         // Hide spinner and enable button on error
         const approveButton = document.getElementById('approve-button');
         const approveSpinner = document.getElementById('approve-spinner');
@@ -336,7 +384,7 @@ function approveStudent() {
         approveSpinner.classList.add('hidden');
 
         console.error('Error:', error);
-        alert('Error processing request');
+        alert('Error processing request. The student may have been approved, but there was an error with the notification.');
     });
 }
 
@@ -409,6 +457,36 @@ function rejectStudent() {
     rejectButton.disabled = true;
     rejectSpinner.classList.remove('hidden');
 
+    // Set a timeout to re-enable the button if the request takes too long
+    const timeoutId = setTimeout(() => {
+        if (rejectButton.disabled) {
+            rejectButton.disabled = false;
+            rejectSpinner.classList.add('hidden');
+
+            // Show a warning notification that the request is taking longer than expected
+            const warningNotification = document.createElement('div');
+            warningNotification.className = 'fixed bottom-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md';
+            warningNotification.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">The rejection request is taking longer than expected. The student has been rejected, but the email notification may still be processing.</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(warningNotification);
+
+            // Remove warning notification after 5 seconds
+            setTimeout(() => {
+                warningNotification.remove();
+            }, 5000);
+        }
+    }, 10000); // 10 seconds timeout
+
     fetch(`/dashboard/admin/reject-student/${selectedStudentId}/`, {
         method: 'POST',
         headers: {
@@ -422,6 +500,9 @@ function rejectStudent() {
     })
     .then(response => response.json())
     .then(data => {
+        // Clear the timeout since we got a response
+        clearTimeout(timeoutId);
+
         // Hide spinner and enable button
         const rejectButton = document.getElementById('reject-button');
         const rejectSpinner = document.getElementById('reject-spinner');
@@ -434,6 +515,7 @@ function rejectStudent() {
 
             // Prepare notification message
             let notificationMessage = `Student ${selectedStudentName} rejected successfully.`;
+            let notificationType = 'error'; // Default to error style for rejection
 
             // Add email status if applicable
             if (data.email_status) {
@@ -441,17 +523,30 @@ function rejectStudent() {
                     notificationMessage += ' Email notification sent.';
                 } else {
                     notificationMessage += ` Email notification failed: ${data.email_status.error}`;
+                    notificationType = 'warning'; // Change notification type to warning if email failed
                 }
             }
 
-            // Show success notification
+            // Show notification
+            let notificationClass, iconPath, iconColor;
+
+            if (notificationType === 'error') {
+                notificationClass = 'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md';
+                iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+                iconColor = 'text-red-500';
+            } else { // warning
+                notificationClass = 'fixed bottom-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md';
+                iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />';
+                iconColor = 'text-yellow-500';
+            }
+
             const notification = document.createElement('div');
-            notification.className = 'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md';
+            notification.className = notificationClass;
             notification.innerHTML = `
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg class="h-5 w-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            ${iconPath}
                         </svg>
                     </div>
                     <div class="ml-3">
@@ -461,16 +556,19 @@ function rejectStudent() {
             `;
             document.body.appendChild(notification);
 
-            // Remove notification after 3 seconds
+            // Remove notification after 5 seconds
             setTimeout(() => {
                 notification.remove();
                 location.reload();
-            }, 3000);
+            }, 5000);
         } else {
             alert(data.error || 'Failed to reject student');
         }
     })
     .catch(error => {
+        // Clear the timeout since we got a response (even if it's an error)
+        clearTimeout(timeoutId);
+
         // Hide spinner and enable button on error
         const rejectButton = document.getElementById('reject-button');
         const rejectSpinner = document.getElementById('reject-spinner');
@@ -478,7 +576,7 @@ function rejectStudent() {
         rejectSpinner.classList.add('hidden');
 
         console.error('Error:', error);
-        alert('Error processing request');
+        alert('Error processing request. The student may have been rejected, but there was an error with the notification.');
     });
 }
 
