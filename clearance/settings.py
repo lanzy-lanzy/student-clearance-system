@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -123,18 +124,19 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration
-# For development, use the console backend to see emails in the console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# For development, use the file backend to save emails to files
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')  # Directory where emails will be saved
 
 # For production, uncomment these lines and use SMTP
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 465  # Using port 465 for SSL
-# EMAIL_USE_TLS = False  # Disabled TLS since we're using SSL
-# EMAIL_USE_SSL = True  # Enabled SSL
+# EMAIL_PORT = 587  # Using port 587 for TLS
+# EMAIL_USE_TLS = True  # Enable TLS
+# EMAIL_USE_SSL = False  # Disable SSL
 # EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Your email address
 # EMAIL_HOST_PASSWORD = 'brfxwxpsbwolhvis'  # Your app password
-# EMAIL_TIMEOUT = 60  # Timeout in seconds
+# EMAIL_TIMEOUT = 30  # Timeout in seconds
 
 # Use a default sender email for both backends
 EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Your email address

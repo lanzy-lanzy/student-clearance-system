@@ -18,7 +18,7 @@ logging.basicConfig(
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'clearance.settings')
 django.setup()
 
-from core.email_utils import send_email
+from core.email_utils import send_email, send_direct_email
 from django.conf import settings
 
 # Log the email configuration
@@ -45,14 +45,14 @@ except Exception as e:
     logger.error(f"Failed to connect to {settings.EMAIL_HOST}:{settings.EMAIL_PORT}: {str(e)}")
     logger.error("This indicates a network connectivity issue or firewall blocking the connection.")
 
-# Test the send_email function
-logger.info("Sending test email...")
+# Test the regular send_email function
+logger.info("\nTesting Django's email backend...")
 try:
     success, result, details = send_email(
         'balolaoapriljane11@gmail.com',  # Use the email from the error log
-        'Test Email from Student Clearance System',
-        'This is a test email from the Student Clearance System.',
-        '<h1>Test Email</h1><p>This is a test email from the Student Clearance System.</p>'
+        'Test Email from Student Clearance System (Django Backend)',
+        'This is a test email from the Student Clearance System using Django backend.',
+        '<h1>Test Email</h1><p>This is a test email from the Student Clearance System using Django backend.</p>'
     )
 
     # Log the result
@@ -76,5 +76,37 @@ except (socket.error, ssl.SSLError, SMTPException) as e:
         logger.error(f"SMTP error details: {e.smtp_code if hasattr(e, 'smtp_code') else 'N/A'} - {e.smtp_error if hasattr(e, 'smtp_error') else 'N/A'}")
 except Exception as e:
     logger.error(f"Unexpected error during email test: {type(e).__name__} - {str(e)}")
+
+# Test the direct SMTP email function
+logger.info("\nTesting direct SMTP connection...")
+try:
+    success, result, details = send_direct_email(
+        'balolaoapriljane11@gmail.com',  # Use the email from the error log
+        'Test Email from Student Clearance System (Direct SMTP)',
+        'This is a test email from the Student Clearance System using direct SMTP connection.',
+        '<h1>Test Email</h1><p>This is a test email from the Student Clearance System using direct SMTP connection.</p>'
+    )
+
+    # Log the result
+    if success:
+        logger.info(f"Direct email sent successfully: {result}")
+        logger.info(f"Details: {details}")
+    else:
+        logger.error(f"Direct email sending failed: {result}")
+        logger.error(f"Details: {details}")
+except (socket.error, ssl.SSLError, SMTPException) as e:
+    error_type = type(e).__name__
+    logger.error(f"Direct email sending failed with {error_type}: {str(e)}")
+
+    # Log more detailed information about the error
+    if isinstance(e, socket.error):
+        logger.error(f"Socket error details: Error code: {e.errno if hasattr(e, 'errno') else 'N/A'}")
+        logger.error(f"Socket error message: {e.strerror if hasattr(e, 'strerror') else 'N/A'}")
+    elif isinstance(e, ssl.SSLError):
+        logger.error(f"SSL error details: {e.reason if hasattr(e, 'reason') else 'N/A'}")
+    elif isinstance(e, SMTPException):
+        logger.error(f"SMTP error details: {e.smtp_code if hasattr(e, 'smtp_code') else 'N/A'} - {e.smtp_error if hasattr(e, 'smtp_error') else 'N/A'}")
+except Exception as e:
+    logger.error(f"Unexpected error during direct email test: {type(e).__name__} - {str(e)}")
 
 print("\nTest completed. Check the logs above for results.")
