@@ -3582,36 +3582,31 @@ def admin_reports(request):
         semester = request.POST.get('semester')
         format_type = request.POST.get('format_type', 'pdf')
 
-        if report_type == 'clearance_summary':
-            # Generate clearance summary report
-            clearances = Clearance.objects.filter(school_year=school_year, semester=semester)
-            total_students = clearances.count()
-            cleared_students = clearances.filter(is_cleared=True).count()
-            pending_students = total_students - cleared_students
+        if report_type == 'student_list':
+            # Generate student list report
+            students = Student.objects.select_related('user', 'course').all()
 
-            report_data = {
-                'total_students': total_students,
-                'cleared_students': cleared_students,
-                'pending_students': pending_students,
-                'clearance_rate': round((cleared_students / total_students * 100) if total_students > 0 else 0, 2)
-            }
+            # Check if there's data
+            if not students.exists():
+                messages.warning(request, "No student data found for the selected criteria.")
+                return redirect('admin_reports')
 
             if format_type == 'pdf':
-                from core.pdf_utils import generate_clearance_summary_pdf
-                pdf = generate_clearance_summary_pdf(report_data, request, school_year, semester)
+                from core.pdf_utils import generate_students_pdf
+                pdf = generate_students_pdf(students, request)
                 response = HttpResponse(pdf, content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="clearance_summary_{school_year}_{semester}.pdf"'
+                response['Content-Disposition'] = f'attachment; filename="student_list_{school_year}_{semester}.pdf"'
                 return response
             else:  # Excel format
                 response = HttpResponse(content_type='application/vnd.ms-excel')
-                response['Content-Disposition'] = f'attachment; filename="clearance_summary_{school_year}_{semester}.xlsx"'
+                response['Content-Disposition'] = f'attachment; filename="student_list_{school_year}_{semester}.xlsx"'
 
                 wb = Workbook()
                 ws = wb.active
-                ws.title = "Clearance Summary"
+                ws.title = "Student List"
 
                 # Add headers
-                headers = ['Metric', 'Value']
+                headers = ['ID', 'Name', 'Course', 'Year Level', 'Contact Number']
                 for col_num, header in enumerate(headers, 1):
                     cell = ws.cell(row=1, column=col_num)
                     cell.value = header
@@ -3620,14 +3615,121 @@ def admin_reports(request):
                     cell.alignment = Alignment(horizontal="center")
 
                 # Add data
-                data = [
-                    ['Total Students', report_data['total_students']],
-                    ['Cleared Students', report_data['cleared_students']],
-                    ['Pending Students', report_data['pending_students']],
-                    ['Clearance Rate', f"{report_data['clearance_rate']}%"]
-                ]
+                for row_num, student in enumerate(students, 2):
+                    row_data = [
+                        student.student_id,
+                        f"{student.user.first_name} {student.user.last_name}",
+                        student.course.name if student.course else 'Not assigned',
+                        student.year_level,
+                        student.contact_number or 'N/A'
+                    ]
 
-                for row_num, row_data in enumerate(data, 2):
+                    for col_num, cell_value in enumerate(row_data, 1):
+                        cell = ws.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                wb.save(response)
+                return response
+
+        elif report_type == 'pending_clearances':
+            # Generate pending clearances report
+            clearance_requests = ClearanceRequest.objects.filter(
+                school_year=school_year,
+                semester=semester,
+                status='pending'
+            ).select_related('student', 'office')
+
+            # Check if there's data
+            if not clearance_requests.exists():
+                messages.warning(request, "No pending clearance requests found for the selected criteria.")
+                return redirect('admin_reports')
+
+            if format_type == 'pdf':
+                # PDF generation logic would go here
+                response = HttpResponse(content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="pending_clearances_{school_year}_{semester}.pdf"'
+                # Add PDF generation logic
+                return response
+            else:  # Excel format
+                response = HttpResponse(content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = f'attachment; filename="pending_clearances_{school_year}_{semester}.xlsx"'
+
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "Pending Clearances"
+
+                # Add headers
+                headers = ['Student ID', 'Student Name', 'Office', 'Request Date']
+                for col_num, header in enumerate(headers, 1):
+                    cell = ws.cell(row=1, column=col_num)
+                    cell.value = header
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+                    cell.alignment = Alignment(horizontal="center")
+
+                # Add data
+                for row_num, request in enumerate(clearance_requests, 2):
+                    row_data = [
+                        request.student.student_id,
+                        f"{request.student.user.first_name} {request.student.user.last_name}",
+                        request.office.name,
+                        request.request_date.strftime("%Y-%m-%d") if request.request_date else 'N/A'
+                    ]
+
+                    for col_num, cell_value in enumerate(row_data, 1):
+                        cell = ws.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                wb.save(response)
+                return response
+
+        elif report_type == 'cleared_students':
+            # Generate cleared students report
+            clearances = Clearance.objects.filter(
+                school_year=school_year,
+                semester=semester,
+                is_cleared=True
+            ).select_related('student')
+
+            # Check if there's data
+            if not clearances.exists():
+                messages.warning(request, "No cleared students found for the selected criteria.")
+                return redirect('admin_reports')
+
+            if format_type == 'pdf':
+                # PDF generation logic would go here
+                response = HttpResponse(content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="cleared_students_{school_year}_{semester}.pdf"'
+                # Add PDF generation logic
+                return response
+            else:  # Excel format
+                response = HttpResponse(content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = f'attachment; filename="cleared_students_{school_year}_{semester}.xlsx"'
+
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "Cleared Students"
+
+                # Add headers
+                headers = ['Student ID', 'Student Name', 'Course', 'Year Level', 'Date Cleared']
+                for col_num, header in enumerate(headers, 1):
+                    cell = ws.cell(row=1, column=col_num)
+                    cell.value = header
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+                    cell.alignment = Alignment(horizontal="center")
+
+                # Add data
+                for row_num, clearance in enumerate(clearances, 2):
+                    student = clearance.student
+                    row_data = [
+                        student.student_id,
+                        f"{student.user.first_name} {student.user.last_name}",
+                        student.course.name if student.course else 'Not assigned',
+                        student.year_level,
+                        clearance.cleared_date.strftime("%Y-%m-%d") if clearance.cleared_date else 'N/A'
+                    ]
+
                     for col_num, cell_value in enumerate(row_data, 1):
                         cell = ws.cell(row=row_num, column=col_num)
                         cell.value = cell_value
@@ -3765,6 +3867,7 @@ def admin_reports(request):
     return render(request, 'admin/reports.html', {
         'school_years': get_school_years(),
         'semesters': SEMESTER_CHOICES,
+        'now': datetime.now(),
     })
 
 @login_required
