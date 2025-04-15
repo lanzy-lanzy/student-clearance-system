@@ -488,6 +488,7 @@ def program_chair_dashboard(request):
         semester=selected_semester
     )
 
+    # Calculate real data counts for dashboard cards
     cleared_students = clearances.filter(is_cleared=True).count()
     pending_clearances = clearances.filter(is_cleared=False).count()
 
