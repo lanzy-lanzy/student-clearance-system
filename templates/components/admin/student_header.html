@@ -1,0 +1,44 @@
+<!-- Student Management Header Component -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 p-6 rounded-xl shadow-lg text-white transform transition-all duration-300 hover:shadow-xl">
+    <div class="animate-fadeIn">
+        <h1 class="text-3xl font-bold tracking-tight">Student Management</h1>
+        <p class="mt-2 text-emerald-100">Comprehensive view and management of all students</p>
+    </div>
+    <div class="mt-4 md:mt-0 flex flex-wrap gap-3">
+        <form method="post" action="{% url 'admin_students' %}" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_student_form">
+            <button type="submit" class="flex items-center px-4 py-2 bg-white text-emerald-700 rounded-lg hover:bg-emerald-50 transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-1">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Student
+            </button>
+        </form>
+        <form method="post" action="{% url 'admin_students' %}" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="export_pdf">
+            <input type="hidden" name="search_query" value="{{ search_query }}">
+            <input type="hidden" name="course_filter" value="{{ course_filter }}">
+            <input type="hidden" name="year_level_filter" value="{{ year_level_filter }}">
+            <input type="hidden" name="status_filter" value="{{ status_filter }}">
+            <input type="hidden" name="boarder_filter" value="{{ boarder_filter }}">
+            <button type="submit" class="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-all duration-200 font-medium shadow-sm border border-emerald-400 hover:shadow-md transform hover:-translate-y-1">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export to PDF
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+</style>

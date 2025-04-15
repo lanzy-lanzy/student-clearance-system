@@ -3,12 +3,14 @@ import time
 import socket
 import ssl
 import smtplib
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from smtplib import SMTPException
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, TemplateDoesNotExist
+from django.template import engines
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +214,23 @@ def send_email(to_email, subject, message, html_message=None):
             # Wait before retrying
             time.sleep(retry_delay)
 
+def template_exists(template_name):
+    """
+    Check if a template exists in any of the template directories.
+
+    Args:
+        template_name (str): The name of the template to check
+
+    Returns:
+        bool: True if the template exists, False otherwise
+    """
+    try:
+        # Try to find the template
+        template = engines['django'].get_template(template_name)
+        return True
+    except TemplateDoesNotExist:
+        return False
+
 def send_approval_email(student, notes=None):
     """
     Send an approval notification email to a student.
@@ -237,11 +256,11 @@ def send_approval_email(student, notes=None):
         'student_name': student_name,
         'course_code': student.course.code,
         'notes': notes,
-        'login_url': settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') else '/login/'
+        # Use absolute URL for login with domain
+        'login_url': f"http://127.0.0.1:8000{settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') and settings.LOGIN_URL.startswith('/') else '/' + settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') else '/login/'}"
     }
 
-    # Render email templates
-    html_message = render_to_string('emails/student_approval.html', context)
+    # Plain text message as fallback
     plain_message = f"""
 Hello {student_name},
 
@@ -252,6 +271,19 @@ Your registration for {student.course.code} has been approved. You can now log i
 Thank you,
 Student Clearance System
 """
+
+    # Check if HTML template exists before rendering
+    html_message = None
+    template_name = 'emails/student_approval.html'
+
+    if template_exists(template_name):
+        try:
+            html_message = render_to_string(template_name, context)
+            logger.info(f"HTML template '{template_name}' rendered successfully")
+        except Exception as e:
+            logger.error(f"Error rendering HTML template '{template_name}': {str(e)}")
+    else:
+        logger.warning(f"HTML template '{template_name}' not found, using plain text only")
 
     return send_email(student.user.email, subject, plain_message, html_message)
 
@@ -284,11 +316,12 @@ def send_rejection_email(student, reason):
         'student_name': student_name,
         'course_code': student.course.code,
         'reason': reason,
-        'support_email': settings.DEFAULT_FROM_EMAIL
+        'support_email': settings.DEFAULT_FROM_EMAIL,
+        # Use absolute URL for login with domain (in case we need it in the rejection template)
+        'login_url': f"http://127.0.0.1:8000{settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') and settings.LOGIN_URL.startswith('/') else '/' + settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') else '/login/'}"
     }
 
-    # Render email templates
-    html_message = render_to_string('emails/student_rejection.html', context)
+    # Plain text message as fallback
     plain_message = f"""
 Hello {student_name},
 
@@ -296,10 +329,23 @@ Your registration for {student.course.code} has been rejected.
 
 Reason: {reason}
 
-If you have any questions, please contact our support team.
+If you have any questions, please contact our support team at {settings.DEFAULT_FROM_EMAIL}.
 
 Thank you,
 Student Clearance System
 """
+
+    # Check if HTML template exists before rendering
+    html_message = None
+    template_name = 'emails/student_rejection.html'
+
+    if template_exists(template_name):
+        try:
+            html_message = render_to_string(template_name, context)
+            logger.info(f"HTML template '{template_name}' rendered successfully")
+        except Exception as e:
+            logger.error(f"Error rendering HTML template '{template_name}': {str(e)}")
+    else:
+        logger.warning(f"HTML template '{template_name}' not found, using plain text only")
 
     return send_email(student.user.email, subject, plain_message, html_message)

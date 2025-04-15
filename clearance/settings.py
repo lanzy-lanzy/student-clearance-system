@@ -11,10 +11,22 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+import environ
 from pathlib import Path
+
+# Initialize environ
+env = environ.Env(
+    # Set default values
+    DEBUG=(bool, True),
+    EMAIL_HOST_USER=(str, 'digitrance01@gmail.com'),
+    EMAIL_HOST_PASSWORD=(str, 'brfxwxpsbwolhvis'),
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Look for .env file in the project root
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -124,22 +136,31 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration
-# For development, use the file backend to save emails to files
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')  # Directory where emails will be saved
+# Choose one of the following email backends:
 
-# For production, uncomment these lines and use SMTP
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587  # Using port 587 for TLS
-# EMAIL_USE_TLS = True  # Enable TLS
-# EMAIL_USE_SSL = False  # Disable SSL
-# EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Your email address
-# EMAIL_HOST_PASSWORD = 'brfxwxpsbwolhvis'  # Your app password
-# EMAIL_TIMEOUT = 30  # Timeout in seconds
+# Option 1: For development, use the file backend to save emails to files
+# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')  # Directory where emails will be saved
+
+# Option 2: For production, use SMTP (currently active)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587  # Using port 587 for TLS
+EMAIL_USE_TLS = True  # Enable TLS
+EMAIL_USE_SSL = False  # Disable SSL
+
+# Get email credentials from environment variables with fallback to defaults
+# Create a .env file in the project root with these variables to override defaults
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')  # Your email address
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')  # Your app password
+
+# Alternative account (commented out)
+# EMAIL_HOST_USER = 'bigbren480@gmail.com'
+# EMAIL_HOST_PASSWORD = 'vuhmpiryzbdezrmp'
+
+EMAIL_TIMEOUT = 60  # Timeout in seconds (reduced from 90 to improve responsiveness)
 
 # Use a default sender email for both backends
-EMAIL_HOST_USER = 'digitrance01@gmail.com'  # Your email address
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 
