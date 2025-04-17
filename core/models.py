@@ -270,8 +270,11 @@ class Clearance(models.Model):
         ordering = ['-school_year', '-semester']
 
     def check_clearance(self):
+        # Check if there are any pending or denied requests
         pending_or_denied = self.requests.filter(status__in=['pending', 'denied']).exists()
         was_cleared = self.is_cleared  # Store previous state
+
+        # If there are no pending or denied requests, mark as cleared
         self.is_cleared = not pending_or_denied
 
         # Set cleared date if newly cleared
@@ -279,11 +282,13 @@ class Clearance(models.Model):
             self.cleared_date = timezone.now()
             # Automatically set program_chair_approved to True when clearance is cleared
             self.program_chair_approved = True
-        # If no longer cleared, reset cleared date
+        # If no longer cleared, reset cleared date and program_chair_approved
         elif not self.is_cleared:
             self.cleared_date = None
+            self.program_chair_approved = False
 
         self.save()
+        return self.is_cleared  # Return the current clearance status
 
     def unlock_permit(self):
         # This method is kept for backward compatibility

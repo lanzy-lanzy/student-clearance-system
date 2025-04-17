@@ -4020,6 +4020,40 @@ def generate_reports(request):
     })
 
 @login_required
+def check_clearance_status(request, student_id):
+    """HTMX endpoint to check and update clearance status"""
+    student = get_object_or_404(Student, id=student_id)
+
+    # Get current school year and semester
+    current_year = timezone.now().year
+    school_year = f"{current_year}-{current_year + 1}"
+
+    # Determine current semester based on month
+    month = timezone.now().month
+    if 1 <= month <= 5:  # January to May
+        semester = "2ND"
+    elif 6 <= month <= 10:  # June to October
+        semester = "1ST"
+    else:  # November to December
+        semester = "SUM"
+
+    # Get or create clearance
+    clearance, created = Clearance.objects.get_or_create(
+        student=student,
+        school_year=school_year,
+        semester=semester
+    )
+
+    # Check clearance status
+    is_cleared = clearance.check_clearance()
+
+    # Return just the clearance status cell for HTMX to swap
+    return render(request, 'core/partials/clearance_status_cell.html', {
+        'student': student,
+        'clearance': clearance
+    })
+
+@login_required
 def generate_report(request):
     if request.method == 'POST':
         school_year = request.POST.get('school_year')
@@ -4161,22 +4195,23 @@ def print_permit(request, student_id):
     else:  # November to December
         semester = "SUM"
 
-    # Get the clearance record - don't modify its status
+    # Get the clearance record
     clearance = Clearance.objects.filter(
         student=student,
         school_year=school_year,
         semester=semester
     ).first()
 
-    # If no clearance exists, create one but don't force it to be cleared
+    # If no clearance exists, create one
     if not clearance:
         clearance = Clearance.objects.create(
             student=student,
             school_year=school_year,
             semester=semester
         )
-        # Check if all requests are approved to determine if it should be cleared
-        clearance.check_clearance()
+
+    # Always check clearance status to ensure it's up to date
+    clearance.check_clearance()
 
     return render(request, 'core/print_permit.html', {
         'student': student,

@@ -27,6 +27,7 @@ urlpatterns = [
     path('program-chair/batch-print-permits/', views.batch_print_permits, name='batch_print_permits'),
     path('profile/program-chair/', views.program_chair_profile, name='program_chair_profile'),
     path('clearance/<int:clearance_id>/delete/', views.delete_clearance, name='delete_clearance'),
+    path('check-clearance-status/<int:student_id>/', views.check_clearance_status, name='check_clearance_status'),
 
     # Staff Routes
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),

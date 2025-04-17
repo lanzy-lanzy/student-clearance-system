@@ -74,7 +74,10 @@
                             </span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-6 py-4 whitespace-nowrap" id="clearance-status-{{ student.id }}"
+                        hx-get="{% url 'check_clearance_status' student.id %}"
+                        hx-trigger="load, every 10s"
+                        hx-swap="innerHTML">
                         {% with clearance=student.get_current_clearance %}
                             {% if clearance %}
                                 {% if clearance.is_cleared %}
@@ -94,9 +97,34 @@
                         {% endwith %}
                     </td>
                     <td class="px-4 py-3">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2" x-data="{ isCleared: {% if student.get_current_clearance and student.get_current_clearance.is_cleared %}true{% else %}false{% endif %} }"
+                             x-init="
+                                $watch('isCleared', value => {
+                                    console.log('Clearance status changed:', value);
+                                });
+
+                                // Set up a MutationObserver to watch for changes in the clearance status cell
+                                const observer = new MutationObserver(mutations => {
+                                    mutations.forEach(mutation => {
+                                        if (mutation.type === 'childList') {
+                                            // Check if the new content contains 'Cleared'
+                                            const isNowCleared = mutation.target.textContent.includes('Cleared');
+                                            if (isNowCleared !== isCleared) {
+                                                isCleared = isNowCleared;
+                                            }
+                                        }
+                                    });
+                                });
+
+                                // Start observing the clearance status cell
+                                observer.observe(document.getElementById('clearance-status-{{ student.id }}'), {
+                                    childList: true,
+                                    subtree: true
+                                });
+                             ">
                             <a href="{% url 'print_permit' student.id %}"
-                               class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-200">
+                               class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-white transition-colors duration-200"
+                               :class="isCleared ? 'bg-green-600 hover:bg-green-700' : 'bg-emerald-600 hover:bg-emerald-700'">
                                 <i class="fas fa-print mr-2"></i> Print Permit
                             </a>
                             <a href="{% url 'student_detail' student.id %}"
