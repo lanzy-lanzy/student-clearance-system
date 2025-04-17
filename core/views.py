@@ -3697,10 +3697,10 @@ def admin_reports(request):
                 return redirect('admin_reports')
 
             if format_type == 'pdf':
-                # PDF generation logic would go here
-                response = HttpResponse(content_type='application/pdf')
+                from core.pdf_utils import generate_cleared_students_pdf
+                pdf = generate_cleared_students_pdf(clearances, request, school_year, semester)
+                response = HttpResponse(pdf, content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="cleared_students_{school_year}_{semester}.pdf"'
-                # Add PDF generation logic
                 return response
             else:  # Excel format
                 response = HttpResponse(content_type='application/vnd.ms-excel')
