@@ -4726,7 +4726,7 @@ def clearance_details(request, clearance_id):
 
     clearance_requests = ClearanceRequest.objects.filter(
         clearance=clearance
-    ).select_related('office', 'staff')
+    ).select_related('office', 'reviewed_by')
 
     return render(request, 'admin/clearance_details.html', {
         'clearance': clearance,
