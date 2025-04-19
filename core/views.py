@@ -470,7 +470,18 @@ def program_chair_dashboard(request):
     # Get current school year and semester
     current_year = timezone.now().year
     selected_school_year = request.GET.get('school_year', f"{current_year}-{current_year + 1}")
-    selected_semester = request.GET.get('semester', "1ST")
+
+    # Determine current semester based on month
+    month = timezone.now().month
+    current_semester = "1ST"
+    if 1 <= month <= 5:  # January to May
+        current_semester = "2ND"
+    elif 6 <= month <= 10:  # June to October
+        current_semester = "1ST"
+    else:  # November to December
+        current_semester = "SUM"
+
+    selected_semester = request.GET.get('semester', current_semester)
 
     # Generate available years (current year and 4 years back)
     available_years = [f"{year}-{year + 1}" for year in range(current_year - 4, current_year + 1)]
