@@ -251,6 +251,24 @@ def student_dashboard(request):
 def student_profile(request):
     try:
         student = request.user.student
+
+        if request.method == 'POST' and request.POST.get('action') == 'change_password':
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            # Validate passwords
+            if not request.user.check_password(current_password):
+                messages.error(request, 'Current password is incorrect.')
+            elif new_password != confirm_password:
+                messages.error(request, 'New passwords do not match.')
+            else:
+                # Set new password with Django's built-in password hashing
+                request.user.set_password(new_password)
+                request.user.save()
+                messages.success(request, 'Password changed successfully. Please log in with your new password.')
+                return redirect('login')
+
         student_info = {
             'full_name': student.user.get_full_name(),
             'student_id': student.student_id,
@@ -885,6 +903,24 @@ def program_chair_dashboard(request):
 def program_chair_profile(request):
     try:
         program_chair = request.user.programchair
+
+        if request.method == 'POST' and request.POST.get('action') == 'change_password':
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            # Validate passwords
+            if not request.user.check_password(current_password):
+                messages.error(request, 'Current password is incorrect.')
+            elif new_password != confirm_password:
+                messages.error(request, 'New passwords do not match.')
+            else:
+                # Set new password with Django's built-in password hashing
+                request.user.set_password(new_password)
+                request.user.save()
+                messages.success(request, 'Password changed successfully. Please log in with your new password.')
+                return redirect('login')
+
         return render(request, 'core/program_chair_profile.html', {
             'program_chair': program_chair
         })
@@ -2267,11 +2303,30 @@ def bh_owner_profile(request):
 def staff_profile(request):
     try:
         staff = request.user.staff
-        if request.method == 'POST' and 'update_role' in request.POST:
-            staff.role = request.POST.get('role')
-            staff.save()
-            messages.success(request, 'Role updated successfully')
-            return redirect('staff_profile')
+
+        if request.method == 'POST':
+            if 'update_role' in request.POST:
+                staff.role = request.POST.get('role')
+                staff.save()
+                messages.success(request, 'Role updated successfully')
+                return redirect('staff_profile')
+
+            elif request.POST.get('action') == 'change_password':
+                current_password = request.POST.get('current_password')
+                new_password = request.POST.get('new_password')
+                confirm_password = request.POST.get('confirm_password')
+
+                # Validate passwords
+                if not request.user.check_password(current_password):
+                    messages.error(request, 'Current password is incorrect.')
+                elif new_password != confirm_password:
+                    messages.error(request, 'New passwords do not match.')
+                else:
+                    # Set new password with Django's built-in password hashing
+                    request.user.set_password(new_password)
+                    request.user.save()
+                    messages.success(request, 'Password changed successfully. Please log in with your new password.')
+                    return redirect('login')
 
         return render(request, 'core/staff_profile.html', {
             'staff': staff,
@@ -2888,6 +2943,24 @@ def admin_dashboard(request):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_profile(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST' and request.POST.get('action') == 'change_password':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Validate passwords
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect.')
+        elif new_password != confirm_password:
+            messages.error(request, 'New passwords do not match.')
+        else:
+            # Set new password with Django's built-in password hashing
+            request.user.set_password(new_password)
+            request.user.save()
+            messages.success(request, 'Password changed successfully. Please log in with your new password.')
+            return redirect('login')
+
     return render(request, 'core/admin_profile.html', {
         'admin_user': request.user,
         'profile': profile
