@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Final Examination Permit{% endblock %}
+{% load myfilters %}
+{% block title %}{{ clearance.semester|semester_display }} Examination Permit{% endblock %}
 {% block sidebar %}
 {% include "components/program_chair_sidenav.html" %}
 {% endblock %}
@@ -63,7 +64,8 @@
                     </h4>
                 </div>
                 <div class="mt-2 text-emerald-600">
-                    <p>School Year: {{ clearance.school_year }} | {{ clearance.get_semester_display }}</p>
+                    <p>School Year: {{ clearance.school_year }}</p>
+                    <p class="font-semibold mt-1 semester-term">{{ clearance.semester|semester_display }}</p>
                 </div>
             </div>
         </div>
@@ -126,15 +128,26 @@
 
         <!-- Print Button (Hidden during print) -->
         <div class="mt-8 text-center print:hidden">
-            <button onclick="window.print()"
-                    class="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-lg">
-                <span class="flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                    </svg>
-                    Print Permit
-                </span>
-            </button>
+            <div class="flex justify-center space-x-4">
+                <button onclick="window.print()"
+                        class="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-lg">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        Print Permit
+                    </span>
+                </button>
+                <a href="{% url 'program_chair_dashboard' %}?view=permit_printing"
+                   class="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg hover:bg-gray-300 transition-colors duration-200 shadow-lg">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Back to Dashboard
+                    </span>
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -148,6 +161,8 @@
       body, html {
          background: #fff;
          color: #000;
+         margin: 0;
+         padding: 0;
          font-family: "Times New Roman", serif;
       }
       /* Hide interactive elements */
@@ -162,40 +177,84 @@
       #print-section, #print-section * {
           visibility: visible;
       }
-      /* Center the print section and scale to fit one page */
+      /* Center the print section and scale to fit permit size */
       #print-section {
           position: absolute;
           top: 0;
-          left: 50%;
-          transform: translateX(-50%) scale(0.88);
-          transform-origin: top center;
+          left: 0;
           width: 100%;
-      }
-      /* Adjust tables and borders for prints */
-      table {
-          border: 1px solid #000;
-      }
-      th, td {
-          border: 1px solid #000;
-      }
-      /* Ensure colors print accurately */
-      * {
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-      }
-      @page {
-          size: A4;
-          margin: 1cm;
-      }
-      /* Preserve logo shadows in print */
-      img {
-          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) !important;
+          height: auto;
+          margin: 0;
+          padding: 0;
       }
 
-      /* Ensure logos maintain size in print */
-      .w-24 {
-          width: 6rem !important;
-          height: 6rem !important;
+      /* Main permit container */
+      #print-section > div {
+          width: 3.5in !important;
+          height: 5in !important;
+          padding: 0.1in !important;
+          margin: 0 auto !important;
+          border: 1px solid #047857 !important;
+          box-sizing: border-box !important;
+      }
+
+      /* Adjust tables and borders for prints */
+      table {
+          border: 1px solid #047857 !important;
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin-top: 0.1in !important;
+      }
+      th, td {
+          border: 1px solid #047857 !important;
+          padding: 0.02in !important;
+          font-size: 6pt !important;
+          height: 0.15in !important;
+      }
+      th {
+          background-color: #047857 !important;
+          color: white !important;
+          font-weight: bold !important;
+          height: 0.2in !important;
+      }
+
+      /* Ensure colors print accurately */
+      * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+      }
+
+      @page {
+          size: 3.5in 5in !important;
+          margin: 0 !important;
+      }
+
+      /* Preserve logo shadows in print */
+      img {
+          filter: none !important;
+          max-width: 0.4in !important;
+          max-height: 0.4in !important;
+      }
+
+      /* Logo container */
+      .flex.justify-between.items-center.mb-6 {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          margin-bottom: 0.05in !important;
+      }
+
+      /* School name container */
+      .flex-1.px-4 {
+          flex: 1 !important;
+          padding: 0 0.05in !important;
+      }
+
+      /* Adjust logo sizes */
+      .w-24, .h-24, .w-24.h-24 {
+          width: 0.4in !important;
+          height: 0.4in !important;
       }
 
       /* Keep decorative lines visible in print */
@@ -206,8 +265,118 @@
       /* Maintain background colors in print */
       .bg-emerald-700 {
           background-color: #047857 !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
+      }
+
+      /* Remove decorative corners that take up space */
+      .absolute.top-0.left-0,
+      .absolute.top-0.right-0,
+      .absolute.bottom-0.left-0,
+      .absolute.bottom-0.right-0 {
+          display: none !important;
+      }
+
+      /* Ensure semester term is visible and properly styled */
+      .semester-term {
+          font-size: 8pt !important;
+          font-weight: bold !important;
+          color: #047857 !important;
+          background-color: #f0fdf4 !important;
+          padding: 0.02in !important;
+          border-radius: 0.02in !important;
+          display: inline-block !important;
+          margin-top: 0.02in !important;
+      }
+
+      /* Adjust font sizes for smaller permit size */
+      h1, .text-2xl {
+          font-size: 10pt !important;
+          margin: 0 !important;
+          line-height: 1.1 !important;
+      }
+      h2, h3, h4, .text-xl {
+          font-size: 8pt !important;
+          margin: 0 !important;
+          line-height: 1.1 !important;
+      }
+      p, span, div {
+          font-size: 7pt !important;
+          line-height: 1.1 !important;
+      }
+
+      /* Student info section */
+      .mb-8.space-y-4.bg-emerald-50.p-4.rounded-lg {
+          margin-bottom: 0.05in !important;
+          padding: 0.05in !important;
+          background-color: #f0fdf4 !important;
+      }
+
+      /* Grid layout for student info */
+      .grid.grid-cols-2.gap-4 {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 0.05in !important;
+      }
+
+      /* Student info labels */
+      .font-bold.text-emerald-800.w-24,
+      .font-bold.text-emerald-800.w-32 {
+          width: auto !important;
+          font-size: 6pt !important;
+          white-space: nowrap !important;
+      }
+
+      /* Student info values */
+      .flex-1.border-b-2.border-emerald-600.px-2.py-1.bg-white.rounded {
+          border-bottom: 1px solid #047857 !important;
+          padding: 0.01in 0.02in !important;
+          font-size: 6pt !important;
+      }
+
+      /* Adjust spacing for smaller permit */
+      .mb-8 {
+          margin-bottom: 0.05in !important;
+      }
+      .mb-6 {
+          margin-bottom: 0.03in !important;
+      }
+      .mt-8, .mt-6, .mt-4 {
+          margin-top: 0.05in !important;
+      }
+      .p-8 {
+          padding: 0.05in !important;
+      }
+      .p-4, .p-3 {
+          padding: 0.02in !important;
+      }
+
+      /* Table rows height */
+      tr .h-8, .h-8 {
+          height: 0.15in !important;
+      }
+
+      /* Program chair signature section */
+      .mt-12.text-center {
+          margin-top: 0.1in !important;
+          text-align: center !important;
+      }
+
+      /* Signature line */
+      .border-t-2.border-emerald-600.pt-2.inline-block.px-12 {
+          border-top: 1px solid #047857 !important;
+          padding-top: 0.02in !important;
+          display: inline-block !important;
+          padding-left: 0.1in !important;
+          padding-right: 0.1in !important;
+      }
+
+      /* Watermark */
+      .absolute.inset-0.flex.items-center.justify-center.opacity-5.pointer-events-none {
+          opacity: 0.03 !important;
+      }
+
+      /* Watermark text */
+      .text-6xl.font-bold.text-emerald-800.rotate-45 {
+          font-size: 20pt !important;
       }
   }
 </style>

@@ -27,7 +27,7 @@
                         <p class="mt-1 text-emerald-100">Request #{{ request_obj.id }}</p>
                     </div>
                     <div class="mt-4 sm:mt-0">
-                        <span class="px-4 py-2 rounded-full 
+                        <span class="px-4 py-2 rounded-full
                             {% if request_obj.status == 'pending' %}
                                 bg-amber-100 text-amber-800
                             {% elif request_obj.status == 'approved' %}
@@ -98,7 +98,7 @@
     </div>
 </div>
 
-<!-- Denial Modal (reuse from staff_pending_requests.html) -->
+<!-- Denial Modal with Checklist -->
 <div id="denialModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-[32rem] shadow-lg rounded-xl bg-white">
         <div class="absolute top-3 right-3">
@@ -113,7 +113,7 @@
                 </div>
                 <h3 class="text-lg font-medium text-gray-900">Deny Request</h3>
             </div>
-            
+
             <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -127,26 +127,74 @@
                 </div>
             </div>
 
-            <form id="denialForm" onsubmit="return handleDenial(event)">
+            <form id="denialForm">
                 {% csrf_token %}
                 <input type="hidden" name="request_id" id="denialRequestId">
+
+                <!-- Checklist of common reasons -->
+                <div class="mb-4 text-left border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <h4 class="font-medium text-gray-700 mb-2 text-sm">Select what is lacking:</h4>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_id" name="lacking_items" value="Student ID"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_id" class="ml-2 text-sm text-gray-700">Student ID</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_form" name="lacking_items" value="Required Form"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_form" class="ml-2 text-sm text-gray-700">Required Form</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_signature" name="lacking_items" value="Signature"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_signature" class="ml-2 text-sm text-gray-700">Signature</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_payment" name="lacking_items" value="Payment Verification"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_payment" class="ml-2 text-sm text-gray-700">Payment Verification</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_documents" name="lacking_items" value="Supporting Documents"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_documents" class="ml-2 text-sm text-gray-700">Supporting Documents</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_requirements" name="lacking_items" value="Incomplete Requirements"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_requirements" class="ml-2 text-sm text-gray-700">Incomplete Requirements</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="lacking_other" name="lacking_items" value="Other"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="lacking_other" class="ml-2 text-sm text-gray-700">Other (specify below)</label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">
-                        Reason for Denial
+                        Additional Details (Optional)
                     </label>
-                    <textarea name="remarks" 
+                    <textarea name="remarks"
                               id="remarks"
-                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" 
-                              rows="4" 
-                              required></textarea>
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                              rows="3"
+                              placeholder="Provide any additional details here"></textarea>
                 </div>
+
+                <!-- Hidden field to store the combined checklist and remarks -->
+                <input type="hidden" id="combined_remarks" name="combined_remarks" value="">
+
                 <div class="flex justify-end space-x-3">
-                    <button type="button" 
+                    <button type="button"
                             onclick="closeDenialModal()"
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">
                         Cancel
                     </button>
-                    <button type="submit" 
+                    <button type="button"
+                            onclick="submitDenialForm()"
                             class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">
                         Deny Request
                     </button>
@@ -201,18 +249,60 @@ async function approveRequest(requestId) {
 function showDenialModal(requestId) {
     document.getElementById('denialRequestId').value = requestId;
     document.getElementById('denialModal').classList.remove('hidden');
-    document.getElementById('remarks').focus();
+
+    // Clear any previously selected checkboxes
+    const checkboxes = document.querySelectorAll('input[name="lacking_items"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    document.getElementById('remarks').value = '';
+    document.getElementById('combined_remarks').value = '';
 }
 
 function closeDenialModal() {
     document.getElementById('denialModal').classList.add('hidden');
     document.getElementById('remarks').value = '';
+    document.getElementById('combined_remarks').value = '';
+
+    // Clear checkboxes
+    const checkboxes = document.querySelectorAll('input[name="lacking_items"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
-async function handleDenial(event) {
-    event.preventDefault();
+function submitDenialForm() {
+    // Get all checked items
+    const checkedItems = Array.from(document.querySelectorAll('input[name="lacking_items"]:checked'))
+        .map(checkbox => checkbox.value);
+
+    // Validate that at least one checkbox is selected
+    if (checkedItems.length === 0) {
+        alert('Please select at least one lacking item.');
+        return;
+    }
+
+    // Get additional remarks
+    const additionalRemarks = document.getElementById('remarks').value.trim();
+
+    // Combine the checklist items and remarks
+    let combinedRemarks = 'Lacking: ' + checkedItems.join(', ');
+
+    if (additionalRemarks) {
+        combinedRemarks += '\n\nAdditional details: ' + additionalRemarks;
+    }
+
+    // Set the combined remarks to the hidden field
+    document.getElementById('combined_remarks').value = combinedRemarks;
+
+    // Call the handleDenial function
+    handleDenial();
+}
+
+async function handleDenial() {
     const requestId = document.getElementById('denialRequestId').value;
-    const remarks = document.getElementById('remarks').value;
+    const combinedRemarks = document.getElementById('combined_remarks').value;
 
     try {
         const response = await fetch(`/deny-clearance-request/${requestId}/`, {
@@ -222,7 +312,7 @@ async function handleDenial(event) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                reason: remarks
+                remarks: combinedRemarks
             })
         });
 

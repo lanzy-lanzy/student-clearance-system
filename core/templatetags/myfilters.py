@@ -50,8 +50,13 @@ def semester_display(semester_code):
     Usage: {{ semester_code|semester_display }}
     """
     semester_map = {
+        "1ST_MID": "1st Sem - Midterm",
+        "1ST_FIN": "1st Sem - Final",
+        "2ND_MID": "2nd Sem - Midterm",
+        "2ND_FIN": "2nd Sem - Final",
+        "SUM": "Summer",
+        # Legacy codes for backward compatibility
         "1ST": "First Semester",
-        "2ND": "Second Semester",
-        "SUM": "Summer"
+        "2ND": "Second Semester"
     }
     return semester_map.get(semester_code, semester_code)

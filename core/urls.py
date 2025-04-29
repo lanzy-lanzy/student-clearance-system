@@ -43,6 +43,7 @@ urlpatterns = [
     path('dormitory-owner/dashboard/', views.bh_owner_dashboard, name='bh_owner_dashboard'),
     path('dormitory-owner/boarders/', views.bh_owner_boarders, name='bh_owner_boarders'),
     path('dormitory-owner/add-student/', views.bh_owner_add_student, name='bh_owner_add_student'),
+    path('dormitory-owner/update-boarder-date/<int:student_id>/', views.update_boarder_date, name='update_boarder_date'),
     path('dormitory-owner/pending-requests/', views.bh_owner_pending_requests, name='bh_owner_pending_requests'),
     path('dormitory-owner/approved-requests/', views.bh_owner_approved_requests, name='bh_owner_approved_requests'),
     path('dormitory-owner/denied-requests/', views.bh_owner_denied_requests, name='bh_owner_denied_requests'),

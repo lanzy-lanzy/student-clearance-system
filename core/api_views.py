@@ -23,7 +23,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.cell.cell import MergedCell
 
-from .models import Student, Clearance, ClearanceRequest, Office, Course
+from .models import Student, Clearance, ClearanceRequest, Office, Course, SEMESTER_CHOICES
 from .utils import is_program_chair
 
 @login_required
@@ -354,10 +354,16 @@ def program_chair_reports(request, report_type):
         # Get current school year and semester
         current_year = timezone.now().year
         school_year = request.GET.get('school_year', f"{current_year}-{current_year + 1}")
-        semester = request.GET.get('semester', "1ST")
+        semester = request.GET.get('semester', "1ST_MID")
+        year_level = request.GET.get('year_level')
+        student_status = request.GET.get('student_status', 'all')  # all, cleared, pending
 
         # Get all students under this program chair's dean
         students = Student.objects.filter(course__dean=program_chair.dean)
+
+        # Filter by year level if provided
+        if year_level and year_level.isdigit():
+            students = students.filter(year_level=int(year_level))
 
         # Get clearances for the selected school year and semester
         clearances = Clearance.objects.filter(
@@ -365,6 +371,14 @@ def program_chair_reports(request, report_type):
             school_year=school_year,
             semester=semester
         )
+
+        # Filter by student status if provided
+        if student_status == 'cleared':
+            clearances = clearances.filter(is_cleared=True)
+            students = students.filter(id__in=clearances.values_list('student_id', flat=True))
+        elif student_status == 'pending':
+            clearances = clearances.filter(is_cleared=False)
+            students = students.filter(id__in=clearances.values_list('student_id', flat=True))
 
         if report_type == 'year_level':
             # Generate report data by year level
@@ -507,12 +521,18 @@ def export_program_chair_report(request, format_type):
         school_year = request.GET.get('school_year')
         semester = request.GET.get('semester')
         report_type = request.GET.get('report_type')
+        year_level = request.GET.get('year_level')
+        student_status = request.GET.get('student_status', 'all')  # all, cleared, pending
 
         if not all([school_year, semester, report_type]):
             return JsonResponse({'success': False, 'error': 'Missing required parameters'}, status=400)
 
         # Get all students under this program chair's dean
         students = Student.objects.filter(course__dean=program_chair.dean)
+
+        # Filter by year level if provided
+        if year_level and year_level.isdigit():
+            students = students.filter(year_level=int(year_level))
 
         # Get clearances for the selected school year and semester
         clearances = Clearance.objects.filter(
@@ -521,10 +541,21 @@ def export_program_chair_report(request, format_type):
             semester=semester
         )
 
+        # Filter by student status if provided
+        if student_status == 'cleared':
+            clearances = clearances.filter(is_cleared=True)
+            students = students.filter(id__in=clearances.values_list('student_id', flat=True))
+        elif student_status == 'pending':
+            clearances = clearances.filter(is_cleared=False)
+            students = students.filter(id__in=clearances.values_list('student_id', flat=True))
+
+        # Get semester display name for the title
+        semester_display = dict(SEMESTER_CHOICES).get(semester, semester)
+
         # Get report data based on report type
         if report_type == 'year_level':
             data = get_year_level_report_data(students, clearances)
-            title = f"Clearance Status by Year Level - {school_year}, {semester} Semester"
+            title = f"Student's List - SY: {school_year} {semester_display} Records"
             headers = ['Year Level', 'Total Students', 'Cleared', 'Pending', 'Not Started', 'Clearance Rate']
 
         elif report_type == 'course':

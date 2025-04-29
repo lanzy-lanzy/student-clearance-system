@@ -24,9 +24,11 @@
                 <label for="report_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
                 <select id="report_semester" name="semester" onchange="updateReports()"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
-                    <option value="1ST" {% if selected_semester == '1ST' %}selected{% endif %}>1st Semester</option>
-                    <option value="2ND" {% if selected_semester == '2ND' %}selected{% endif %}>2nd Semester</option>
-                    <option value="SUMMER" {% if selected_semester == 'SUMMER' %}selected{% endif %}>Summer</option>
+                    <option value="1ST_MID" {% if selected_semester == '1ST_MID' %}selected{% endif %}>1st Sem - Midterm</option>
+                    <option value="1ST_FIN" {% if selected_semester == '1ST_FIN' %}selected{% endif %}>1st Sem - Final</option>
+                    <option value="2ND_MID" {% if selected_semester == '2ND_MID' %}selected{% endif %}>2nd Sem - Midterm</option>
+                    <option value="2ND_FIN" {% if selected_semester == '2ND_FIN' %}selected{% endif %}>2nd Sem - Final</option>
+                    <option value="SUM" {% if selected_semester == 'SUM' %}selected{% endif %}>Summer</option>
                 </select>
             </div>
         </div>
@@ -155,6 +157,37 @@
                     <!-- Report content will be loaded here -->
                     <div class="text-center py-8 text-gray-500">
                         Select a report type to view detailed statistics
+                    </div>
+                </div>
+
+                <!-- Report Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <label for="report_year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                        <select id="report_year_level" name="year_level" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">All Year Levels</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                            <option value="5">5th Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="report_student_status" class="block text-sm font-medium text-gray-700 mb-1">Student Status</label>
+                        <select id="report_student_status" name="student_status" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="all">All Students</option>
+                            <option value="cleared">Cleared Students</option>
+                            <option value="pending">Pending Students</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="applyReportFilters()" class="w-full px-3 py-2 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            Apply Filters
+                        </button>
                     </div>
                 </div>
 
@@ -555,6 +588,78 @@
         `;
     }
 
+    function applyReportFilters() {
+        // Get the currently active report type
+        let reportType = 'year_level'; // Default
+
+        // Find which report is currently displayed
+        const reportContent = document.getElementById('reportContent');
+        if (reportContent.querySelector('h4')) {
+            const reportTitle = reportContent.querySelector('h4').textContent.trim().toLowerCase();
+            if (reportTitle.includes('year level')) reportType = 'year_level';
+            else if (reportTitle.includes('course')) reportType = 'course';
+            else if (reportTitle.includes('office')) reportType = 'office';
+            else if (reportTitle.includes('timeline')) reportType = 'timeline';
+        }
+
+        // Get filter values
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const yearLevel = document.getElementById('report_year_level').value;
+        const studentStatus = document.getElementById('report_student_status').value;
+
+        // Show loading state
+        reportContent.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="animate-spin h-8 w-8 text-emerald-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-600">Loading report data with filters...</p>
+            </div>
+        `;
+
+        // Fetch report data with filters
+        let url = `/api/program-chair/reports/${reportType}/?school_year=${schoolYear}&semester=${semester}`;
+        if (yearLevel) url += `&year_level=${yearLevel}`;
+        if (studentStatus) url += `&student_status=${studentStatus}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Render the appropriate report based on type
+                    switch (reportType) {
+                        case 'year_level':
+                            renderYearLevelReport(data.data);
+                            break;
+                        case 'course':
+                            renderCourseReport(data.data);
+                            break;
+                        case 'office':
+                            renderOfficeReport(data.data);
+                            break;
+                        case 'timeline':
+                            renderTimelineReport(data.data);
+                            break;
+                        default:
+                            reportContent.innerHTML = '<div class="text-center py-8 text-gray-500">Invalid report type selected</div>';
+                    }
+                } else {
+                    reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error loading report data'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching report data:', error);
+                reportContent.innerHTML = `<div class="text-center py-8 text-red-500">Error loading report data: ${error.message}</div>`;
+            });
+    }
+
     function exportReport(format) {
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
@@ -576,6 +681,10 @@
             return;
         }
 
+        // Get filter values
+        const yearLevel = document.getElementById('report_year_level').value;
+        const studentStatus = document.getElementById('report_student_status').value;
+
         // Show loading indicator
         const exportBtn = document.querySelector(`button[onclick="exportReport('${format}')"]`);
         const originalText = exportBtn.textContent;
@@ -588,8 +697,13 @@
         `;
         exportBtn.disabled = true;
 
+        // Build the URL with filters
+        let url = `/api/program-chair/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=${reportType}`;
+        if (yearLevel) url += `&year_level=${yearLevel}`;
+        if (studentStatus) url += `&student_status=${studentStatus}`;
+
         // Redirect to export endpoint
-        window.location.href = `/api/program-chair/reports/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=${reportType}`;
+        window.location.href = url;
 
         // Reset button after a delay (since we're navigating away)
         setTimeout(() => {

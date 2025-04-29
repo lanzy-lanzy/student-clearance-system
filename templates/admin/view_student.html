@@ -34,7 +34,7 @@
                         {% endif %}
                         <h2 class="text-xl font-bold mt-4">{{ student.user.get_full_name }}</h2>
                         <p class="text-gray-500">{{ student.student_id }}</p>
-                        
+
                         <div class="mt-4 pt-4 border-t border-gray-200">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-sm font-medium text-gray-500">Status:</span>
@@ -62,7 +62,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Actions Section -->
                     <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
                         <h3 class="text-lg font-semibold mb-4 text-gray-700">Actions</h3>
@@ -73,7 +73,7 @@
                                 </svg>
                                 Edit Student
                             </a>
-                            
+
                             {% if not student.is_approved %}
                             <form method="post" action="{% url 'admin_students' %}" class="block">
                                 {% csrf_token %}
@@ -87,7 +87,7 @@
                                 </button>
                             </form>
                             {% endif %}
-                            
+
                             <form method="post" action="{% url 'admin_students' %}" class="block" onsubmit="return confirm('Are you sure you want to delete this student? This action cannot be undone.')">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete">
@@ -102,7 +102,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Details Sections -->
                 <div class="md:col-span-2 space-y-6">
                     <!-- Personal Information -->
@@ -115,21 +115,21 @@
                                     {{ student.user.first_name }}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Last Name</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
                                     {{ student.user.last_name }}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Email Address</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
                                     {{ student.user.email }}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Contact Number</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
@@ -138,7 +138,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Academic Information -->
                     <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
                         <h3 class="text-lg font-semibold mb-4 text-gray-700">Academic Information</h3>
@@ -149,14 +149,14 @@
                                     {{ student.student_id }}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Course</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
                                     {{ student.course.name }} ({{ student.course.code }})
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Year Level</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
@@ -168,7 +168,7 @@
                                     {% else %}{{ student.year_level }} Year{% endif %}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Registration Date</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
@@ -177,7 +177,65 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Boarding Information -->
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Boarding Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Boarding Status</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.is_boarder %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                            Active
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            Inactive
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Dormitory Owner</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.dormitory_owner %}
+                                        {{ student.dormitory_owner.get_full_name }}
+                                    {% else %}
+                                        Not assigned
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if student.is_boarder %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Date Started as a Boarder</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.boarder_since %}
+                                        {{ student.boarder_since|date:"F d, Y" }}
+                                    {% else %}
+                                        Not recorded
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if student.dormitory_owner %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Boarding House Address</label>
+                                <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
+                                    {% if student.dormitory_owner.boarding_house_address %}
+                                        {{ student.dormitory_owner.boarding_house_address }}
+                                    {% else %}
+                                        Not provided
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
                     <!-- Account Information -->
                     <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
                         <h3 class="text-lg font-semibold mb-4 text-gray-700">Account Information</h3>
@@ -188,7 +246,7 @@
                                     {{ student.user.username }}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Last Login</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">
@@ -199,7 +257,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            
+
                             {% if student.is_approved %}
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Approved By</label>
@@ -211,7 +269,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-500">Approval Date</label>
                                 <div class="mt-1 p-2 bg-white border border-gray-300 rounded-md">

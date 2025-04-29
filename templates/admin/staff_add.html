@@ -68,11 +68,20 @@
                 <div class="col-span-2">
                     <div class="flex items-center">
                         <input type="checkbox" name="is_dormitory_owner" id="is_dormitory_owner"
+                               onchange="toggleBoardingHouseFields()"
                                class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
                         <label for="is_dormitory_owner" class="ml-2 block text-sm text-gray-700">
                             Is Dormitory Owner
                         </label>
                     </div>
+                </div>
+
+                <!-- Boarding House Address - Only visible when is_dormitory_owner is checked -->
+                <div id="boarding_house_fields" class="col-span-2 hidden">
+                    <label for="boarding_house_address" class="block text-sm font-medium text-gray-700">Boarding House Address</label>
+                    <textarea name="boarding_house_address" id="boarding_house_address" rows="3"
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Enter the complete address of the boarding house</p>
                 </div>
             </div>
 
@@ -90,4 +99,22 @@
         </form>
     </div>
 </div>
+
+<script>
+    function toggleBoardingHouseFields() {
+        const isDormitoryOwner = document.getElementById('is_dormitory_owner').checked;
+        const boardingHouseFields = document.getElementById('boarding_house_fields');
+
+        if (isDormitoryOwner) {
+            boardingHouseFields.classList.remove('hidden');
+        } else {
+            boardingHouseFields.classList.add('hidden');
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleBoardingHouseFields();
+    });
+</script>
 {% endblock %}

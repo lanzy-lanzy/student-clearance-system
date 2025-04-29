@@ -6,8 +6,10 @@ from django.utils import timezone
 from django.templatetags.static import static
 
 SEMESTER_CHOICES = [
-    ('1ST', 'First Semester'),
-    ('2ND', 'Second Semester'),
+    ('1ST_MID', '1st Sem - Midterm'),
+    ('1ST_FIN', '1st Sem - Final'),
+    ('2ND_MID', '2nd Sem - Midterm'),
+    ('2ND_FIN', '2nd Sem - Final'),
     ('SUM', 'Summer'),
 ]
 
@@ -63,6 +65,7 @@ class Staff(models.Model):
     office = models.ForeignKey(Office, on_delete=models.CASCADE, related_name='staff')
     role = models.CharField(max_length=100)
     is_dormitory_owner = models.BooleanField(default=False)
+    boarding_house_address = models.TextField(verbose_name="Boarding House Address", null=True, blank=True)
     profile_picture = models.ImageField(upload_to='staff_profiles/', null=True, blank=True)
 
     def get_profile_picture_url(self):
@@ -122,6 +125,7 @@ class Student(models.Model):
     year_level = models.IntegerField()
     contact_number = models.CharField(max_length=20, blank=True, null=True)
     is_boarder = models.BooleanField(default=False)
+    boarder_since = models.DateTimeField(verbose_name="Date Started as a Boarder", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
     rejection_reason = models.TextField(blank=True, null=True)
@@ -131,6 +135,35 @@ class Student(models.Model):
         if self.profile_picture and self.profile_picture.url:
             return self.profile_picture.url
         return static('img/default-profile.png')  # Make sure this file exists in your static folder
+
+    def save(self, *args, **kwargs):
+        """Override save method to handle boarder_since field and dormitory owner changes"""
+        # If this is an existing student (has an ID)
+        if self.pk:
+            try:
+                old_instance = Student.objects.get(pk=self.pk)
+
+                # If student is becoming a boarder and doesn't have a boarder_since date
+                if self.is_boarder and not old_instance.is_boarder and not self.boarder_since:
+                    self.boarder_since = timezone.now()
+
+                # If student is no longer assigned to a dormitory owner, set is_boarder to False
+                if old_instance.dormitory_owner and not self.dormitory_owner:
+                    self.is_boarder = False
+                    # We keep the boarder_since date for historical purposes
+
+                # If student is assigned to a new dormitory owner and is marked as a boarder
+                if self.dormitory_owner and (not old_instance.dormitory_owner or old_instance.dormitory_owner.id != self.dormitory_owner.id) and self.is_boarder:
+                    # Update boarder_since to now if changing dormitory owners
+                    self.boarder_since = timezone.now()
+
+            except Student.DoesNotExist:
+                pass
+        # If this is a new student and is a boarder
+        elif self.is_boarder and not self.boarder_since and self.dormitory_owner:
+            self.boarder_since = timezone.now()
+
+        super().save(*args, **kwargs)
 
     def approve_student(self, admin_user):
         """Approve a student's registration."""
@@ -200,7 +233,7 @@ class ClearanceRequest(models.Model):
     office = models.ForeignKey(Office, on_delete=models.CASCADE, related_name='clearance_requests')
     clearance = models.ForeignKey('Clearance', on_delete=models.CASCADE, related_name='requests')
     school_year = models.CharField(max_length=9)
-    semester = models.CharField(max_length=3, choices=SEMESTER_CHOICES)
+    semester = models.CharField(max_length=7, choices=SEMESTER_CHOICES)
     status_choices = [
         ('pending', 'Pending'),
         ('approved', 'Approved'),
@@ -259,7 +292,7 @@ class ClearanceRequest(models.Model):
 class Clearance(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='clearances')
     school_year = models.CharField(max_length=9)
-    semester = models.CharField(max_length=3, choices=SEMESTER_CHOICES)
+    semester = models.CharField(max_length=7, choices=SEMESTER_CHOICES)
     is_cleared = models.BooleanField(default=False)
     cleared_date = models.DateTimeField(null=True, blank=True)
     program_chair_approved = models.BooleanField(default=False)

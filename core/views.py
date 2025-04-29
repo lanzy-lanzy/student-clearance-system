@@ -1803,6 +1803,43 @@ def bh_owner_boarders(request):
     })
 
 @login_required
+def update_boarder_date(request, student_id):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    try:
+        # Get the student and verify they belong to this dormitory owner
+        student = Student.objects.get(id=student_id, dormitory_owner=staff)
+
+        if request.method == 'POST':
+            # Handle boarder_since date
+            boarder_since = request.POST.get('boarder_since')
+            if boarder_since:
+                # Convert the datetime-local input to a Python datetime
+                try:
+                    from datetime import datetime
+                    student.boarder_since = datetime.strptime(boarder_since, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    # If there's an error parsing the date, use current time
+                    student.boarder_since = timezone.now()
+            else:
+                # If no date provided, use current time
+                student.boarder_since = timezone.now()
+
+            student.save()
+            messages.success(request, f"Boarding start date for {student.get_full_name()} has been updated successfully.")
+
+        return redirect('bh_owner_boarders')
+
+    except Student.DoesNotExist:
+        messages.error(request, "Student not found or you don't have permission to edit this student.")
+        return redirect('bh_owner_boarders')
+
+@login_required
 def bh_owner_add_student(request):
     # Check if the user is a dormitory owner
     if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
@@ -1819,11 +1856,29 @@ def bh_owner_add_student(request):
 
             # Check if student is already assigned to a dormitory owner
             if student.dormitory_owner:
-                messages.error(request, f"Student {student.get_full_name()} is already assigned to {student.dormitory_owner.get_full_name()}.")
+                if student.dormitory_owner == staff:
+                    messages.warning(request, f"Student {student.get_full_name()} is already assigned to your boarding house.")
+                else:
+                    messages.error(request, f"Student {student.get_full_name()} is already assigned to {student.dormitory_owner.get_full_name()}'s boarding house. Students cannot be in multiple boarding houses simultaneously.")
             else:
                 # Assign student to this dormitory owner
                 student.dormitory_owner = staff
                 student.is_boarder = True
+
+                # Handle boarder_since date
+                boarder_since = request.POST.get('boarder_since')
+                if boarder_since:
+                    # Convert the datetime-local input to a Python datetime
+                    try:
+                        from datetime import datetime
+                        student.boarder_since = datetime.strptime(boarder_since, '%Y-%m-%dT%H:%M')
+                    except ValueError:
+                        # If there's an error parsing the date, use current time
+                        student.boarder_since = timezone.now()
+                else:
+                    # If no date provided, use current time
+                    student.boarder_since = timezone.now()
+
                 student.save()
                 messages.success(request, f"Student {student.get_full_name()} has been added to your boarders.")
                 return redirect('bh_owner_boarders')
@@ -2283,6 +2338,10 @@ def bh_owner_profile(request):
         user.email = request.POST.get('email')
         user.save()
 
+        # Update boarding house address
+        staff.boarding_house_address = request.POST.get('boarding_house_address', '')
+        staff.save()
+
         # Update password if provided
         new_password = request.POST.get('new_password')
         if new_password:
@@ -2496,8 +2555,8 @@ def deny_clearance_request(request, request_id):
             messages.warning(request, f'Request already processed (current status: {clearance_request.status})')
             return redirect(redirect_url)
 
-        # Get the reason from form data
-        reason = request.POST.get('remarks', '')
+        # Get the reason from form data - check combined_remarks first, then fall back to remarks
+        reason = request.POST.get('combined_remarks', '') or request.POST.get('remarks', '')
 
         if not reason:
             messages.error(request, 'Reason required for denial')
@@ -3064,9 +3123,13 @@ def admin_students(request):
         elif action == 'edit_form':
             try:
                 student = Student.objects.get(id=student_id)
+                # Get all dormitory owners for the dropdown
+                dormitory_owners = Staff.objects.filter(is_dormitory_owner=True).select_related('user')
+
                 return render(request, 'admin/edit_student.html', {
                     'student': student,
                     'courses': Course.objects.all(),
+                    'dormitory_owners': dormitory_owners,
                 })
             except Student.DoesNotExist:
                 messages.error(request, 'Student not found.')
@@ -3089,7 +3152,33 @@ def admin_students(request):
                     student.course_id = request.POST.get('course')
                 if request.POST.get('year_level'):
                     student.year_level = request.POST.get('year_level')
-                student.is_boarder = request.POST.get('is_boarder') == 'on'
+
+                # Handle boarding information
+                is_boarder = request.POST.get('is_boarder') == 'on'
+                student.is_boarder = is_boarder
+
+                # Handle dormitory owner assignment
+                dormitory_owner_id = request.POST.get('dormitory_owner')
+                if dormitory_owner_id:
+                    student.dormitory_owner_id = dormitory_owner_id
+                elif not is_boarder:
+                    # If student is not a boarder, remove dormitory owner assignment
+                    student.dormitory_owner = None
+
+                # Handle boarder_since date
+                boarder_since = request.POST.get('boarder_since')
+                if is_boarder and boarder_since:
+                    # Convert the datetime-local input to a Python datetime
+                    try:
+                        from datetime import datetime
+                        student.boarder_since = datetime.strptime(boarder_since, '%Y-%m-%dT%H:%M')
+                    except ValueError:
+                        # If there's an error parsing the date, use current time
+                        student.boarder_since = timezone.now()
+                elif is_boarder and not student.boarder_since:
+                    # If becoming a boarder and no date is set, use current time
+                    student.boarder_since = timezone.now()
+
                 student.is_approved = request.POST.get('is_approved') == 'on'
                 student.user.is_active = student.is_approved
                 student.save()
@@ -3255,12 +3344,18 @@ def admin_staff_add(request):
                 is_active=True
             )
 
-            Staff.objects.create(
+            # Create staff object
+            staff = Staff.objects.create(
                 user=user,
                 office_id=request.POST.get('office'),
                 role=role,  # Use the uppercase role
                 is_dormitory_owner=is_dormitory_owner
             )
+
+            # Handle boarding house address if staff is a dormitory owner
+            if is_dormitory_owner:
+                staff.boarding_house_address = request.POST.get('boarding_house_address', '')
+                staff.save()
             messages.success(request, 'Staff member added successfully.')
             return redirect('admin_staff')
         except Exception as e:
@@ -3305,6 +3400,11 @@ def admin_staff_edit(request, staff_id):
             staff.office_id = request.POST.get('office')
             staff.role = role
             staff.is_dormitory_owner = is_dormitory_owner
+
+            # Handle boarding house address if staff is a dormitory owner
+            if is_dormitory_owner:
+                staff.boarding_house_address = request.POST.get('boarding_house_address', '')
+
             if 'profile_picture' in request.FILES:
                 staff.profile_picture = request.FILES['profile_picture']
             staff.save()
@@ -3665,10 +3765,15 @@ def admin_reports(request):
         school_year = request.POST.get('school_year')
         semester = request.POST.get('semester')
         format_type = request.POST.get('format_type', 'pdf')
+        department = request.POST.get('department')
 
         if report_type == 'student_list':
             # Generate student list report
             students = Student.objects.select_related('user', 'course').all()
+
+            # Filter by department (dean) if specified
+            if department:
+                students = students.filter(course__dean_id=department)
 
             # Check if there's data
             if not students.exists():
@@ -3677,7 +3782,7 @@ def admin_reports(request):
 
             if format_type == 'pdf':
                 from core.pdf_utils import generate_students_pdf
-                pdf = generate_students_pdf(students, request)
+                pdf = generate_students_pdf(students, request, school_year, semester, department)
                 response = HttpResponse(pdf, content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="student_list_{school_year}_{semester}.pdf"'
                 return response
@@ -3723,16 +3828,20 @@ def admin_reports(request):
                 status='pending'
             ).select_related('student', 'office')
 
+            # Filter by department (dean) if specified
+            if department:
+                clearance_requests = clearance_requests.filter(student__course__dean_id=department)
+
             # Check if there's data
             if not clearance_requests.exists():
                 messages.warning(request, "No pending clearance requests found for the selected criteria.")
                 return redirect('admin_reports')
 
             if format_type == 'pdf':
-                # PDF generation logic would go here
-                response = HttpResponse(content_type='application/pdf')
+                from core.pdf_utils import generate_pending_clearances_pdf
+                pdf = generate_pending_clearances_pdf(clearance_requests, request, school_year, semester, department)
+                response = HttpResponse(pdf, content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="pending_clearances_{school_year}_{semester}.pdf"'
-                # Add PDF generation logic
                 return response
             else:  # Excel format
                 response = HttpResponse(content_type='application/vnd.ms-excel')
@@ -3775,6 +3884,10 @@ def admin_reports(request):
                 is_cleared=True
             ).select_related('student')
 
+            # Filter by department (dean) if specified
+            if department:
+                clearances = clearances.filter(student__course__dean_id=department)
+
             # Check if there's data
             if not clearances.exists():
                 messages.warning(request, "No cleared students found for the selected criteria.")
@@ -3782,7 +3895,7 @@ def admin_reports(request):
 
             if format_type == 'pdf':
                 from core.pdf_utils import generate_cleared_students_pdf
-                pdf = generate_cleared_students_pdf(clearances, request, school_year, semester)
+                pdf = generate_cleared_students_pdf(clearances, request, school_year, semester, department)
                 response = HttpResponse(pdf, content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="cleared_students_{school_year}_{semester}.pdf"'
                 return response
@@ -3910,7 +4023,7 @@ def admin_reports(request):
 
             if format_type == 'pdf':
                 from core.pdf_utils import generate_course_statistics_pdf
-                pdf = generate_course_statistics_pdf(course_stats, request, school_year, semester)
+                pdf = generate_course_statistics_pdf(course_stats, request, school_year, semester, department)
                 response = HttpResponse(pdf, content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="course_statistics_{school_year}_{semester}.pdf"'
                 return response
@@ -3952,6 +4065,7 @@ def admin_reports(request):
         'school_years': get_school_years(),
         'semesters': SEMESTER_CHOICES,
         'now': datetime.now(),
+        'deans': Dean.objects.all(),
     })
 
 @login_required
@@ -4481,17 +4595,33 @@ def assign_students(request):
         # Assign students to the dormitory owner
         students = Student.objects.filter(id__in=student_ids)
         count = 0
+        skipped = 0
+        already_assigned_students = []
 
         for student in students:
+            # Check if student is already assigned to a different dormitory owner
+            if student.dormitory_owner and student.dormitory_owner.id != dormitory_owner.id:
+                skipped += 1
+                already_assigned_students.append(f"{student.get_full_name()} ({student.student_id})")
+                continue
+
             student.dormitory_owner = dormitory_owner
             if mark_as_boarders:
                 student.is_boarder = True
+                # Set boarder_since if it's not already set and student is becoming a boarder
+                if mark_as_boarders and not student.boarder_since:
+                    student.boarder_since = timezone.now()
             student.save()
             count += 1
 
+        message = f'{count} student(s) have been assigned to {dormitory_owner.get_full_name()}.'
+        if skipped > 0:
+            message += f' {skipped} student(s) were skipped because they are already assigned to another dormitory owner.'
+
         return JsonResponse({
             'success': True,
-            'message': f'{count} student(s) have been assigned to {dormitory_owner.get_full_name()}.'
+            'message': message,
+            'skipped_students': already_assigned_students if already_assigned_students else None
         })
     except Staff.DoesNotExist:
         return JsonResponse({

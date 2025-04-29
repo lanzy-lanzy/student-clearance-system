@@ -81,12 +81,18 @@
                         <label class="text-sm font-medium text-gray-600">Boarding Status</label>
                         <p class="text-lg font-semibold text-gray-900">
                             {% if student_info.is_boarder %}
-                                Boarder
+                                <span class="text-emerald-600">Active</span>
                             {% else %}
-                                Non-Boarder
+                                <span class="text-gray-500">Inactive</span>
                             {% endif %}
                         </p>
                     </div>
+                    {% if student_info.boarder_since %}
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Date Started as a Boarder</label>
+                        <p class="text-lg font-semibold text-gray-900">{{ student_info.boarder_since|date:"F d, Y" }}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 

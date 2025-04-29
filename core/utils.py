@@ -442,19 +442,28 @@ def get_current_school_year():
 def get_current_semester():
     """Get the current semester based on the current month"""
     month = timezone.now().month
+    day = timezone.now().day
+
     if 1 <= month <= 5:  # January to May
-        return "2ND"
+        # For 2nd semester, Jan-Mar is midterm, Apr-May is final
+        return "2ND_MID" if month <= 3 else "2ND_FIN"
     elif 6 <= month <= 10:  # June to October
-        return "1ST"
+        # For 1st semester, Jun-Aug is midterm, Sep-Oct is final
+        return "1ST_MID" if month <= 8 else "1ST_FIN"
     else:  # November to December
         return "SUM"
 
 def get_semester_display(semester_code):
     """Convert semester code to display text"""
     semester_map = {
+        "1ST_MID": "1st Sem - Midterm",
+        "1ST_FIN": "1st Sem - Final",
+        "2ND_MID": "2nd Sem - Midterm",
+        "2ND_FIN": "2nd Sem - Final",
+        "SUM": "Summer",
+        # Legacy codes for backward compatibility
         "1ST": "First Semester",
-        "2ND": "Second Semester",
-        "SUM": "Summer"
+        "2ND": "Second Semester"
     }
     return semester_map.get(semester_code, semester_code)
 

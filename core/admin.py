@@ -574,7 +574,7 @@ class ProgramChairAdmin(admin.ModelAdmin):
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('student_id', 'get_full_name', 'user_email', 'course', 'year_level',
-                   'contact_number', 'is_boarder', 'approval_status', 'clearance_status', 'profile_picture_preview')
+                   'contact_number', 'is_boarder', 'boarder_status', 'approval_status', 'clearance_status', 'profile_picture_preview')
     list_filter = ('course', 'year_level', 'is_boarder', 'user__is_active', 'created_at')
     search_fields = ('student_id', 'user__username', 'user__first_name', 'user__last_name',
                     'user__email', 'contact_number')
@@ -582,7 +582,22 @@ class StudentAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     date_hierarchy = 'created_at'
     inlines = [ClearanceInline]
-    actions = ['approve_students', 'reject_students', 'export_students_data']
+    actions = ['approve_students', 'reject_students', 'export_students_data', 'set_boarder_date']
+
+    fieldsets = (
+        ('Personal Information', {
+            'fields': ('user', 'student_id', 'profile_picture', 'contact_number')
+        }),
+        ('Academic Information', {
+            'fields': ('course', 'year_level', 'program_chair')
+        }),
+        ('Boarding Information', {
+            'fields': ('is_boarder', 'boarder_since', 'dormitory_owner')
+        }),
+        ('Status Information', {
+            'fields': ('is_approved', 'rejection_reason', 'created_at')
+        }),
+    )
 
     def get_full_name(self, obj):
         return obj.get_full_name()
@@ -621,6 +636,32 @@ class StudentAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="50" height="50" />', obj.profile_picture.url)
         return "-"
     profile_picture_preview.short_description = 'Profile Picture'
+
+    def boarder_status(self, obj):
+        if not obj.is_boarder:
+            return format_html('<span style="color: gray;">Inactive</span>')
+
+        if obj.boarder_since:
+            return format_html('<span style="color: green;">Active</span> <small style="color: gray;">since {}</small>',
+                              obj.boarder_since.strftime('%b %d, %Y'))
+        else:
+            return format_html('<span style="color: green;">Active</span> <small style="color: gray;">(date not set)</small>')
+    boarder_status.short_description = 'Boarding Status'
+
+    def set_boarder_date(self, request, queryset):
+        # Only apply to students who are boarders but don't have a date set
+        boarders_without_date = queryset.filter(is_boarder=True, boarder_since__isnull=True)
+
+        if not boarders_without_date:
+            self.message_user(request, "No active boarders without a start date were found in the selection.", level=messages.WARNING)
+            return
+
+        # Set the date to now for all selected students
+        count = boarders_without_date.count()
+        boarders_without_date.update(boarder_since=timezone.now())
+
+        self.message_user(request, f"Boarding start date has been set to now for {count} student(s).")
+    set_boarder_date.short_description = "Set boarding start date to now for selected students"
 
     def approve_students(self, request, queryset):
         for student in queryset:
