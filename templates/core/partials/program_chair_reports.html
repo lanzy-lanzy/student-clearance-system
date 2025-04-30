@@ -153,6 +153,9 @@
                     <button id="btn-cleared-students" onclick="exportClearedStudents()" class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-md hover:bg-green-700 transition-colors">
                         Cleared Students
                     </button>
+                    <button id="btn-students-by-year" onclick="exportStudentsByYearLevel()" class="px-3 sm:px-4 py-2 bg-purple-600 text-white text-sm sm:text-base rounded-md hover:bg-purple-700 transition-colors">
+                        Students by Year Level
+                    </button>
                 </div>
 
                 <!-- Report Content -->
@@ -757,6 +760,63 @@
 
                     if (yearLevel) {
                         url += `&year_level=${yearLevel}`;
+                    }
+
+                    window.open(url, '_blank');
+                    Swal.close();
+                });
+            }
+        });
+    }
+
+    function exportStudentsByYearLevel() {
+        // Get filter values
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const yearLevel = document.getElementById('report_year_level').value;
+        const course = document.getElementById('report_course').value;
+
+        // Show export format modal
+        Swal.fire({
+            title: 'Export Students by Year Level',
+            html: `
+                <div class="mb-4">
+                    <p class="mb-2 text-left">Select export format:</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="pdf-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">PDF</button>
+                        <button id="excel-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Excel</button>
+                    </div>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            cancelButtonColor: '#6B7280',
+            didOpen: () => {
+                document.getElementById('pdf-btn').addEventListener('click', () => {
+                    let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
+
+                    if (yearLevel) {
+                        url += `&year_level=${yearLevel}`;
+                    }
+
+                    if (course) {
+                        url += `&department=${course}`;
+                    }
+
+                    window.open(url, '_blank');
+                    Swal.close();
+                });
+
+                document.getElementById('excel-btn').addEventListener('click', () => {
+                    let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=excel`;
+
+                    if (yearLevel) {
+                        url += `&year_level=${yearLevel}`;
+                    }
+
+                    if (course) {
+                        url += `&department=${course}`;
                     }
 
                     window.open(url, '_blank');
