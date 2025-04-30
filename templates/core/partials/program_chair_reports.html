@@ -208,20 +208,13 @@
                     </div>
                 </div>
 
-                <!-- Export Options -->
-                <div class="flex flex-wrap justify-end gap-2 sm:gap-3 mt-6">
-                    <button onclick="exportReport('pdf')" class="px-3 sm:px-4 py-2 bg-red-600 text-white text-sm sm:text-base rounded-md hover:bg-red-700 transition-colors flex items-center">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9h4m-2-2v6"></path>
+                <!-- Export Data Button -->
+                <div class="flex justify-center mt-6">
+                    <button onclick="exportStudentsByYearLevel()" class="px-6 py-3 bg-purple-600 text-white text-base rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <span class="whitespace-nowrap">Export as PDF</span>
-                    </button>
-                    <button onclick="exportReport('excel')" class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-md hover:bg-green-700 transition-colors flex items-center">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span class="whitespace-nowrap">Export as Excel</span>
+                        <span class="whitespace-nowrap font-medium">Export Data</span>
                     </button>
                 </div>
 
@@ -234,10 +227,11 @@
                         <div>
                             <p class="text-xs sm:text-sm font-medium">Export Instructions:</p>
                             <ol class="text-xs mt-1 list-decimal list-inside">
-                                <li>Select a report type (Year Level, Course, Office, or Timeline)</li>
-                                <li>Wait for the report to load</li>
-                                <li>Click on either "Export as PDF" or "Export as Excel"</li>
-                                <li>The report will download automatically</li>
+                                <li>Select the desired Year Level from the dropdown (or leave as "All Year Levels")</li>
+                                <li>Select the Student Status if needed (All, Cleared, or Pending)</li>
+                                <li>Click the "Export Data" button</li>
+                                <li>A PDF report will be generated with students grouped by year level</li>
+                                <li>The report includes student ID numbers and names for each year level</li>
                             </ol>
                         </div>
                     </div>
@@ -1265,5 +1259,45 @@
                 });
             }
         });
+    }
+
+    function exportStudentsByYearLevel() {
+        // Get filter values
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const yearLevel = document.getElementById('report_year_level').value;
+        const studentStatus = document.getElementById('report_student_status').value;
+
+        // Show loading state
+        const exportBtn = document.querySelector('button[onclick="exportStudentsByYearLevel()"]');
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = `
+            <svg class="animate-spin w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Generating Report...
+        `;
+        exportBtn.disabled = true;
+
+        // Build the URL with parameters
+        let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
+
+        if (yearLevel) {
+            url += `&year_level=${yearLevel}`;
+        }
+
+        if (studentStatus && studentStatus !== 'all') {
+            url += `&student_status=${studentStatus}`;
+        }
+
+        // Open the URL in a new tab
+        window.open(url, '_blank');
+
+        // Reset button after a delay
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 2000);
     }
 </script>
