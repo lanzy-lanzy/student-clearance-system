@@ -137,25 +137,36 @@
         <div class="p-6">
             <div class="space-y-6">
                 <!-- Report Type Selector -->
-                <div class="flex flex-wrap gap-2 sm:gap-4">
+                <div class="flex flex-wrap gap-2 sm:gap-4 mb-4">
                     <button id="btn-year-level" onclick="showReport('year_level')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
-                        By Year Level
+                        Year Level
                     </button>
-                    <button id="btn-course" onclick="showReport('course')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
-                        By Course
-                    </button>
-                    <button id="btn-office" onclick="showReport('office')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
-                        By Office
-                    </button>
-                    <button id="btn-timeline" onclick="showReport('timeline')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
-                        Timeline
+                    <button id="btn-students-list" onclick="showStudentsList()" class="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm sm:text-base rounded-md hover:bg-blue-700 transition-colors">
+                        Students List
                     </button>
                     <button id="btn-cleared-students" onclick="exportClearedStudents()" class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-md hover:bg-green-700 transition-colors">
                         Cleared Students
                     </button>
-                    <button id="btn-students-by-year" onclick="exportStudentsByYearLevel()" class="px-3 sm:px-4 py-2 bg-purple-600 text-white text-sm sm:text-base rounded-md hover:bg-purple-700 transition-colors">
-                        Students by Year Level
+                    <button id="btn-pending-students" onclick="showPendingStudents()" class="px-3 sm:px-4 py-2 bg-orange-600 text-white text-sm sm:text-base rounded-md hover:bg-orange-700 transition-colors">
+                        Pending Students
                     </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="mb-6">
+                    <div class="relative">
+                        <input type="text" id="student-search" placeholder="Search by name, ID number, or year level..."
+                               class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               onkeyup="if(event.key === 'Enter') searchStudents()">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <button onclick="searchStudents()" class="absolute inset-y-0 right-0 px-4 text-emerald-600 font-medium hover:text-emerald-800">
+                            Search
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Report Content -->
@@ -334,17 +345,30 @@
         const reportContent = document.getElementById('reportContent');
 
         // Update active button
-        const allButtons = document.querySelectorAll('#btn-year-level, #btn-course, #btn-office, #btn-timeline');
+        const allButtons = document.querySelectorAll('#btn-year-level, #btn-students-list, #btn-cleared-students, #btn-pending-students');
         allButtons.forEach(btn => {
-            btn.classList.remove('bg-emerald-700');
-            btn.classList.add('bg-emerald-600');
+            if (btn.id === 'btn-year-level') {
+                btn.classList.remove('bg-emerald-700');
+                btn.classList.add('bg-emerald-600');
+            } else if (btn.id === 'btn-students-list') {
+                btn.classList.remove('bg-blue-700');
+                btn.classList.add('bg-blue-600');
+            } else if (btn.id === 'btn-cleared-students') {
+                btn.classList.remove('bg-green-700');
+                btn.classList.add('bg-green-600');
+            } else if (btn.id === 'btn-pending-students') {
+                btn.classList.remove('bg-orange-700');
+                btn.classList.add('bg-orange-600');
+            }
         });
 
         // Highlight the active button
         const activeButton = document.getElementById(`btn-${reportType.replace('_', '-')}`);
         if (activeButton) {
-            activeButton.classList.remove('bg-emerald-600');
-            activeButton.classList.add('bg-emerald-700');
+            if (activeButton.id === 'btn-year-level') {
+                activeButton.classList.remove('bg-emerald-600');
+                activeButton.classList.add('bg-emerald-700');
+            }
         }
 
         // Show loading state
@@ -769,16 +793,414 @@
         });
     }
 
-    function exportStudentsByYearLevel() {
+    function showStudentsList() {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const reportContent = document.getElementById('reportContent');
+
+        // Update active button
+        const allButtons = document.querySelectorAll('#btn-year-level, #btn-students-list, #btn-cleared-students, #btn-pending-students');
+        allButtons.forEach(btn => {
+            if (btn.id === 'btn-year-level') {
+                btn.classList.remove('bg-emerald-700');
+                btn.classList.add('bg-emerald-600');
+            } else if (btn.id === 'btn-students-list') {
+                btn.classList.remove('bg-blue-700');
+                btn.classList.add('bg-blue-600');
+            } else if (btn.id === 'btn-cleared-students') {
+                btn.classList.remove('bg-green-700');
+                btn.classList.add('bg-green-600');
+            } else if (btn.id === 'btn-pending-students') {
+                btn.classList.remove('bg-orange-700');
+                btn.classList.add('bg-orange-600');
+            }
+        });
+
+        // Highlight the active button
+        const activeButton = document.getElementById('btn-students-list');
+        activeButton.classList.remove('bg-blue-600');
+        activeButton.classList.add('bg-blue-700');
+
+        // Show loading state
+        reportContent.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-600">Loading students list...</p>
+            </div>
+        `;
+
+        // Fetch students data
+        fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    renderStudentsList(data.data);
+                } else {
+                    reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error loading students data'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching students data:', error);
+                reportContent.innerHTML = `<div class="text-center py-8 text-red-500">Error loading students data: ${error.message}</div>`;
+            });
+    }
+
+    function renderStudentsList(students) {
+        const reportContent = document.getElementById('reportContent');
+
+        if (!students || students.length === 0) {
+            reportContent.innerHTML = `<div class="text-center py-8 text-gray-500">No students found for the selected filters</div>`;
+            return;
+        }
+
+        // Group students by year level
+        const studentsByYear = {};
+        students.forEach(student => {
+            const yearLevel = student.year_level || 'Unknown';
+            if (!studentsByYear[yearLevel]) {
+                studentsByYear[yearLevel] = [];
+            }
+            studentsByYear[yearLevel].push(student);
+        });
+
+        // Create the HTML for the students list
+        let html = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Complete Students List</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+        `;
+
+        // Sort students alphabetically by last name
+        const allStudents = students.sort((a, b) => {
+            const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
+            const nameB = `${b.last_name}, ${b.first_name}`.toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        // Add all students to the table
+        allStudents.forEach(student => {
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[student.year_level] || `Year ${student.year_level}`;
+
+            const statusClass = student.is_cleared ? 'text-green-600' : 'text-orange-600';
+            const statusText = student.is_cleared ? 'Cleared' : 'Pending';
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${statusClass} font-medium">${statusText}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-right">
+                <button onclick="exportStudentsList()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Export List
+                </button>
+            </div>
+        `;
+
+        reportContent.innerHTML = html;
+    }
+
+    function showPendingStudents() {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const reportContent = document.getElementById('reportContent');
+
+        // Update active button
+        const allButtons = document.querySelectorAll('#btn-year-level, #btn-students-list, #btn-cleared-students, #btn-pending-students');
+        allButtons.forEach(btn => {
+            if (btn.id === 'btn-year-level') {
+                btn.classList.remove('bg-emerald-700');
+                btn.classList.add('bg-emerald-600');
+            } else if (btn.id === 'btn-students-list') {
+                btn.classList.remove('bg-blue-700');
+                btn.classList.add('bg-blue-600');
+            } else if (btn.id === 'btn-cleared-students') {
+                btn.classList.remove('bg-green-700');
+                btn.classList.add('bg-green-600');
+            } else if (btn.id === 'btn-pending-students') {
+                btn.classList.remove('bg-orange-700');
+                btn.classList.add('bg-orange-600');
+            }
+        });
+
+        // Highlight the active button
+        const activeButton = document.getElementById('btn-pending-students');
+        activeButton.classList.remove('bg-orange-600');
+        activeButton.classList.add('bg-orange-700');
+
+        // Show loading state
+        reportContent.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="animate-spin h-8 w-8 text-orange-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-600">Loading pending students...</p>
+            </div>
+        `;
+
+        // Fetch pending students data
+        fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}&status=pending`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    renderPendingStudentsList(data.data);
+                } else {
+                    reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error loading pending students data'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching pending students data:', error);
+                reportContent.innerHTML = `<div class="text-center py-8 text-red-500">Error loading pending students data: ${error.message}</div>`;
+            });
+    }
+
+    function renderPendingStudentsList(students) {
+        const reportContent = document.getElementById('reportContent');
+
+        if (!students || students.length === 0) {
+            reportContent.innerHTML = `<div class="text-center py-8 text-gray-500">No pending students found for the selected filters</div>`;
+            return;
+        }
+
+        // Create the HTML for the pending students list
+        let html = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Pending Students List</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Offices</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+        `;
+
+        // Sort students alphabetically by last name
+        const sortedStudents = students.sort((a, b) => {
+            const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
+            const nameB = `${b.last_name}, ${b.first_name}`.toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        // Add all pending students to the table
+        sortedStudents.forEach(student => {
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[student.year_level] || `Year ${student.year_level}`;
+
+            const pendingOffices = student.pending_offices || [];
+            const pendingOfficesText = pendingOffices.join(', ') || 'None';
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-orange-600">${pendingOfficesText}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-right">
+                <button onclick="exportPendingStudentsList()" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                    Export List
+                </button>
+            </div>
+        `;
+
+        reportContent.innerHTML = html;
+    }
+
+    function searchStudents() {
+        const searchTerm = document.getElementById('student-search').value.trim().toLowerCase();
+        if (!searchTerm) {
+            alert('Please enter a search term');
+            return;
+        }
+
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const reportContent = document.getElementById('reportContent');
+
+        // Show loading state
+        reportContent.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="animate-spin h-8 w-8 text-emerald-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-600">Searching for "${searchTerm}"...</p>
+            </div>
+        `;
+
+        // Fetch all students data
+        fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const filteredStudents = data.data.filter(student => {
+                        const fullName = `${student.first_name} ${student.last_name}`.toLowerCase();
+                        const studentId = (student.student_id || '').toLowerCase();
+                        const yearLevel = String(student.year_level || '').toLowerCase();
+
+                        return fullName.includes(searchTerm) ||
+                               studentId.includes(searchTerm) ||
+                               yearLevel === searchTerm;
+                    });
+
+                    renderSearchResults(filteredStudents, searchTerm);
+                } else {
+                    reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error searching for students'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error searching for students:', error);
+                reportContent.innerHTML = `<div class="text-center py-8 text-red-500">Error searching for students: ${error.message}</div>`;
+            });
+    }
+
+    function renderSearchResults(students, searchTerm) {
+        const reportContent = document.getElementById('reportContent');
+
+        if (!students || students.length === 0) {
+            reportContent.innerHTML = `<div class="text-center py-8 text-gray-500">No students found matching "${searchTerm}"</div>`;
+            return;
+        }
+
+        // Create the HTML for the search results
+        let html = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Search Results for "${searchTerm}" (${students.length} found)</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+        `;
+
+        // Sort students alphabetically by last name
+        const sortedStudents = students.sort((a, b) => {
+            const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
+            const nameB = `${b.last_name}, ${b.first_name}`.toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        // Add all matching students to the table
+        sortedStudents.forEach(student => {
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[student.year_level] || `Year ${student.year_level}`;
+
+            const statusClass = student.is_cleared ? 'text-green-600' : 'text-orange-600';
+            const statusText = student.is_cleared ? 'Cleared' : 'Pending';
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${statusClass} font-medium">${statusText}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        reportContent.innerHTML = html;
+    }
+
+    function exportStudentsList() {
         // Get filter values
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
-        const yearLevel = document.getElementById('report_year_level').value;
-        const course = document.getElementById('report_course').value;
 
         // Show export format modal
         Swal.fire({
-            title: 'Export Students by Year Level',
+            title: 'Export Students List',
             html: `
                 <div class="mb-4">
                     <p class="mb-2 text-left">Select export format:</p>
@@ -795,30 +1217,49 @@
             didOpen: () => {
                 document.getElementById('pdf-btn').addEventListener('click', () => {
                     let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
-
-                    if (yearLevel) {
-                        url += `&year_level=${yearLevel}`;
-                    }
-
-                    if (course) {
-                        url += `&department=${course}`;
-                    }
-
                     window.open(url, '_blank');
                     Swal.close();
                 });
 
                 document.getElementById('excel-btn').addEventListener('click', () => {
                     let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=excel`;
+                    window.open(url, '_blank');
+                    Swal.close();
+                });
+            }
+        });
+    }
 
-                    if (yearLevel) {
-                        url += `&year_level=${yearLevel}`;
-                    }
+    function exportPendingStudentsList() {
+        // Get filter values
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
 
-                    if (course) {
-                        url += `&department=${course}`;
-                    }
+        // Show export format modal
+        Swal.fire({
+            title: 'Export Pending Students List',
+            html: `
+                <div class="mb-4">
+                    <p class="mb-2 text-left">Select export format:</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="pdf-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">PDF</button>
+                        <button id="excel-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Excel</button>
+                    </div>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            cancelButtonColor: '#6B7280',
+            didOpen: () => {
+                document.getElementById('pdf-btn').addEventListener('click', () => {
+                    let url = `{% url 'admin_reports' %}?report_type=pending_students&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
+                    window.open(url, '_blank');
+                    Swal.close();
+                });
 
+                document.getElementById('excel-btn').addEventListener('click', () => {
+                    let url = `{% url 'admin_reports' %}?report_type=pending_students&school_year=${schoolYear}&semester=${semester}&format_type=excel`;
                     window.open(url, '_blank');
                     Swal.close();
                 });
