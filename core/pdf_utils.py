@@ -308,6 +308,237 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
     return pdf
 
 
+def generate_students_by_year_level_pdf(students, request=None, school_year=None, semester=None, department=None):
+    """
+    Generate a PDF report of students grouped by year level for departments
+    """
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.5*inch,
+        leftMargin=0.5*inch,
+        topMargin=0.75*inch,
+        bottomMargin=0.75*inch
+    )
+
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Heading1'],
+        fontSize=18,
+        alignment=TA_CENTER,
+        spaceAfter=12,
+        textColor=EMERALD_DARK
+    )
+
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        alignment=TA_CENTER,
+        spaceAfter=12,
+        textColor=EMERALD_MEDIUM
+    )
+
+    header_style = ParagraphStyle(
+        'Header',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.white,
+        alignment=TA_LEFT
+    )
+
+    year_header_style = ParagraphStyle(
+        'YearHeader',
+        parent=styles['Heading3'],
+        fontSize=14,
+        textColor=EMERALD_DARK,
+        spaceBefore=15,
+        spaceAfter=10
+    )
+
+    normal_style = styles["Normal"]
+
+    # Content elements
+    elements = []
+
+    # Add logo if available
+    logo_path = get_logo_path()
+    if logo_path:
+        img = Image(logo_path, width=1.5*inch, height=1.5*inch)
+        img.hAlign = 'CENTER'
+        elements.append(img)
+        elements.append(Spacer(1, 0.25*inch))
+
+    # Title
+    title = Paragraph("Students by Year Level", title_style)
+    elements.append(title)
+
+    # Subtitle with school year and semester
+    if school_year and semester:
+        semester_display = dict(SEMESTER_CHOICES).get(semester, semester)
+        subtitle_text = f"School Year: {school_year} | Semester: {semester_display}"
+        if department:
+            from core.models import Dean
+            try:
+                dean = Dean.objects.get(id=department)
+                subtitle_text += f" | Department: {dean.name}"
+            except:
+                pass
+        subtitle = Paragraph(subtitle_text, subtitle_style)
+        elements.append(subtitle)
+
+    # Current date
+    date_text = Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", normal_style)
+    elements.append(date_text)
+    elements.append(Spacer(1, 0.25*inch))
+
+    # Group students by year level
+    students_by_year = {}
+    for student in students:
+        year_level = student.year_level
+        if year_level not in students_by_year:
+            students_by_year[year_level] = []
+        students_by_year[year_level].append(student)
+
+    # Sort year levels
+    sorted_years = sorted(students_by_year.keys())
+
+    # Process each year level
+    for year in sorted_years:
+        year_students = students_by_year[year]
+
+        # Year level header
+        year_text = {
+            1: "First Year Students",
+            2: "Second Year Students",
+            3: "Third Year Students",
+            4: "Fourth Year Students",
+            5: "Fifth Year Students"
+        }.get(year, f"Year {year} Students")
+
+        elements.append(Paragraph(year_text, year_header_style))
+
+        # Table header
+        data = [
+            [
+                Paragraph("Student ID", header_style),
+                Paragraph("Name", header_style),
+                Paragraph("Course", header_style),
+                Paragraph("Contact", header_style),
+                Paragraph("Status", header_style)
+            ]
+        ]
+
+        # Add student data for this year level
+        for student in year_students:
+            status = "Approved" if student.is_approved else "Pending"
+
+            data.append([
+                student.student_id,
+                f"{student.user.first_name} {student.user.last_name}",
+                student.course.name if student.course else "N/A",
+                student.contact_number or "N/A",
+                status
+            ])
+
+        # Create the table
+        table = Table(data, repeatRows=1)
+
+        # Style the table
+        table_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, EMERALD_MEDIUM),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ])
+
+        # Add alternating row colors
+        for i in range(1, len(data)):
+            if i % 2 == 0:
+                table_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+
+        table.setStyle(table_style)
+        elements.append(table)
+
+        # Add year level summary
+        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Paragraph(f"Total {year_text}: {len(year_students)}", normal_style))
+        elements.append(Spacer(1, 0.3*inch))
+
+    # Add overall summary
+    elements.append(Spacer(1, 0.2*inch))
+    elements.append(Paragraph("Overall Summary", year_header_style))
+
+    # Create summary table
+    summary_data = [["Year Level", "Number of Students"]]
+    total_students = 0
+
+    for year in sorted_years:
+        year_text = {
+            1: "First Year",
+            2: "Second Year",
+            3: "Third Year",
+            4: "Fourth Year",
+            5: "Fifth Year"
+        }.get(year, f"Year {year}")
+
+        count = len(students_by_year[year])
+        total_students += count
+        summary_data.append([year_text, str(count)])
+
+    # Add total row
+    summary_data.append(["Total", str(total_students)])
+
+    # Create and style the summary table
+    summary_table = Table(summary_data, colWidths=[2.5*inch, 1.5*inch])
+    summary_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, EMERALD_MEDIUM),
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ])
+
+    # Style the total row
+    summary_style.add('BACKGROUND', (0, -1), (-1, -1), EMERALD_PALE)
+    summary_style.add('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold')
+
+    # Add alternating row colors for the summary table
+    for i in range(1, len(summary_data)-1):
+        if i % 2 == 0:
+            summary_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+
+    summary_table.setStyle(summary_style)
+    elements.append(summary_table)
+
+    # Add page numbers
+    elements.append(PageNumberFooter())
+
+    # Build the PDF
+    doc.build(elements)
+
+    # Get the value of the BytesIO buffer
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    return pdf
+
+
 
 def generate_clearance_summary_pdf(report_data, request=None, school_year=None, semester=None):
     """

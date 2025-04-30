@@ -4295,6 +4295,165 @@ def admin_reports(request):
                 wb.save(response)
                 return response
 
+        elif report_type == 'students_by_year_level':
+            # Generate students by year level report
+            students = Student.objects.select_related('user', 'course').all()
+
+            # Filter by department (dean) if specified and not "all"
+            if department and department != 'all' and department != '':
+                students = students.filter(course__dean_id=department)
+
+            # Check if there's data
+            if not students.exists():
+                messages.warning(request, "No student data found for the selected criteria.")
+                return redirect('admin_reports')
+
+            if format_type == 'pdf':
+                from core.pdf_utils import generate_students_by_year_level_pdf
+                pdf = generate_students_by_year_level_pdf(students, request, school_year, semester, department)
+                response = HttpResponse(pdf, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="students_by_year_level_{school_year}_{semester}.pdf"'
+                return response
+            else:  # Excel format
+                response = HttpResponse(content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = f'attachment; filename="students_by_year_level_{school_year}_{semester}.xlsx"'
+
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "Students by Year Level"
+
+                # Add title
+                ws.merge_cells('A1:E1')
+                title_cell = ws['A1']
+                title_cell.value = f"Students by Year Level - {school_year} {semester}"
+                title_cell.font = Font(size=16, bold=True)
+                title_cell.alignment = Alignment(horizontal='center')
+
+                # Group students by year level
+                students_by_year = {}
+                for student in students:
+                    year_level = student.year_level
+                    if year_level not in students_by_year:
+                        students_by_year[year_level] = []
+                    students_by_year[year_level].append(student)
+
+                # Sort year levels
+                sorted_years = sorted(students_by_year.keys())
+
+                # Current row for writing data
+                current_row = 3
+
+                # Process each year level
+                for year in sorted_years:
+                    year_students = students_by_year[year]
+
+                    # Year level header
+                    year_text = {
+                        1: "First Year Students",
+                        2: "Second Year Students",
+                        3: "Third Year Students",
+                        4: "Fourth Year Students",
+                        5: "Fifth Year Students"
+                    }.get(year, f"Year {year} Students")
+
+                    # Add year level header
+                    ws.merge_cells(f'A{current_row}:E{current_row}')
+                    header_cell = ws[f'A{current_row}']
+                    header_cell.value = year_text
+                    header_cell.font = Font(size=14, bold=True)
+                    header_cell.alignment = Alignment(horizontal='center')
+                    current_row += 1
+
+                    # Add column headers
+                    headers = ['Student ID', 'Name', 'Course', 'Contact', 'Status']
+                    for col_num, header in enumerate(headers, 1):
+                        cell = ws.cell(row=current_row, column=col_num)
+                        cell.value = header
+                        cell.font = Font(bold=True, color="FFFFFF")
+                        cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+                        cell.alignment = Alignment(horizontal='center')
+                    current_row += 1
+
+                    # Add student data
+                    for student in year_students:
+                        status = "Approved" if student.is_approved else "Pending"
+
+                        row_data = [
+                            student.student_id,
+                            f"{student.user.first_name} {student.user.last_name}",
+                            student.course.name if student.course else "N/A",
+                            student.contact_number or "N/A",
+                            status
+                        ]
+
+                        for col_num, cell_value in enumerate(row_data, 1):
+                            cell = ws.cell(row=current_row, column=col_num)
+                            cell.value = cell_value
+
+                        current_row += 1
+
+                    # Add year level summary
+                    ws.merge_cells(f'A{current_row}:B{current_row}')
+                    summary_cell = ws[f'A{current_row}']
+                    summary_cell.value = f"Total {year_text}: {len(year_students)}"
+                    summary_cell.font = Font(bold=True)
+                    current_row += 2  # Add extra space between year levels
+
+                # Add overall summary
+                current_row += 1
+                ws.merge_cells(f'A{current_row}:E{current_row}')
+                overall_header = ws[f'A{current_row}']
+                overall_header.value = "Overall Summary"
+                overall_header.font = Font(size=14, bold=True)
+                overall_header.alignment = Alignment(horizontal='center')
+                current_row += 1
+
+                # Add summary headers
+                ws.cell(row=current_row, column=1).value = "Year Level"
+                ws.cell(row=current_row, column=2).value = "Number of Students"
+                ws.cell(row=current_row, column=1).font = Font(bold=True)
+                ws.cell(row=current_row, column=2).font = Font(bold=True)
+                current_row += 1
+
+                # Add summary data
+                total_students = 0
+                for year in sorted_years:
+                    year_text = {
+                        1: "First Year",
+                        2: "Second Year",
+                        3: "Third Year",
+                        4: "Fourth Year",
+                        5: "Fifth Year"
+                    }.get(year, f"Year {year}")
+
+                    count = len(students_by_year[year])
+                    total_students += count
+
+                    ws.cell(row=current_row, column=1).value = year_text
+                    ws.cell(row=current_row, column=2).value = count
+                    current_row += 1
+
+                # Add total row
+                ws.cell(row=current_row, column=1).value = "Total"
+                ws.cell(row=current_row, column=2).value = total_students
+                ws.cell(row=current_row, column=1).font = Font(bold=True)
+                ws.cell(row=current_row, column=2).font = Font(bold=True)
+
+                # Auto-adjust column widths
+                for column in ws.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        if cell.value:
+                            cell_length = len(str(cell.value))
+                            if cell_length > max_length:
+                                max_length = cell_length
+                    adjusted_width = (max_length + 2) * 1.2
+                    ws.column_dimensions[column_letter].width = adjusted_width
+
+                wb.save(response)
+                return response
+
         elif report_type == 'course_statistics':
             # Generate course statistics report
             courses = Course.objects.all()

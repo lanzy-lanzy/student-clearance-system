@@ -723,15 +723,16 @@ def get_timeline_report_data(semester, school_year, students, clearances):
         start_year = timezone.now().year
 
     # Determine semester start date based on semester and school year
+    from datetime import datetime, timezone as dt_timezone
     if semester.startswith('1ST'):
         # First semester typically starts in August/September
-        start_date = timezone.datetime(start_year, 8, 1).replace(tzinfo=timezone.utc)
+        start_date = datetime(start_year, 8, 1).replace(tzinfo=dt_timezone.utc)
     elif semester.startswith('2ND'):
         # Second semester typically starts in January/February
-        start_date = timezone.datetime(start_year + 1, 1, 1).replace(tzinfo=timezone.utc)
+        start_date = datetime(start_year + 1, 1, 1).replace(tzinfo=dt_timezone.utc)
     else:  # Summer
         # Summer typically starts in May/June
-        start_date = timezone.datetime(start_year + 1, 5, 1).replace(tzinfo=timezone.utc)
+        start_date = datetime(start_year + 1, 5, 1).replace(tzinfo=dt_timezone.utc)
 
     # Generate weekly data for 6 weeks
     total_students = students.count()
