@@ -419,8 +419,11 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
     elements.append(Paragraph("Summary Statistics", section_header_style))
 
     # Create summary table
-    summary_data = [["Year Level", "Number of Students"]]
+    summary_data = [["Year Level", "Total Students", "Cleared", "Pending", "Not Started", "Clearance Rate"]]
     total_students = 0
+    total_cleared = 0
+    total_pending = 0
+    total_not_started = 0
 
     for year in sorted_years:
         year_text = {
@@ -431,22 +434,51 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
             5: "Fifth Year"
         }.get(year, f"Year {year}")
 
-        count = len(students_by_year[year])
+        year_students = students_by_year[year]
+        count = len(year_students)
         total_students += count
-        summary_data.append([year_text, str(count)])
+
+        # Count cleared, pending, and not started students
+        cleared = sum(1 for s in year_students if hasattr(s, 'is_approved') and s.is_approved)
+        pending = sum(1 for s in year_students if hasattr(s, 'is_approved') and not s.is_approved)
+        not_started = count - (cleared + pending)
+
+        total_cleared += cleared
+        total_pending += pending
+        total_not_started += not_started
+
+        # Calculate clearance rate
+        clearance_rate = f"{(cleared / count * 100) if count > 0 else 0:.1f}%"
+
+        summary_data.append([
+            year_text,
+            str(count),
+            str(cleared),
+            str(pending),
+            str(not_started),
+            clearance_rate
+        ])
 
     # Add total row
-    summary_data.append(["Total", str(total_students)])
+    total_clearance_rate = f"{(total_cleared / total_students * 100) if total_students > 0 else 0:.1f}%"
+    summary_data.append([
+        "Total",
+        str(total_students),
+        str(total_cleared),
+        str(total_pending),
+        str(total_not_started),
+        total_clearance_rate
+    ])
 
     # Create and style the summary table
-    summary_table = Table(summary_data, colWidths=[2.5*inch, 1.5*inch])
+    summary_table = Table(summary_data, repeatRows=1)
     summary_style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 1, EMERALD_MEDIUM),
-        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ])
 
@@ -461,6 +493,78 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
 
     summary_table.setStyle(summary_style)
     elements.append(summary_table)
+    elements.append(Spacer(1, 0.3*inch))
+
+    # Add the students list table right after the summary
+    elements.append(Paragraph("Students List", section_header_style))
+
+    # Create a comprehensive student list sorted by year level and then alphabetically
+    all_students = []
+    for year_students in students_by_year.values():
+        all_students.extend(year_students)
+
+    # Sort students by year level first, then alphabetically by last name, then first name
+    all_students.sort(key=lambda s: (s.year_level, s.user.last_name.lower(), s.user.first_name.lower()))
+
+    # Table header for students list
+    students_list_data = [
+        [
+            Paragraph("Student ID", header_style),
+            Paragraph("Name", header_style),
+            Paragraph("Year Level", header_style),
+            Paragraph("Course", header_style),
+            Paragraph("Status", header_style)
+        ]
+    ]
+
+    # Add all students to the list
+    for student in all_students:
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(student.year_level, f"{student.year_level} Year")
+
+        status = "Cleared" if (hasattr(student, 'is_approved') and student.is_approved) else "Pending"
+
+        students_list_data.append([
+            student.student_id,
+            f"{student.user.last_name}, {student.user.first_name}",
+            year_level_text,
+            student.course.name if student.course else "N/A",
+            status
+        ])
+
+    # Create the students list table
+    students_list_table = Table(students_list_data, repeatRows=1)
+
+    # Style the students list table
+    students_list_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, EMERALD_MEDIUM),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+    ])
+
+    # Add alternating row colors for the students list
+    for i in range(1, len(students_list_data)):
+        if i % 2 == 0:
+            students_list_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+
+    students_list_table.setStyle(students_list_style)
+    elements.append(students_list_table)
     elements.append(Spacer(1, 0.3*inch))
 
     # Second section: Detailed student lists by year level
