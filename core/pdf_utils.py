@@ -359,6 +359,15 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
         spaceAfter=10
     )
 
+    section_header_style = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading3'],
+        fontSize=16,
+        textColor=EMERALD_DARK,
+        spaceBefore=20,
+        spaceAfter=10
+    )
+
     normal_style = styles["Normal"]
 
     # Content elements
@@ -405,6 +414,57 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
 
     # Sort year levels
     sorted_years = sorted(students_by_year.keys())
+
+    # First section: Summary statistics
+    elements.append(Paragraph("Summary Statistics", section_header_style))
+
+    # Create summary table
+    summary_data = [["Year Level", "Number of Students"]]
+    total_students = 0
+
+    for year in sorted_years:
+        year_text = {
+            1: "First Year",
+            2: "Second Year",
+            3: "Third Year",
+            4: "Fourth Year",
+            5: "Fifth Year"
+        }.get(year, f"Year {year}")
+
+        count = len(students_by_year[year])
+        total_students += count
+        summary_data.append([year_text, str(count)])
+
+    # Add total row
+    summary_data.append(["Total", str(total_students)])
+
+    # Create and style the summary table
+    summary_table = Table(summary_data, colWidths=[2.5*inch, 1.5*inch])
+    summary_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, EMERALD_MEDIUM),
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ])
+
+    # Style the total row
+    summary_style.add('BACKGROUND', (0, -1), (-1, -1), EMERALD_PALE)
+    summary_style.add('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold')
+
+    # Add alternating row colors for the summary table
+    for i in range(1, len(summary_data)-1):
+        if i % 2 == 0:
+            summary_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+
+    summary_table.setStyle(summary_style)
+    elements.append(summary_table)
+    elements.append(Spacer(1, 0.3*inch))
+
+    # Second section: Detailed student lists by year level
+    elements.append(Paragraph("Detailed Student Lists by Year Level", section_header_style))
 
     # Process each year level
     for year in sorted_years:
@@ -478,53 +538,82 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
         elements.append(Paragraph(f"Total {year_text}: {len(year_students)}", normal_style))
         elements.append(Spacer(1, 0.3*inch))
 
-    # Add overall summary
-    elements.append(Spacer(1, 0.2*inch))
-    elements.append(Paragraph("Overall Summary", year_header_style))
+    # Third section: Complete Student Namelist
+    elements.append(Paragraph("Complete Student Namelist", section_header_style))
 
-    # Create summary table
-    summary_data = [["Year Level", "Number of Students"]]
-    total_students = 0
+    # Create a comprehensive student list sorted alphabetically
+    all_students = []
+    for year_students in students_by_year.values():
+        all_students.extend(year_students)
 
-    for year in sorted_years:
-        year_text = {
-            1: "First Year",
-            2: "Second Year",
-            3: "Third Year",
-            4: "Fourth Year",
-            5: "Fifth Year"
-        }.get(year, f"Year {year}")
+    # Sort students alphabetically by last name, then first name
+    all_students.sort(key=lambda s: (s.user.last_name.lower(), s.user.first_name.lower()))
 
-        count = len(students_by_year[year])
-        total_students += count
-        summary_data.append([year_text, str(count)])
+    # Table header for complete namelist
+    namelist_data = [
+        [
+            Paragraph("Student ID", header_style),
+            Paragraph("Last Name", header_style),
+            Paragraph("First Name", header_style),
+            Paragraph("Year Level", header_style),
+            Paragraph("Course", header_style),
+            Paragraph("Status", header_style)
+        ]
+    ]
 
-    # Add total row
-    summary_data.append(["Total", str(total_students)])
+    # Add all students to the namelist
+    for student in all_students:
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(student.year_level, f"{student.year_level} Year")
 
-    # Create and style the summary table
-    summary_table = Table(summary_data, colWidths=[2.5*inch, 1.5*inch])
-    summary_style = TableStyle([
+        status = "Approved" if student.is_approved else "Pending"
+
+        namelist_data.append([
+            student.student_id,
+            student.user.last_name,
+            student.user.first_name,
+            year_level_text,
+            student.course.name if student.course else "N/A",
+            status
+        ])
+
+    # Create the namelist table
+    namelist_table = Table(namelist_data, repeatRows=1)
+
+    # Style the namelist table
+    namelist_style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
         ('GRID', (0, 0), (-1, -1), 1, EMERALD_MEDIUM),
-        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
     ])
 
-    # Style the total row
-    summary_style.add('BACKGROUND', (0, -1), (-1, -1), EMERALD_PALE)
-    summary_style.add('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold')
-
-    # Add alternating row colors for the summary table
-    for i in range(1, len(summary_data)-1):
+    # Add alternating row colors for the namelist
+    for i in range(1, len(namelist_data)):
         if i % 2 == 0:
-            summary_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+            namelist_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
 
-    summary_table.setStyle(summary_style)
-    elements.append(summary_table)
+    namelist_table.setStyle(namelist_style)
+    elements.append(namelist_table)
+
+    # Add total count for the namelist
+    elements.append(Spacer(1, 0.2*inch))
+    elements.append(Paragraph(f"Total Students: {len(all_students)}", normal_style))
 
     # Add page numbers
     elements.append(PageNumberFooter())
