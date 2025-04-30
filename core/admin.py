@@ -10,7 +10,8 @@ from django.utils.html import format_html
 
 from core.models import (
     Dean, Course, Office, Staff, Student, ProgramChair,
-    UserProfile, ClearanceRequest, Clearance, SEMESTER_CHOICES
+    UserProfile, ClearanceRequest, Clearance, SEMESTER_CHOICES,
+    SystemSettings
 )
 
 # Inline admin classes for related models
@@ -794,3 +795,21 @@ class UserProfileAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="50" height="50" />', obj.profile_picture.url)
         return "-"
     profile_picture_preview.short_description = 'Profile Picture'
+
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    list_display = ('school_year', 'semester', 'clearance_active', 'maintenance_mode', 'email_notifications', 'last_updated')
+    readonly_fields = ('last_updated', 'updated_by')
+
+    def has_add_permission(self, request):
+        # Only allow adding if no settings exist yet
+        return not SystemSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of settings
+        return False
+
+    def save_model(self, request, obj, form, change):
+        # Set the updated_by field to the current user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)

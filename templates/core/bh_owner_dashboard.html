@@ -187,12 +187,12 @@
                                     <div class="flex flex-col sm:flex-row gap-2">
                                         <button onclick="approveRequest({{ request.id }})"
                                                 class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium">
-                                            Approve
+                                            Paid
                                         </button>
                                         <button onclick="showDenialModal({{ request.id }})"
                                                 class="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium"
                                                 type="button">
-                                            Deny
+                                                Unpaid
                                         </button>
                                     </div>
                                 {% endif %}
@@ -208,24 +208,69 @@
     </div>
 </div>
 
-<!-- Denial Modal -->
+<!-- Denial Modal with Checklist -->
 <div id="denialModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-4 sm:p-5 border w-full max-w-xs sm:max-w-md shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
+    <div class="relative top-20 mx-auto p-4 sm:p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
             <div class="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100">
                 <svg class="h-5 w-5 sm:h-6 sm:w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            <h3 class="text-base sm:text-lg leading-6 font-medium text-gray-900 mt-2">Deny Clearance Request</h3>
-            <div class="mt-2 px-3 sm:px-7 py-3">
-                <p class="text-xs sm:text-sm text-gray-500 mb-4">Please provide a reason for denying this clearance request.</p>
+            <h3 class="text-base sm:text-lg leading-6 font-medium text-gray-900 mt-2 text-center">Deny Clearance Request</h3>
+
+            <div class="mt-4 px-3 sm:px-5 py-3">
                 <form id="denialForm" method="POST" action="">
                     {% csrf_token %}
                     <input type="hidden" name="status" value="denied">
-                    <textarea id="remarks" name="remarks" rows="4" required
-                              class="w-full px-3 py-2 text-xs sm:text-sm text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
-                              placeholder="Enter reason for denial"></textarea>
+
+                    <!-- Denial Reason Checklist -->
+                    <div class="mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Select reason(s) for denial:</p>
+                        <div class="space-y-2 max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg">
+                            <div class="flex items-start">
+                                <input id="reason1" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Unpaid boarding fees">
+                                <label for="reason1" class="ml-2 block text-sm text-gray-700">Unpaid boarding fees</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason2" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Damaged dormitory property">
+                                <label for="reason2" class="ml-2 block text-sm text-gray-700">Damaged dormitory property</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason3" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Violation of dormitory rules">
+                                <label for="reason3" class="ml-2 block text-sm text-gray-700">Violation of dormitory rules</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason4" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Unauthorized guests">
+                                <label for="reason4" class="ml-2 block text-sm text-gray-700">Unauthorized guests</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason5" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Noise complaints">
+                                <label for="reason5" class="ml-2 block text-sm text-gray-700">Noise complaints</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason6" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Unsanitary conditions">
+                                <label for="reason6" class="ml-2 block text-sm text-gray-700">Unsanitary conditions</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason7" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Curfew violations">
+                                <label for="reason7" class="ml-2 block text-sm text-gray-700">Curfew violations</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input id="reason8" type="checkbox" class="denial-reason mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" data-reason="Unauthorized appliances">
+                                <label for="reason8" class="ml-2 block text-sm text-gray-700">Unauthorized appliances</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Comments -->
+                    <div class="mb-4">
+                        <label for="remarks" class="block text-sm font-medium text-gray-700 mb-1">Additional comments:</label>
+                        <textarea id="remarks" name="remarks" rows="3" required
+                                  class="w-full px-3 py-2 text-xs sm:text-sm text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+                                  placeholder="Provide details about the selected reason(s)"></textarea>
+                    </div>
+
                     <div class="flex flex-col sm:flex-row items-center sm:justify-between gap-2 mt-4">
                         <button type="button" onclick="closeDenialModal()"
                                 class="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-800 text-xs sm:text-sm font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
@@ -289,15 +334,54 @@
     }
 
     function showDenialModal(requestId) {
+        // Reset form state
+        document.querySelectorAll('.denial-reason').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('remarks').value = '';
+
+        // Set form action and show modal
         document.getElementById('denialForm').action = `/deny-clearance-request/${requestId}/`;
         document.getElementById('denialModal').classList.remove('hidden');
-        document.getElementById('remarks').focus();
     }
 
     function closeDenialModal() {
         document.getElementById('denialModal').classList.add('hidden');
         document.getElementById('remarks').value = '';
+        document.querySelectorAll('.denial-reason').forEach(checkbox => {
+            checkbox.checked = false;
+        });
     }
+
+    // Handle checkbox changes to update remarks field
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.denial-reason');
+        const remarksField = document.getElementById('remarks');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateRemarks);
+        });
+
+        function updateRemarks() {
+            // Get all checked reasons
+            const selectedReasons = [];
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedReasons.push(checkbox.getAttribute('data-reason'));
+                }
+            });
+
+            // Update remarks field with selected reasons
+            if (selectedReasons.length > 0) {
+                remarksField.value = selectedReasons.join(', ') + '. ';
+                remarksField.focus();
+                // Place cursor at the end
+                remarksField.setSelectionRange(remarksField.value.length, remarksField.value.length);
+            } else {
+                remarksField.value = '';
+            }
+        }
+    });
 
     // Close modal when clicking outside of it
     window.onclick = function(event) {

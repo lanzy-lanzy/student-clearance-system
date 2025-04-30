@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
 {% load myfilters %}
-{% block title %}{{ clearance.semester|semester_display }} Examination Permit{% endblock %}
+{% block title %}
+{% if "_MID" in clearance.semester %}
+    Midterm Examination Permit - {{ clearance.semester|semester_display }}
+{% elif "_FIN" in clearance.semester %}
+    Final Examination Permit - {{ clearance.semester|semester_display }}
+{% else %}
+    {{ clearance.semester|semester_display }} Examination Permit
+{% endif %}
+{% endblock %}
 {% block sidebar %}
 {% include "components/program_chair_sidenav.html" %}
 {% endblock %}
@@ -52,7 +60,7 @@
 
             <!-- Department and Permit Title -->
             <div class="mt-6">
-                <h3 class="text-lg font-bold text-emerald-700">{{ student.course.dean.description }}</h3>
+                <h3 class="text-lg font-bold text-emerald-700">{{ student.course.description|default:"" }}</h3>
                 <div class="relative mt-4">
                     <!-- Decorative Lines -->
                     <div class="absolute w-1/4 h-px bg-emerald-600 left-0 top-1/2 transform -translate-y-1/2"></div>
@@ -60,7 +68,13 @@
 
                     <!-- Permit Title -->
                     <h4 class="text-xl font-bold inline-block bg-emerald-700 text-white py-2 px-8 rounded-lg transform -skew-x-6">
-                        EXAMINATION PERMIT
+                        {% if "_MID" in clearance.semester %}
+                            MIDTERM EXAMINATION PERMIT
+                        {% elif "_FIN" in clearance.semester %}
+                            FINAL EXAMINATION PERMIT
+                        {% else %}
+                            EXAMINATION PERMIT
+                        {% endif %}
                     </h4>
                 </div>
                 <div class="mt-2 text-emerald-600">
@@ -94,7 +108,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in "123456789"|make_list %}
+                    {% for i in "123"|make_list %}
                     <tr class="hover:bg-emerald-50">
                         <td class="border-2 border-emerald-600 p-4 text-emerald-800">
                             <div class="h-8 flex items-center px-2"></div>
@@ -117,7 +131,7 @@
                 {{ student.program_chair.user.get_full_name }}
             </p>
             <div class="border-t-2 border-emerald-600 pt-2 inline-block px-12">
-                <p class="font-semibold text-emerald-800">{{ student.program_chair.get_title }}</p>
+                <p class="font-semibold text-emerald-800">Program Chair / {{ student.program_chair.dean.name }}</p>
             </div>
         </div>
 
@@ -188,34 +202,42 @@
           padding: 0;
       }
 
-      /* Main permit container */
+      /* Main permit container - adjusted for 8 permits per A4 page (4x2 grid) */
       #print-section > div {
-          width: 3.5in !important;
-          height: 5in !important;
-          padding: 0.1in !important;
+          width: 2.05in !important; /* Quarter of A4 width (8.27in) */
+          height: 5.8in !important; /* Half of A4 height (11.69in) */
+          padding: 0.05in !important;
           margin: 0 auto !important;
-          border: 1px solid #047857 !important;
+          border: 0.5px solid #047857 !important;
           box-sizing: border-box !important;
+          transform: scale(0.98); /* Slightly scale down to ensure fit */
+          transform-origin: top center;
+      }
+
+      /* Set A4 page size */
+      @page {
+          size: A4 portrait !important;
+          margin: 0 !important;
       }
 
       /* Adjust tables and borders for prints */
       table {
-          border: 1px solid #047857 !important;
+          border: 0.5px solid #047857 !important;
           width: 100% !important;
           border-collapse: collapse !important;
-          margin-top: 0.1in !important;
+          margin-top: 0.05in !important;
       }
       th, td {
-          border: 1px solid #047857 !important;
-          padding: 0.02in !important;
-          font-size: 6pt !important;
-          height: 0.15in !important;
+          border: 0.5px solid #047857 !important;
+          padding: 0.01in !important;
+          font-size: 5pt !important;
+          height: 0.08in !important;
       }
       th {
           background-color: #047857 !important;
           color: white !important;
           font-weight: bold !important;
-          height: 0.2in !important;
+          height: 0.1in !important;
       }
 
       /* Ensure colors print accurately */
@@ -225,10 +247,7 @@
           color-adjust: exact !important;
       }
 
-      @page {
-          size: 3.5in 5in !important;
-          margin: 0 !important;
-      }
+
 
       /* Preserve logo shadows in print */
       img {
@@ -287,26 +306,41 @@
           margin-top: 0.02in !important;
       }
 
-      /* Adjust font sizes for smaller permit size */
+      /* Style for examination type */
+      .examination-type {
+          font-size: 9pt !important;
+          font-weight: bold !important;
+          color: #065f46 !important;
+          text-align: center !important;
+          margin-top: 0.05in !important;
+          border: 1px solid #047857 !important;
+          padding: 0.03in !important;
+          border-radius: 0.03in !important;
+          background-color: #ecfdf5 !important;
+          display: block !important;
+          letter-spacing: 0.02in !important;
+      }
+
+      /* Adjust font sizes for much smaller permit size (1/8 of A4) */
       h1, .text-2xl {
-          font-size: 10pt !important;
+          font-size: 7pt !important;
           margin: 0 !important;
           line-height: 1.1 !important;
       }
       h2, h3, h4, .text-xl {
-          font-size: 8pt !important;
+          font-size: 6pt !important;
           margin: 0 !important;
           line-height: 1.1 !important;
       }
       p, span, div {
-          font-size: 7pt !important;
+          font-size: 5pt !important;
           line-height: 1.1 !important;
       }
 
       /* Student info section */
       .mb-8.space-y-4.bg-emerald-50.p-4.rounded-lg {
-          margin-bottom: 0.05in !important;
-          padding: 0.05in !important;
+          margin-bottom: 0.03in !important;
+          padding: 0.03in !important;
           background-color: #f0fdf4 !important;
       }
 
@@ -314,14 +348,14 @@
       .grid.grid-cols-2.gap-4 {
           display: grid !important;
           grid-template-columns: 1fr 1fr !important;
-          gap: 0.05in !important;
+          gap: 0.02in !important;
       }
 
       /* Student info labels */
       .font-bold.text-emerald-800.w-24,
       .font-bold.text-emerald-800.w-32 {
           width: auto !important;
-          font-size: 6pt !important;
+          font-size: 5pt !important;
           white-space: nowrap !important;
       }
 

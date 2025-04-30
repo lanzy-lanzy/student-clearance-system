@@ -22,16 +22,16 @@
         /* Print container */
         .print-container {
             width: 100%;
-            max-width: 8.5in;
+            max-width: 210mm; /* A4 width */
             margin: 0 auto;
         }
 
         /* Permit page */
         .permit-page {
-            width: 8.5in;
-            height: 11in;
-            padding: 0.5in;
+            width: 100%;
+            padding: 10mm;
             position: relative;
+            margin-bottom: 15mm;
         }
 
         /* Permit header */
@@ -176,7 +176,37 @@
                 padding: 0;
             }
 
+            /* Set up A4 page */
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+
+            /* Create a 4x2 grid layout for permits (8 per page) */
+            .print-container {
+                display: grid;
+                grid-template-columns: 25% 25% 25% 25%;
+                grid-template-rows: 50% 50%;
+                width: 210mm; /* A4 width */
+                height: 297mm; /* A4 height */
+                page-break-after: always;
+            }
+
             .permit-page {
+                width: 100%;
+                height: 100%;
+                padding: 2mm;
+                box-sizing: border-box;
+                border: 0.5px solid #047857;
+                margin: 0;
+                transform: scale(0.98);
+                transform-origin: center;
+                page-break-inside: avoid;
+                font-size: 6pt !important;
+            }
+
+            /* Every 8 permits, start a new page */
+            .permit-page:nth-child(8n) {
                 page-break-after: always;
             }
 
@@ -184,17 +214,109 @@
                 page-break-after: avoid;
             }
 
+            /* Remove default page break */
+            .page-break {
+                display: none;
+            }
+
+            /* Adjust font sizes for much smaller permits (1/8 of A4) */
+            .permit-header {
+                margin-bottom: 2mm;
+                padding-bottom: 1mm;
+            }
+
+            .permit-logo {
+                width: 8mm;
+                height: auto;
+                margin-right: 2mm;
+            }
+
+            .permit-title h1 {
+                font-size: 7pt !important;
+                margin-bottom: 1mm;
+            }
+
+            .permit-title h2 {
+                font-size: 6pt !important;
+            }
+
             /* Ensure semester term is visible and properly styled in print */
             .semester-term, .permit-title h3 {
-                font-size: 18pt !important;
+                font-size: 6pt !important;
                 font-weight: bold !important;
                 color: #047857 !important;
                 background-color: #f0fdf4 !important;
-                padding: 0.1in !important;
-                border-radius: 0.1in !important;
+                padding: 1mm !important;
+                border-radius: 1mm !important;
                 display: inline-block !important;
+                margin-top: 1mm !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+            }
+
+            /* Adjust student info section */
+            .student-info {
+                margin-bottom: 2mm;
+            }
+
+            .info-row {
+                margin-bottom: 1mm;
+            }
+
+            .info-label {
+                width: 10mm !important;
+                font-size: 5pt !important;
+            }
+
+            .info-value {
+                font-size: 5pt !important;
+            }
+
+            /* Adjust clearance status section */
+            .clearance-status {
+                margin-bottom: 2mm;
+                padding: 1mm;
+            }
+
+            .clearance-status h3 {
+                font-size: 6pt !important;
+                margin-bottom: 1mm;
+            }
+
+            .clearance-status p, .clearance-status li {
+                font-size: 5pt !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+            }
+
+            .clearance-status ul {
+                margin-left: 3mm !important;
+                padding-left: 0 !important;
+            }
+
+            /* Adjust approval section */
+            .approval-section {
+                margin-top: 2mm;
+            }
+
+            .signature-line {
+                margin-bottom: 0.5mm;
+            }
+
+            .signature-name, .signature-title {
+                font-size: 5pt !important;
+                margin: 0 !important;
+                line-height: 1.1 !important;
+            }
+
+            /* Adjust footer */
+            .permit-footer {
+                bottom: 1mm;
+                left: 1mm;
+                right: 1mm;
+                padding-top: 1mm;
+                font-size: 4pt !important;
             }
         }
     </style>

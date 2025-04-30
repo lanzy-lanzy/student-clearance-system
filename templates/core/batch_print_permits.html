@@ -10,7 +10,13 @@
         <div class="permit-header">
             <img src="{{ logo_url }}" alt="School Logo" class="permit-logo">
             <div class="permit-title">
-                <h1>EXAMINATION PERMIT</h1>
+                {% if "_MID" in student.get_current_clearance.semester %}
+                    <h1>MIDTERM EXAMINATION PERMIT</h1>
+                {% elif "_FIN" in student.get_current_clearance.semester %}
+                    <h1>FINAL EXAMINATION PERMIT</h1>
+                {% else %}
+                    <h1>EXAMINATION PERMIT</h1>
+                {% endif %}
                 <h2>School Year {{ student.get_current_clearance.school_year }}</h2>
                 <h3 class="semester-term">{{ student.get_current_clearance.semester|semester_display }}</h3>
             </div>
@@ -54,7 +60,7 @@
                 <div class="signature-section">
                     <div class="signature-line"></div>
                     <p class="signature-name">{{ student.program_chair.get_full_name }}</p>
-                    <p class="signature-title">{{ student.program_chair.get_title }}</p>
+                    <p class="signature-title">Program Chair / {{ student.program_chair.dean.name }}</p>
                 </div>
             </div>
         </div>
@@ -103,23 +109,136 @@
     .no-print {
         display: block;
     }
+
+    /* Create a grid layout for permits */
+    .print-container {
+        display: block;
+    }
+
+    .permit-page {
+        margin-bottom: 20px;
+    }
+
     @media print {
         .no-print {
             display: none;
         }
 
+        /* Set up A4 page */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Create a 4x2 grid layout for permits (8 per page) */
+        .print-container {
+            display: grid;
+            grid-template-columns: 25% 25% 25% 25%;
+            grid-template-rows: 50% 50%;
+            width: 210mm; /* A4 width */
+            height: 297mm; /* A4 height */
+            page-break-after: always;
+        }
+
+        .permit-page {
+            width: 100%;
+            height: 100%;
+            padding: 2mm;
+            box-sizing: border-box;
+            border: 0.5px solid #047857;
+            margin: 0;
+            transform: scale(0.98);
+            transform-origin: center;
+            page-break-inside: avoid;
+            font-size: 6pt !important;
+        }
+
+        /* Every 8 permits, start a new page */
+        .permit-page:nth-child(8n) {
+            page-break-after: always;
+        }
+
+        /* Remove default page break */
+        .page-break {
+            display: none;
+        }
+
         /* Ensure semester term is visible and properly styled */
         .semester-term {
-            font-size: 16pt !important;
+            font-size: 12pt !important;
             font-weight: bold !important;
             color: #047857 !important;
             background-color: #f0fdf4 !important;
-            padding: 5px 10px !important;
-            border-radius: 5px !important;
+            padding: 3px 6px !important;
+            border-radius: 3px !important;
             display: inline-block !important;
-            margin-top: 8px !important;
+            margin-top: 4px !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+        }
+
+        /* Adjust font sizes for much smaller permits (1/8 of A4) */
+        .permit-title h1 {
+            font-size: 7pt !important;
+            margin-bottom: 1mm !important;
+        }
+
+        .permit-title h2 {
+            font-size: 6pt !important;
+            margin-bottom: 1mm !important;
+        }
+
+        .semester-term {
+            font-size: 6pt !important;
+            padding: 1mm !important;
+            margin-top: 1mm !important;
+        }
+
+        .info-label {
+            width: 10mm !important;
+            font-size: 5pt !important;
+        }
+
+        .info-value {
+            font-size: 5pt !important;
+        }
+
+        .clearance-status h3 {
+            font-size: 6pt !important;
+            margin-bottom: 1mm !important;
+        }
+
+        .clearance-status p, .clearance-status li {
+            font-size: 5pt !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.1 !important;
+        }
+
+        .signature-name, .signature-title {
+            font-size: 5pt !important;
+            margin: 0 !important;
+            line-height: 1.1 !important;
+        }
+
+        .permit-footer p {
+            font-size: 4pt !important;
+        }
+
+        /* Adjust table for smaller permits */
+        table {
+            margin-top: 1mm !important;
+        }
+
+        th, td {
+            padding: 0.5mm !important;
+            font-size: 5pt !important;
+            height: 2mm !important;
         }
     }
 </style>

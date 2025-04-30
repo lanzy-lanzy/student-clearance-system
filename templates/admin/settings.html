@@ -7,6 +7,16 @@
         <p class="text-gray-600 mt-2">Configure system-wide settings and preferences</p>
     </div>
 
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Academic Settings -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -14,21 +24,57 @@
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Academic Settings</h2>
                 <form method="POST" class="space-y-4">
                     {% csrf_token %}
+                    <input type="hidden" name="form_type" value="academic_settings">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Current School Year</label>
-                        <input type="number" name="school_year" value="{{ current_school_year }}"
+                        <label class="block text-sm font-medium text-gray-700">Current School Year (Starting Year)</label>
+                        <input type="number" name="school_year" value="{{ settings.school_year|slice:":4" }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <p class="text-xs text-gray-500 mt-1">Enter the starting year (e.g., 2023 for 2023-2024)</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Current Semester</label>
                         <select name="semester" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                            <option value="First" {% if current_semester == 'First' %}selected{% endif %}>First</option>
-                            <option value="Second" {% if current_semester == 'Second' %}selected{% endif %}>Second</option>
-                            <option value="Summer" {% if current_semester == 'Summer' %}selected{% endif %}>Summer</option>
+                            {% for code, name in semester_choices %}
+                            <option value="{{ code }}" {% if settings.semester == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200">
                         Save Academic Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Clearance Settings -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Clearance Settings</h2>
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="clearance_settings">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Clearance Status</label>
+                        <div class="mt-2">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="clearance_active" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" {% if settings.clearance_active %}checked{% endif %}>
+                                <span class="ml-2">Enable Clearance System</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">When enabled, students can submit clearance requests for the current semester</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-md">
+                        <h3 class="font-medium text-gray-700 mb-2">Current Clearance Period</h3>
+                        <p class="text-sm text-gray-600">School Year: <span class="font-semibold">{{ settings.school_year }}</span></p>
+                        <p class="text-sm text-gray-600">Semester: <span class="font-semibold">{{ settings.get_semester_display }}</span></p>
+                        <p class="text-sm text-gray-600 mt-2">Status:
+                            <span class="font-semibold {% if settings.clearance_active %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if settings.clearance_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+                        Save Clearance Settings
                     </button>
                 </form>
             </div>
@@ -40,11 +86,12 @@
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">System Settings</h2>
                 <form method="POST" class="space-y-4">
                     {% csrf_token %}
+                    <input type="hidden" name="form_type" value="system_settings">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">System Maintenance Mode</label>
                         <div class="mt-2">
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="maintenance_mode" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                <input type="checkbox" name="maintenance_mode" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" {% if settings.maintenance_mode %}checked{% endif %}>
                                 <span class="ml-2">Enable Maintenance Mode</span>
                             </label>
                         </div>
@@ -53,7 +100,7 @@
                         <label class="block text-sm font-medium text-gray-700">Email Notifications</label>
                         <div class="mt-2">
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="email_notifications" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                <input type="checkbox" name="email_notifications" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" {% if settings.email_notifications %}checked{% endif %}>
                                 <span class="ml-2">Enable Email Notifications</span>
                             </label>
                         </div>
@@ -62,6 +109,33 @@
                         Save System Settings
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">System Information</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700">Last Updated</h3>
+                        <p class="text-gray-600">{{ settings.last_updated|date:"F j, Y, g:i a" }}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700">Updated By</h3>
+                        <p class="text-gray-600">
+                            {% if settings.updated_by %}
+                                {{ settings.updated_by.get_full_name|default:settings.updated_by.username }}
+                            {% else %}
+                                System
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700">Current Server Time</h3>
+                        <p class="text-gray-600">{{ current_time|date:"F j, Y, g:i a" }}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

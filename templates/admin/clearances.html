@@ -78,7 +78,7 @@
     <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
             <div class="flex-1">
-                <input type="text" id="searchClearance" placeholder="Search by student name or ID..." 
+                <input type="text" id="searchClearance" placeholder="Search by student name or ID..."
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
             </div>
             <div class="flex space-x-4">
@@ -143,7 +143,7 @@
                             {{ clearance.student.course.code }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                 {% if clearance.is_cleared %}bg-emerald-100 text-emerald-800
                                 {% elif clearance.is_denied %}bg-red-100 text-red-800
                                 {% else %}bg-yellow-100 text-yellow-800{% endif %}">
@@ -157,7 +157,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-3">
-                                <a href="{% url 'clearance_details' clearance.id %}" 
+                                <a href="{% url 'clearance_details' clearance.id %}"
                                    class="text-emerald-600 hover:text-emerald-800">
                                     View Details
                                 </a>
@@ -178,7 +178,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Pagination -->
         {% if clearances.has_other_pages %}
         <div class="px-6 py-4 border-t border-gray-200">
@@ -186,25 +186,25 @@
                 <ul class="flex space-x-2">
                     {% if clearances.has_previous %}
                     <li>
-                        <a href="?page={{ clearances.previous_page_number }}" 
+                        <a href="?page={{ clearances.previous_page_number }}"
                            class="px-3 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">
                             Previous
                         </a>
                     </li>
                     {% endif %}
-                    
+
                     {% for num in clearances.paginator.page_range %}
                     <li>
-                        <a href="?page={{ num }}" 
+                        <a href="?page={{ num }}"
                            class="px-3 py-2 rounded-md {% if clearances.number == num %}bg-emerald-500 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                             {{ num }}
                         </a>
                     </li>
                     {% endfor %}
-                    
+
                     {% if clearances.has_next %}
                     <li>
-                        <a href="?page={{ clearances.next_page_number }}" 
+                        <a href="?page={{ clearances.next_page_number }}"
                            class="px-3 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">
                             Next
                         </a>
@@ -225,21 +225,21 @@
         const semesterFilter = document.getElementById('semesterFilter').value;
         const yearFilter = document.getElementById('yearFilter').value;
         const rows = document.querySelectorAll('#clearanceTableBody tr');
-        
+
         rows.forEach(row => {
             const studentInfo = row.querySelector('td:first-child')?.textContent.toLowerCase() || '';
             const status = row.querySelector('td:nth-child(5) span')?.textContent.toLowerCase() || '';
             const semester = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
             const year = row.querySelector('td:nth-child(2)')?.textContent.trim() || '';
-            
+
             const matchesSearch = studentInfo.includes(searchText);
             const matchesStatus = !statusFilter || status.includes(statusFilter);
-            const matchesSemester = !semesterFilter || 
+            const matchesSemester = !semesterFilter ||
                                   (semesterFilter === '1' && semester.includes('first')) ||
                                   (semesterFilter === '2' && semester.includes('second')) ||
                                   (semesterFilter === '3' && semester.includes('summer'));
             const matchesYear = !yearFilter || year === yearFilter;
-            
+
             row.style.display = matchesSearch && matchesStatus && matchesSemester && matchesYear ? '' : 'none';
         });
     }
@@ -263,7 +263,7 @@
     // Delete clearance functionality
     function deleteClearance(clearanceId) {
         if (confirm('Are you sure you want to delete this clearance?')) {
-            fetch(`/delete-clearance/${clearanceId}/`, {
+            fetch(`/api/clearance/${clearanceId}/delete/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken'),
@@ -275,7 +275,7 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert('Failed to delete clearance');
+                    alert('Failed to delete clearance: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(error => {

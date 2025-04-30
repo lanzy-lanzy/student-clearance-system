@@ -8,7 +8,7 @@
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600">Total Courses</p>
+                    <p class="text-sm text-gray-600">Total Programs</p>
                     <h3 class="text-2xl font-bold text-gray-800">{{ courses.count }}</h3>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-full">
@@ -69,7 +69,7 @@
     <div class="bg-white rounded-lg shadow-md p-6 transform hover:shadow-lg transition-all duration-300">
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Add New Course</h2>
+                <h2 class="text-2xl font-bold text-gray-800">Add New Program</h2>
                 <p class="text-sm text-gray-600 mt-1">Create a new course in the system</p>
             </div>
             <div class="p-3 bg-emerald-100 rounded-full">
@@ -83,14 +83,14 @@
             <input type="hidden" name="action" value="add">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label for="code" class="block text-sm font-medium text-gray-700">Course Code</label>
+                    <label for="code" class="block text-sm font-medium text-gray-700">Programs Code</label>
                     <input type="text" name="code" id="code" required oninput="this.value = this.value.toUpperCase()"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
                         placeholder="e.g., BSCS">
                     <p class="text-xs text-gray-500 mt-1">Course code will be in uppercase</p>
                 </div>
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">Course Name</label>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Program Name</label>
                     <input type="text" name="name" id="name" required
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
                         placeholder="e.g., Bachelor of Science in Computer Science">
@@ -112,7 +112,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Add Course
+                    Add Program
                 </button>
             </div>
         </form>
@@ -123,7 +123,7 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Courses List</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">Programs List</h2>
                     <p class="text-sm text-gray-600 mt-1">Manage existing courses in the system</p>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -221,7 +221,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                <span>No courses found</span>
+                                <span>No Programs found</span>
                             </div>
                         </td>
                     </tr>
@@ -237,7 +237,7 @@
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Cannot Delete Course</h3>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Cannot Delete Program</h3>
                 <button type="button" onclick="closeDeleteWarningModal()" class="text-gray-400 hover:text-gray-500">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -254,7 +254,7 @@
                         </div>
                         <div class="ml-3">
                             <p class="text-sm text-yellow-700" id="warningMessage">
-                                This course has students assigned to it and cannot be deleted directly.
+                                This Program has students assigned to it and cannot be deleted directly.
                             </p>
                         </div>
                     </div>

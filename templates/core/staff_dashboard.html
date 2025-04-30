@@ -106,7 +106,21 @@
                     <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span class="text-white font-medium">{{ current_semester }}</span>
+                    <span class="text-white font-medium">
+                        {% if current_semester == "1ST_MID" %}
+                            1st Semester - Midterm
+                        {% elif current_semester == "1ST_FIN" %}
+                            1st Semester - Final
+                        {% elif current_semester == "2ND_MID" %}
+                            2nd Semester - Midterm
+                        {% elif current_semester == "2ND_FIN" %}
+                            2nd Semester - Final
+                        {% elif current_semester == "SUM" %}
+                            Summer
+                        {% else %}
+                            {{ current_semester }}
+                        {% endif %}
+                    </span>
                 </div>
             </div>
         </div>

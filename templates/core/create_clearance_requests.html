@@ -20,7 +20,7 @@
                 <i class="fas fa-file-alt mr-2"></i>New Semester Clearance
             </h2>
             <p class="mt-2 text-center text-emerald-100">
-                Create a clearance request for the current semester
+                Create a clearance request for {{ settings.get_semester_display }} {{ settings.school_year }}
             </p>
         </div>
 
@@ -33,6 +33,39 @@
                     </div>
                 {% endfor %}
             {% endif %}
+
+            <!-- Clearance Status Notice -->
+            <div class="mb-6 p-4 rounded-lg {% if settings.clearance_active %}bg-emerald-100 text-emerald-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        {% if settings.clearance_active %}
+                        <svg class="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {% else %}
+                        <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium">
+                            {% if settings.clearance_active %}
+                                Clearance System is Active
+                            {% else %}
+                                Clearance System is Currently Disabled
+                            {% endif %}
+                        </h3>
+                        <div class="mt-1 text-sm">
+                            {% if settings.clearance_active %}
+                                <p>You can create clearance requests for the current semester.</p>
+                            {% else %}
+                                <p>The administrator has temporarily disabled clearance requests. Please check back later.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Current Details Card -->
             <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -64,9 +97,58 @@
                             {% endif %}
                         </p>
                     </div>
+                    {% if student.dormitory_owner %}
+                    <div class="md:col-span-2">
+                        <p class="text-sm text-gray-600">Boarding House Status</p>
+                        <p class="font-medium {% if not student.is_boarder %}text-red-600{% else %}text-emerald-600{% endif %}">
+                            {% if student.is_boarder %}
+                                Active - {{ student.dormitory_owner.user.get_full_name }}
+                            {% else %}
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Deactivated - Contact {{ student.dormitory_owner.user.get_full_name }}
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
+            {% if student.dormitory_owner and not student.is_boarder %}
+            <div class="mb-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-amber-800">Boarding House Status Deactivated</h3>
+                        <div class="mt-1 text-sm text-amber-700">
+                            <p>Your boarding house status has been deactivated by {{ student.dormitory_owner.user.get_full_name }}. You can still create clearance requests, but the Dormitory Office will be excluded from your clearance requirements.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Current Clearance Period -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 class="text-md font-semibold text-blue-800 mb-2">Current Clearance Period</h3>
+                <p class="text-blue-700">The administrator has set the current clearance period to:</p>
+                <p class="font-medium text-blue-900 mt-1">{{ settings.get_semester_display }} - {{ settings.school_year }}</p>
+                <p class="text-blue-700 mt-2">
+                    Status:
+                    <span class="font-medium {% if settings.clearance_active %}text-green-600{% else %}text-red-600{% endif %}">
+                        {% if settings.clearance_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </p>
+            </div>
+
+            {% if settings.clearance_active %}
             <form method="POST" class="space-y-6">
                 {% csrf_token %}
 
@@ -75,10 +157,9 @@
                     <label for="school_year" class="block text-sm font-medium text-gray-700 mb-2">School Year</label>
                     <select name="school_year" id="school_year" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                        {% for year in school_years %}
-                            <option value="{{ year }}">{{ year }}</option>
-                        {% endfor %}
+                        <option value="{{ current_school_year }}">{{ current_school_year }}</option>
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">The school year is set by the administrator and cannot be changed.</p>
                 </div>
 
                 <!-- Semester Selection -->
@@ -86,13 +167,30 @@
                     <label for="semester" class="block text-sm font-medium text-gray-700 mb-2">Semester</label>
                     <select name="semester" id="semester" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                        {% for value, label in semesters %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
+                        <option value="{{ current_semester }}">{{ settings.get_semester_display }}</option>
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">The semester is set by the administrator and cannot be changed.</p>
                 </div>
+            {% else %}
+                <div class="p-4 bg-amber-50 rounded-lg border border-amber-200 mb-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-amber-800">Clearance Requests Currently Disabled</h3>
+                            <div class="mt-1 text-sm text-amber-700">
+                                <p>The administrator has temporarily disabled clearance requests. Please check back later or contact your program chair for more information.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
 
                 <!-- Submit Button -->
+                {% if settings.clearance_active %}
                 <div class="pt-4">
                     <button type="submit"
                             class="w-full flex justify-center items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md transition-colors">
@@ -103,6 +201,7 @@
                     </button>
                 </div>
             </form>
+            {% endif %}
 
             <!-- Information Cards -->
             <div class="mt-8 space-y-4">
@@ -111,7 +210,8 @@
                     <h3 class="text-lg font-semibold text-blue-800 mb-2">Important Information</h3>
                     <ul class="list-disc list-inside text-blue-700 space-y-2">
                         <li>You can only create one clearance request per semester</li>
-                        <li>Make sure to select the correct school year and semester</li>
+                        <li>The current clearance period is set by the administrator</li>
+                        <li>The form is pre-filled with the current clearance period settings</li>
                         <li>All required offices will be automatically included</li>
                         <li>Offices with program chairs assigned to them are excluded from clearance requests</li>
                         <li>You can track the status of your clearance in the dashboard</li>

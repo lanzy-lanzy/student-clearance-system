@@ -1,0 +1,12 @@
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0002_systemsettings'),
+        ('core', '0004_alter_clearance_semester_and_more'),
+    ]
+
+    operations = [
+    ]

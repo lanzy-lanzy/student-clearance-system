@@ -13,6 +13,57 @@ SEMESTER_CHOICES = [
     ('SUM', 'Summer'),
 ]
 
+class SystemSettings(models.Model):
+    """Model to store system-wide settings and configurations"""
+    school_year = models.CharField(max_length=9, help_text="Current school year in format YYYY-YYYY")
+    semester = models.CharField(max_length=7, choices=SEMESTER_CHOICES, help_text="Current semester")
+    clearance_active = models.BooleanField(default=False, help_text="Whether clearance requests are currently active")
+    maintenance_mode = models.BooleanField(default=False, help_text="Whether the system is in maintenance mode")
+    email_notifications = models.BooleanField(default=True, help_text="Whether email notifications are enabled")
+    last_updated = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "System Settings"
+        verbose_name_plural = "System Settings"
+
+    def __str__(self):
+        return f"System Settings - {self.school_year} {self.get_semester_display()}"
+
+    def get_semester_display(self):
+        """Get the display name for the semester"""
+        for code, name in SEMESTER_CHOICES:
+            if code == self.semester:
+                return name
+        return self.semester
+
+    @classmethod
+    def get_settings(cls):
+        """Get the current system settings, creating default if none exist"""
+        settings = cls.objects.first()
+        if not settings:
+            # Create default settings
+            current_year = timezone.now().year
+            school_year = f"{current_year}-{current_year + 1}"
+
+            # Determine current semester based on month
+            month = timezone.now().month
+            if 1 <= month <= 5:  # January to May
+                semester = "2ND_MID" if month <= 3 else "2ND_FIN"
+            elif 6 <= month <= 10:  # June to October
+                semester = "1ST_MID" if month <= 8 else "1ST_FIN"
+            else:  # November to December
+                semester = "SUM"
+
+            settings = cls.objects.create(
+                school_year=school_year,
+                semester=semester,
+                clearance_active=False,
+                maintenance_mode=False,
+                email_notifications=True
+            )
+        return settings
+
 class Dean(models.Model):
     name = models.CharField(max_length=100, unique=True)
     logo = models.ImageField(upload_to='dean_logos/', blank=True, null=True)
@@ -195,17 +246,10 @@ class Student(models.Model):
 
     def get_current_clearance(self):
         """Get the current clearance for the student based on the current school year and semester"""
-        current_year = timezone.now().year
-        school_year = f"{current_year}-{current_year + 1}"
-
-        # Determine current semester based on month
-        month = timezone.now().month
-        if 1 <= month <= 5:  # January to May
-            semester = "2ND"
-        elif 6 <= month <= 10:  # June to October
-            semester = "1ST"
-        else:  # November to December
-            semester = "SUM"
+        # Get current school year and semester from system settings
+        settings = SystemSettings.get_settings()
+        school_year = settings.school_year
+        semester = settings.semester
 
         return self.clearances.filter(
             school_year=school_year,

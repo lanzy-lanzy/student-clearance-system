@@ -75,15 +75,28 @@
                             <td class="px-4 py-3 text-emerald-900">{{ student.year_level }}</td>
                             <td class="px-4 py-3 text-emerald-900">{{ student.contact_number }}</td>
                             <td class="px-4 py-3">
-                                {% if student.is_boarder %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                        Active
-                                    </span>
-                                {% else %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        Inactive
-                                    </span>
-                                {% endif %}
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        {% if student.is_boarder %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                Active
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                Inactive
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <button type="button"
+                                            onclick="showStatusToggleModal({{ student.id }}, '{{ student.get_full_name|escapejs }}', {{ student.is_boarder|yesno:'true,false' }})"
+                                            class="ml-2 text-sm font-medium {% if student.is_boarder %}text-red-600 hover:text-red-800{% else %}text-emerald-600 hover:text-emerald-800{% endif %}">
+                                        {% if student.is_boarder %}
+                                            Deactivate
+                                        {% else %}
+                                            Activate
+                                        {% endif %}
+                                    </button>
+                                </div>
                             </td>
                             <td class="px-4 py-3 text-emerald-900">
                                 <div class="flex items-center justify-between">
@@ -203,6 +216,44 @@
     </div>
 </div>
 
+<!-- Status Toggle Modal -->
+<div id="statusToggleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="statusToggleTitle">Change Boarder Status</h3>
+                <button type="button" onclick="closeStatusToggleModal()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600" id="statusToggleMessage"></p>
+            </div>
+            <form id="statusToggleForm" method="POST" action="">
+                {% csrf_token %}
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeStatusToggleModal()"
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit" id="statusToggleButton"
+                            class="px-4 py-2 text-white rounded-lg transition-colors duration-200 flex items-center">
+                        <span id="statusToggleButtonText">Confirm</span>
+                        <span id="statusToggleSpinner" class="ml-2 hidden">
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     function getCookie(name) {
         let cookieValue = null;
@@ -252,6 +303,55 @@
     document.getElementById('dateEditForm').addEventListener('submit', function() {
         document.getElementById('saveButton').disabled = true;
         document.getElementById('saveSpinner').classList.remove('hidden');
+    });
+
+    function showStatusToggleModal(studentId, studentName, isActive) {
+        // Set the form action URL
+        document.getElementById('statusToggleForm').action = `/dormitory-owner/toggle-boarder-status/${studentId}/`;
+
+        // Set the title and message
+        const action = isActive ? 'Deactivate' : 'Activate';
+        document.getElementById('statusToggleTitle').textContent = `${action} Boarder Status`;
+
+        // Set the message
+        if (isActive) {
+            document.getElementById('statusToggleMessage').textContent =
+                `Are you sure you want to deactivate ${studentName} as a boarder? This will mark them as inactive in your boarding house.`;
+            document.getElementById('statusToggleButton').classList.add('bg-red-600', 'hover:bg-red-700');
+            document.getElementById('statusToggleButton').classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+            document.getElementById('statusToggleButtonText').textContent = 'Deactivate';
+        } else {
+            document.getElementById('statusToggleMessage').textContent =
+                `Are you sure you want to activate ${studentName} as a boarder? This will mark them as active in your boarding house.`;
+            document.getElementById('statusToggleButton').classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            document.getElementById('statusToggleButton').classList.remove('bg-red-600', 'hover:bg-red-700');
+            document.getElementById('statusToggleButtonText').textContent = 'Activate';
+        }
+
+        // Show the modal
+        document.getElementById('statusToggleModal').classList.remove('hidden');
+    }
+
+    function closeStatusToggleModal() {
+        document.getElementById('statusToggleModal').classList.add('hidden');
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const dateModal = document.getElementById('dateEditModal');
+        const statusModal = document.getElementById('statusToggleModal');
+
+        if (event.target === dateModal) {
+            closeDateEditModal();
+        } else if (event.target === statusModal) {
+            closeStatusToggleModal();
+        }
+    }
+
+    // Show spinner when status toggle form is submitted
+    document.getElementById('statusToggleForm').addEventListener('submit', function() {
+        document.getElementById('statusToggleButton').disabled = true;
+        document.getElementById('statusToggleSpinner').classList.remove('hidden');
     });
 </script>
 {% endblock %}

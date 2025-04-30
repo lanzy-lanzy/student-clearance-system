@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q, Count
+from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
@@ -293,12 +294,34 @@ def create_clearance_requests(request):
 
     student = request.user.student
 
+    # Get system settings
+    from core.models import SystemSettings
+    settings = SystemSettings.get_settings()
+
+    # We'll check if clearance is active, but we'll still show the page with disabled controls
+    # This allows students to see the current clearance period even if they can't submit requests
+    clearance_active = settings.clearance_active
+
+    # Log the clearance status for debugging
+    logger.info(f"Clearance active status: {clearance_active}, School year: {settings.school_year}, Semester: {settings.semester}")
+
     if request.method == 'POST':
-        school_year = request.POST.get('school_year')
-        semester = request.POST.get('semester')
+        # First check if clearance is active
+        if not settings.clearance_active:
+            messages.error(request, "Clearance requests are currently disabled by the administrator.")
+            return redirect('student_dashboard')
+
+        # Use system settings as default values
+        school_year = request.POST.get('school_year', settings.school_year)
+        semester = request.POST.get('semester', settings.semester)
 
         if not all([school_year, semester]):
             messages.error(request, "School year and semester required.")
+            return redirect('create_clearance_requests')
+
+        # Ensure the submitted school year and semester match the admin settings
+        if school_year != settings.school_year or semester != settings.semester:
+            messages.error(request, f"Clearance requests can only be created for the current period: {settings.get_semester_display()} {settings.school_year}")
             return redirect('create_clearance_requests')
 
         if Clearance.objects.filter(student=student, school_year=school_year, semester=semester).exists():
@@ -328,6 +351,14 @@ def create_clearance_requests(request):
             required_offices = Office.objects.filter(
                 Q(office_type='OTHER') | Q(office_type=student.course.dean.name)
             )
+
+            # If student is assigned to a dormitory owner but has been deactivated,
+            # exclude the dormitory office from clearance requests
+            if student.dormitory_owner and not student.is_boarder:
+                dormitory_offices = Office.objects.filter(name__icontains='dormitory')
+                if dormitory_offices.exists():
+                    required_offices = required_offices.exclude(id__in=dormitory_offices.values_list('id', flat=True))
+                    logger.info(f"Excluded dormitory offices for deactivated student {student.id}")
 
             # Debug logging
             logger.info(f"Initial required offices: {[o.name for o in required_offices]}")
@@ -381,7 +412,10 @@ def create_clearance_requests(request):
     return render(request, 'core/create_clearance_requests.html', {
         'school_years': get_school_years(),
         'semesters': SEMESTER_CHOICES,
-        'student': student
+        'student': student,
+        'settings': settings,
+        'current_school_year': settings.school_year,
+        'current_semester': settings.semester
     })
 
 @login_required
@@ -589,6 +623,7 @@ def program_chair_dashboard(request):
         elif action == 'batch_print_permits':
             # Handle batch permit printing
             course_id = request.POST.get('course')
+            department_id = request.POST.get('department')
             year_level = request.POST.get('year_level')
             status = request.POST.get('status')
 
@@ -596,6 +631,8 @@ def program_chair_dashboard(request):
             permit_students = students
             if course_id:
                 permit_students = permit_students.filter(course_id=course_id)
+            if department_id:
+                permit_students = permit_students.filter(course__dean_id=department_id)
             if year_level:
                 permit_students = permit_students.filter(year_level=year_level)
 
@@ -776,6 +813,9 @@ def program_chair_dashboard(request):
     elif view == 'permit_printing':
         filter_type = request.GET.get('filter', '')
         search_query = request.GET.get('search', '')
+        department_id = request.GET.get('department', '')
+        course_id = request.GET.get('course', '')
+        year_level = request.GET.get('year_level', '')
 
         # Get all cleared students
         cleared_student_ids = clearances.filter(is_cleared=True).values_list('student_id', flat=True)
@@ -804,6 +844,14 @@ def program_chair_dashboard(request):
         elif filter_type == 'pending':
             filtered_students = cleared_students_qs.exclude(id__in=permit_issued_ids)
 
+        # Apply additional filters
+        if department_id:
+            filtered_students = filtered_students.filter(course__dean_id=department_id)
+        if course_id:
+            filtered_students = filtered_students.filter(course_id=course_id)
+        if year_level:
+            filtered_students = filtered_students.filter(year_level=year_level)
+
         # Apply search filter if provided
         if search_query:
             filtered_students = filtered_students.filter(
@@ -814,6 +862,9 @@ def program_chair_dashboard(request):
 
         # Get courses for the filter dropdown
         courses = Course.objects.filter(dean=program_chair.dean)
+
+        # Get departments (deans) for the filter dropdown
+        departments = Dean.objects.all()
 
         # Get recent permits (clearances with program_chair_approved=True)
         recent_permits = clearances.filter(
@@ -848,6 +899,7 @@ def program_chair_dashboard(request):
             'issued_percentage': issued_percentage,
             'pending_permit_percentage': pending_permit_percentage,
             'courses': courses,
+            'departments': departments,
             'recent_permits': formatted_permits,
         })
 
@@ -935,6 +987,20 @@ def delete_clearance(request, clearance_id):
         clearance.delete()
         messages.success(request, 'Clearance deleted successfully.')
     return redirect('program_chair_dashboard')
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_delete_clearance(request, clearance_id):
+    """API endpoint for admin to delete a clearance with JSON response"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        clearance = get_object_or_404(Clearance, id=clearance_id)
+        clearance.delete()
+        return JsonResponse({'success': True, 'message': 'Clearance deleted successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 class ManageStudentsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Student
@@ -1045,7 +1111,9 @@ def staff_dashboard(request):
     # Get current school year and semester
     current_year = timezone.now().year
     school_year = f"{current_year}-{current_year + 1}"
-    semester = get_current_semester()
+    # Use the utils.py version of get_current_semester that includes midterm/final
+    from core.utils import get_current_semester as get_detailed_semester
+    semester = get_detailed_semester()
 
     # Check if we're in a student management view
     view = request.GET.get('view', '')
@@ -1088,6 +1156,130 @@ def staff_dashboard(request):
         'school_year': school_year,
         'current_semester': semester,
         'office': staff.office,
+    })
+
+@login_required
+def office_reports(request):
+    staff = request.user.staff
+
+    # Check if the staff member is a dormitory owner and redirect to BH Owner Dashboard
+    if staff.is_dormitory_owner:
+        return redirect('bh_owner_dashboard')
+
+    # Get current school year and semester
+    current_year = timezone.now().year
+    school_year = f"{current_year}-{current_year + 1}"
+    # Use the utils.py version of get_current_semester that includes midterm/final
+    from core.utils import get_current_semester as get_detailed_semester
+    semester = get_detailed_semester()
+
+    if request.method == 'POST':
+        report_type = request.POST.get('report_type')
+        school_year = request.POST.get('school_year')
+        semester = request.POST.get('semester')
+
+        if report_type == 'clearance_status':
+            # Generate clearance status report
+            clearance_requests = ClearanceRequest.objects.filter(
+                office=staff.office,
+                school_year=school_year,
+                semester=semester
+            ).select_related('student__user', 'reviewed_by')
+
+            from core.office_pdf_utils import generate_office_clearance_report_pdf
+            pdf = generate_office_clearance_report_pdf(clearance_requests, request, school_year, semester, staff.office)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="office_clearance_report_{school_year}_{semester}.pdf"'
+            return response
+
+        elif report_type == 'student_performance':
+            # Generate student performance report
+            clearance_requests = ClearanceRequest.objects.filter(
+                office=staff.office,
+                school_year=school_year,
+                semester=semester
+            ).select_related('student__user', 'student__course')
+
+            from core.office_pdf_utils import generate_student_performance_report_pdf
+            pdf = generate_student_performance_report_pdf(clearance_requests, request, school_year, semester, staff.office)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="student_performance_report_{school_year}_{semester}.pdf"'
+            return response
+
+        elif report_type == 'department_report':
+            # Generate department report
+            department_id = request.POST.get('department')
+
+            # Base query for clearance requests from this office
+            clearance_requests = ClearanceRequest.objects.filter(
+                office=staff.office,
+                school_year=school_year,
+                semester=semester
+            ).select_related('student__user', 'student__course', 'student__course__dean')
+
+            # If a specific department is selected, filter by it
+            if department_id:
+                clearance_requests = clearance_requests.filter(student__course__dean_id=department_id)
+
+            from core.office_pdf_utils import generate_department_report_pdf
+            pdf = generate_department_report_pdf(clearance_requests, request, school_year, semester, staff.office, department_id)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="department_report_{school_year}_{semester}.pdf"'
+            return response
+
+        elif report_type == 'processing_time':
+            # Generate processing time report
+            clearance_requests = ClearanceRequest.objects.filter(
+                office=staff.office,
+                school_year=school_year,
+                semester=semester,
+                status__in=['approved', 'denied']
+            ).select_related('student__user')
+
+            from core.office_pdf_utils import generate_processing_time_report_pdf
+            pdf = generate_processing_time_report_pdf(clearance_requests, request, school_year, semester, staff.office)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="processing_time_report_{school_year}_{semester}.pdf"'
+            return response
+
+        elif report_type == 'denial_reasons':
+            # Generate denial reasons report
+            clearance_requests = ClearanceRequest.objects.filter(
+                office=staff.office,
+                school_year=school_year,
+                semester=semester,
+                status='denied'
+            ).select_related('student__user')
+
+            from core.office_pdf_utils import generate_denial_reasons_report_pdf
+            pdf = generate_denial_reasons_report_pdf(clearance_requests, request, school_year, semester, staff.office)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="denial_reasons_report_{school_year}_{semester}.pdf"'
+            return response
+
+        elif report_type == 'cleared_students':
+            # Generate cleared students report
+            clearance_requests = ClearanceRequest.objects.filter(
+                office=staff.office,
+                school_year=school_year,
+                semester=semester,
+                status='approved'
+            ).select_related('student__user', 'student__course')
+
+            from core.cleared_students_pdf import generate_cleared_students_report_pdf
+            pdf = generate_cleared_students_report_pdf(clearance_requests, request, school_year, semester, staff.office)
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="cleared_students_report_{school_year}_{semester}.pdf"'
+            return response
+
+    # Get all deans for department filter dropdown
+    deans = Dean.objects.all().order_by('name')
+
+    return render(request, 'core/office_reports.html', {
+        'office': staff.office,
+        'school_years': get_school_years(),
+        'semesters': SEMESTER_CHOICES,
+        'deans': deans,
     })
 
 @login_required
@@ -1840,6 +2032,38 @@ def update_boarder_date(request, student_id):
         return redirect('bh_owner_boarders')
 
 @login_required
+def toggle_boarder_status(request, student_id):
+    # Check if the user is a dormitory owner
+    if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('home')
+
+    staff = request.user.staff
+
+    try:
+        # Get the student and verify they belong to this dormitory owner
+        student = Student.objects.get(id=student_id, dormitory_owner=staff)
+
+        if request.method == 'POST':
+            # Toggle the boarder status
+            student.is_boarder = not student.is_boarder
+
+            # If student is becoming a boarder and doesn't have a boarder_since date, set it
+            if student.is_boarder and not student.boarder_since:
+                student.boarder_since = timezone.now()
+
+            student.save()
+
+            status_message = "activated" if student.is_boarder else "deactivated"
+            messages.success(request, f"Boarder status for {student.get_full_name()} has been {status_message} successfully.")
+
+        return redirect('bh_owner_boarders')
+
+    except Student.DoesNotExist:
+        messages.error(request, "Student not found or you don't have permission to edit this student.")
+        return redirect('bh_owner_boarders')
+
+@login_required
 def bh_owner_add_student(request):
     # Check if the user is a dormitory owner
     if not hasattr(request.user, 'staff') or not request.user.staff.is_dormitory_owner:
@@ -2113,7 +2337,7 @@ def bh_owner_generate_reports(request):
 
         if report_type == 'boarders':
             # Generate boarders report
-            from core.pdf_utils import generate_boarders_pdf
+            from core.office_pdf_utils import generate_boarders_pdf
             pdf = generate_boarders_pdf(students, request, school_year, semester)
             response = HttpResponse(pdf, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="boarders_report_{school_year}_{semester}.pdf"'
@@ -2127,7 +2351,7 @@ def bh_owner_generate_reports(request):
                 school_year=school_year,
                 semester=semester
             )
-            from core.pdf_utils import generate_clearance_report_pdf
+            from core.office_pdf_utils import generate_clearance_report_pdf
             pdf = generate_clearance_report_pdf(clearance_requests, request, school_year, semester)
             response = HttpResponse(pdf, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="clearance_report_{school_year}_{semester}.pdf"'
@@ -2673,22 +2897,48 @@ def admin_dormitory_owners(request):
         action = request.POST.get('action')
         try:
             if action == 'add':
-                user_id = request.POST.get('user')
-                user = User.objects.get(id=user_id)
+                # Get form data
+                username = request.POST.get('username')
+                first_name = request.POST.get('first_name')
+                last_name = request.POST.get('last_name')
+                email = request.POST.get('email')
+                password = request.POST.get('password')
+                role = request.POST.get('role', 'Dormitory Owner')
+                boarding_house_address = request.POST.get('boarding_house_address', '')
+
+                # Check if username already exists
+                if User.objects.filter(username=username).exists():
+                    messages.error(request, f'Username "{username}" is already taken. Please choose another username.')
+                    return redirect('admin_dormitory_owners')
+
+                # Check if email already exists
+                if User.objects.filter(email=email).exists():
+                    messages.error(request, f'Email "{email}" is already in use. Please use another email address.')
+                    return redirect('admin_dormitory_owners')
+
+                # Get the dormitory office
                 office = Office.objects.get(name="DORMITORY")
 
-                # Check if user already has a staff profile
-                if hasattr(user, 'staff'):
-                    messages.error(request, f'User {user.get_full_name()} is already a staff member.')
-                else:
-                    # Create dormitory owner
-                    staff = Staff.objects.create(
-                        user=user,
-                        office=office,
-                        role=request.POST.get('role', 'Dormitory Owner'),
-                        is_dormitory_owner=True
-                    )
-                    messages.success(request, f'Dormitory Owner {staff.get_full_name()} added successfully.')
+                # Create the user
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    is_active=True
+                )
+
+                # Create the dormitory owner
+                staff = Staff.objects.create(
+                    user=user,
+                    office=office,
+                    role=role,
+                    is_dormitory_owner=True,
+                    boarding_house_address=boarding_house_address
+                )
+
+                messages.success(request, f'Dormitory Owner {staff.get_full_name()} added successfully.')
 
             elif action == 'batch_assign':
                 dormitory_owner_id = request.POST.get('dormitory_owner_id')
@@ -2767,6 +3017,8 @@ def admin_dormitory_owners(request):
             messages.error(request, 'Dormitory office not found. Please create an office named "DORMITORY" first.')
         except Staff.DoesNotExist:
             messages.error(request, 'Dormitory Owner not found.')
+        except IntegrityError:
+            messages.error(request, 'A user with this username or email already exists.')
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
 
@@ -2777,13 +3029,8 @@ def admin_dormitory_owners(request):
     for owner in dormitory_owners:
         owner.student_count = Student.objects.filter(dormitory_owner=owner).count()
 
-    # Get available users (those who are not already staff)
-    staff_user_ids = Staff.objects.values_list('user_id', flat=True)
-    available_users = User.objects.exclude(id__in=staff_user_ids).filter(is_active=True)
-
     return render(request, 'admin/dormitory_owners.html', {
         'dormitory_owners': dormitory_owners,
-        'available_users': available_users,
         'total_boarders': Student.objects.filter(is_boarder=True).count(),
         'total_dormitory_owners': dormitory_owners.count(),
         'unassigned_boarders': Student.objects.filter(is_boarder=True, dormitory_owner=None).count()
@@ -3748,13 +3995,69 @@ def admin_users(request):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_settings(request):
+    # Get or create system settings
+    from core.models import SystemSettings
+    settings = SystemSettings.get_settings()
+
     if request.method == 'POST':
-        # Handle settings updates
-        pass
+        # Determine which form was submitted
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'academic_settings':
+            # Handle academic settings updates
+            school_year = request.POST.get('school_year')
+            semester = request.POST.get('semester')
+
+            # Validate school year format (YYYY-YYYY)
+            try:
+                year = int(school_year)
+                settings.school_year = f"{year}-{year + 1}"
+            except (ValueError, TypeError):
+                messages.error(request, "Invalid school year format. Please enter a valid year.")
+
+            # Validate semester
+            if semester in dict(SEMESTER_CHOICES):
+                settings.semester = semester
+            else:
+                messages.error(request, "Invalid semester selection.")
+
+            # Save changes
+            settings.updated_by = request.user
+            settings.save()
+            messages.success(request, "Academic settings updated successfully.")
+
+        elif form_type == 'clearance_settings':
+            # Handle clearance settings updates
+            clearance_active = request.POST.get('clearance_active') == 'on'
+
+            # Update settings
+            settings.clearance_active = clearance_active
+            settings.updated_by = request.user
+            settings.save()
+
+            status = "activated" if clearance_active else "deactivated"
+            messages.success(request, f"Clearance system has been {status}.")
+
+        elif form_type == 'system_settings':
+            # Handle system settings updates
+            maintenance_mode = request.POST.get('maintenance_mode') == 'on'
+            email_notifications = request.POST.get('email_notifications') == 'on'
+
+            # Update settings
+            settings.maintenance_mode = maintenance_mode
+            settings.email_notifications = email_notifications
+            settings.updated_by = request.user
+            settings.save()
+
+            messages.success(request, "System settings updated successfully.")
+
+    # Get semester choices for the template
+    semester_choices = [(code, name) for code, name in SEMESTER_CHOICES]
 
     return render(request, 'admin/settings.html', {
-        'current_school_year': timezone.now().year,
-        'current_semester': get_current_semester(),
+        'settings': settings,
+        'semester_choices': semester_choices,
+        'current_time': timezone.now(),
     })
 
 @login_required
@@ -3771,8 +4074,8 @@ def admin_reports(request):
             # Generate student list report
             students = Student.objects.select_related('user', 'course').all()
 
-            # Filter by department (dean) if specified
-            if department:
+            # Filter by department (dean) if specified and not "all"
+            if department and department != 'all' and department != '':
                 students = students.filter(course__dean_id=department)
 
             # Check if there's data
@@ -3828,8 +4131,8 @@ def admin_reports(request):
                 status='pending'
             ).select_related('student', 'office')
 
-            # Filter by department (dean) if specified
-            if department:
+            # Filter by department (dean) if specified and not "all"
+            if department and department != 'all' and department != '':
                 clearance_requests = clearance_requests.filter(student__course__dean_id=department)
 
             # Check if there's data
@@ -3884,8 +4187,8 @@ def admin_reports(request):
                 is_cleared=True
             ).select_related('student')
 
-            # Filter by department (dean) if specified
-            if department:
+            # Filter by department (dean) if specified and not "all"
+            if department and department != 'all' and department != '':
                 clearances = clearances.filter(student__course__dean_id=department)
 
             # Check if there's data
@@ -4066,6 +4369,7 @@ def admin_reports(request):
         'semesters': SEMESTER_CHOICES,
         'now': datetime.now(),
         'deans': Dean.objects.all(),
+        'departments': Dean.objects.all(),  # Add departments for consistency
     })
 
 @login_required
@@ -4380,18 +4684,10 @@ def update_contact_number(request):
 def print_permit(request, student_id):
     student = get_object_or_404(Student, id=student_id)
 
-    # Get current school year and semester
-    current_year = timezone.now().year
-    school_year = f"{current_year}-{current_year + 1}"
-
-    # Determine current semester based on month
-    month = timezone.now().month
-    if 1 <= month <= 5:  # January to May
-        semester = "2ND"
-    elif 6 <= month <= 10:  # June to October
-        semester = "1ST"
-    else:  # November to December
-        semester = "SUM"
+    # Get current school year and semester from system settings
+    from core.utils import get_current_school_year, get_current_semester
+    school_year = get_current_school_year()
+    semester = get_current_semester()
 
     # Get the clearance record
     clearance = Clearance.objects.filter(
@@ -4430,19 +4726,6 @@ def batch_print_permits(request):
 
     # Get the students
     students = Student.objects.filter(id__in=student_ids)
-
-    # Get current school year and semester
-    current_year = timezone.now().year
-    school_year = f"{current_year}-{current_year + 1}"
-
-    # Determine current semester based on month
-    month = timezone.now().month
-    if 1 <= month <= 5:  # January to May
-        semester = "2ND"
-    elif 6 <= month <= 10:  # June to October
-        semester = "1ST"
-    else:  # November to December
-        semester = "SUM"
 
     # Clear the session data
     if 'batch_print_students' in request.session:

@@ -5,19 +5,27 @@
         </svg>
         <h2 class="ml-3 text-2xl font-bold text-white">Office Panel</h2>
     </div>
-    
+
     <div class="mt-5 px-2">
         <nav class="space-y-2">
-            <a href="{% url 'office_dashboard' %}"
-               class="group flex items-center px-4 py-3 text-base font-medium rounded-md text-white {% if request.resolver_match.url_name == 'office_dashboard' %}bg-emerald-800{% else %}hover:bg-emerald-800{% endif %}">
+            <a href="{% url 'staff_dashboard' %}"
+               class="group flex items-center px-4 py-3 text-base font-medium rounded-md text-white {% if request.resolver_match.url_name == 'staff_dashboard' %}bg-emerald-800{% else %}hover:bg-emerald-800{% endif %}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="mr-3 h-6 w-6 text-emerald-300" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                 </svg>
                 Dashboard
             </a>
-            
+
+            <a href="{% url 'office_reports' %}"
+               class="group flex items-center px-4 py-3 text-base font-medium rounded-md text-white {% if request.resolver_match.url_name == 'office_reports' %}bg-emerald-800{% else %}hover:bg-emerald-800{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mr-3 h-6 w-6 text-emerald-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Reports
+            </a>
+
             <!-- Logout -->
-            <a href="{% url 'logout' %}" 
+            <a href="{% url 'logout' %}"
                class="group flex items-center px-4 py-3 text-base font-medium rounded-md text-white hover:bg-red-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="mr-3 h-6 w-6 text-red-300" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>

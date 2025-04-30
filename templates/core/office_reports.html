@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block title %}Office Reports{% endblock %}
+
+{% block sidebar %}
+{% include "components/staff_sidenav.html" %}
+{% endblock %}
+
+{% block sidebar_mobile %}
+{% include "components/staff_sidenav_mobile.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="flex">
+  <div class="flex-1 p-8 overflow-auto bg-gray-50">
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+          </svg>
+          <h2 class="text-3xl font-bold text-emerald-900">{{ office.name }} Reports</h2>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-emerald-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+          </svg>
+          Generate comprehensive reports for your office
+        </div>
+      </div>
+
+      <!-- Report Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Clearance Status Report -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-emerald-100">
+          <div class="bg-emerald-600 p-4">
+            <h2 class="text-xl font-bold text-white">Clearance Status Report</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600 mb-4">Generate a comprehensive report of all clearance requests processed by your office, including status statistics and trends.</p>
+
+            <form method="POST" action="{% url 'office_reports' %}">
+              {% csrf_token %}
+              <input type="hidden" name="report_type" value="clearance_status">
+
+              <div class="mb-4">
+                <label for="clearance_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="clearance_school_year" name="school_year" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for year in school_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="clearance_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="clearance_semester" name="semester" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for semester_value, semester_name in semesters %}
+                  <option value="{{ semester_value }}">{{ semester_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Student Performance Report -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-emerald-100">
+          <div class="bg-emerald-600 p-4">
+            <h2 class="text-xl font-bold text-white">Student Performance Report</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600 mb-4">Generate a report showing student performance metrics by course, year level, and other demographics.</p>
+
+            <form method="POST" action="{% url 'office_reports' %}">
+              {% csrf_token %}
+              <input type="hidden" name="report_type" value="student_performance">
+
+              <div class="mb-4">
+                <label for="performance_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="performance_school_year" name="school_year" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for year in school_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="performance_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="performance_semester" name="semester" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for semester_value, semester_name in semesters %}
+                  <option value="{{ semester_value }}">{{ semester_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Department Report -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-emerald-100">
+          <div class="bg-emerald-600 p-4">
+            <h2 class="text-xl font-bold text-white">Department Report</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600 mb-4">Generate a report analyzing clearance requests by academic departments, showing performance across different departments.</p>
+
+            <form method="POST" action="{% url 'office_reports' %}">
+              {% csrf_token %}
+              <input type="hidden" name="report_type" value="department_report">
+
+              <div class="mb-4">
+                <label for="department_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="department_school_year" name="school_year" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for year in school_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="department_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="department_semester" name="semester" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for semester_value, semester_name in semesters %}
+                  <option value="{{ semester_value }}">{{ semester_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="department_filter" class="block text-sm font-medium text-gray-700 mb-1">Department Filter</label>
+                <select id="department_filter" name="department" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  <option value="">All Departments</option>
+                  {% for dean in deans %}
+                  <option value="{{ dean.id }}">{{ dean.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Processing Time Report -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-emerald-100">
+          <div class="bg-emerald-600 p-4">
+            <h2 class="text-xl font-bold text-white">Processing Time Report</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600 mb-4">Generate a report analyzing the average processing time for clearance requests in your office.</p>
+
+            <form method="POST" action="{% url 'office_reports' %}">
+              {% csrf_token %}
+              <input type="hidden" name="report_type" value="processing_time">
+
+              <div class="mb-4">
+                <label for="processing_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="processing_school_year" name="school_year" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for year in school_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="processing_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="processing_semester" name="semester" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for semester_value, semester_name in semesters %}
+                  <option value="{{ semester_value }}">{{ semester_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Denial Reasons Report -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-emerald-100">
+          <div class="bg-emerald-600 p-4">
+            <h2 class="text-xl font-bold text-white">Denial Reasons Report</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600 mb-4">Generate a report analyzing the most common reasons for clearance request denials in your office.</p>
+
+            <form method="POST" action="{% url 'office_reports' %}">
+              {% csrf_token %}
+              <input type="hidden" name="report_type" value="denial_reasons">
+
+              <div class="mb-4">
+                <label for="denial_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="denial_school_year" name="school_year" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for year in school_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="denial_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="denial_semester" name="semester" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for semester_value, semester_name in semesters %}
+                  <option value="{{ semester_value }}">{{ semester_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Cleared Students Report -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-emerald-100">
+          <div class="bg-emerald-600 p-4">
+            <h2 class="text-xl font-bold text-white">Cleared Students Report</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600 mb-4">Generate a comprehensive report of all students who have been cleared by your office.</p>
+
+            <form method="POST" action="{% url 'office_reports' %}">
+              {% csrf_token %}
+              <input type="hidden" name="report_type" value="cleared_students">
+
+              <div class="mb-4">
+                <label for="cleared_school_year" class="block text-sm font-medium text-gray-700 mb-1">School Year</label>
+                <select id="cleared_school_year" name="school_year" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for year in school_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="cleared_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="cleared_semester" name="semester" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                  {% for semester_value, semester_name in semesters %}
+                  <option value="{{ semester_value }}">{{ semester_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Information -->
+      <div class="mt-8 bg-blue-50 rounded-xl p-6 border border-blue-100">
+        <h2 class="text-xl font-semibold text-blue-800 mb-3">About Reports</h2>
+        <p class="text-blue-700 mb-4">Reports are generated as PDF files that you can download, print, or share. Here's what each report contains:</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Clearance Status Report</h3>
+            <ul class="list-disc pl-5 space-y-1 text-blue-700">
+              <li>Summary of all clearance requests processed by your office</li>
+              <li>Breakdown by status (pending, approved, denied)</li>
+              <li>Trends over time with visual charts</li>
+              <li>Comparison with previous semesters</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Student Performance Report</h3>
+            <ul class="list-disc pl-5 space-y-1 text-blue-700">
+              <li>Analysis of student performance by course and year level</li>
+              <li>Identification of courses with high denial rates</li>
+              <li>Demographic analysis of clearance completion</li>
+              <li>Recommendations for improvement</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Department Report</h3>
+            <ul class="list-disc pl-5 space-y-1 text-blue-700">
+              <li>Breakdown of clearance requests by academic department</li>
+              <li>Comparison of approval rates across departments</li>
+              <li>Department-specific processing metrics</li>
+              <li>Identification of departments needing additional support</li>
+              <li>Trends in department performance over time</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Processing Time Report</h3>
+            <ul class="list-disc pl-5 space-y-1 text-blue-700">
+              <li>Average time to process clearance requests</li>
+              <li>Breakdown by day of week and time of day</li>
+              <li>Identification of peak processing periods</li>
+              <li>Recommendations for optimizing processing efficiency</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Denial Reasons Report</h3>
+            <ul class="list-disc pl-5 space-y-1 text-blue-700">
+              <li>Analysis of most common denial reasons</li>
+              <li>Trends in denial reasons over time</li>
+              <li>Correlation between denial reasons and student demographics</li>
+              <li>Recommendations for reducing denial rates</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-medium text-blue-800 mb-2">Cleared Students Report</h3>
+            <ul class="list-disc pl-5 space-y-1 text-blue-700">
+              <li>Comprehensive list of all students cleared by your office</li>
+              <li>Breakdown by course and year level</li>
+              <li>Statistical analysis of clearance patterns</li>
+              <li>Detailed information about each cleared student</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

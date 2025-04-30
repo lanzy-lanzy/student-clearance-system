@@ -11,7 +11,7 @@
     </div>
 
     <!-- Year Level Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <!-- 1st Year -->
         <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=1"
            class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '1' %}ring-2 ring-emerald-500{% endif %}">
@@ -76,23 +76,6 @@
                 <div class="flex items-center justify-between text-sm">
                     <span class="text-gray-500">Students</span>
                     <span class="text-amber-600 font-medium">View All</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- 5th Year -->
-        <a href="{% url 'staff_dashboard' %}?view=student_management_year&year_level=5"
-           class="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow {% if request.GET.year_level == '5' %}ring-2 ring-emerald-500{% endif %}">
-            <div class="p-5 bg-red-50 border-b border-red-100">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-red-800">5th Year</h3>
-                    <span class="text-2xl font-bold text-red-600">{{ year_counts.5|default:"0" }}</span>
-                </div>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-gray-500">Students</span>
-                    <span class="text-red-600 font-medium">View All</span>
                 </div>
             </div>
         </a>

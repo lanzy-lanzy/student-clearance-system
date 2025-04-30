@@ -257,7 +257,7 @@ def send_approval_email(student, notes=None):
         'course_code': student.course.code,
         'notes': notes,
         # Use absolute URL for login with domain
-        'login_url': f"http://127.0.0.1:8000{settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') and settings.LOGIN_URL.startswith('/') else '/' + settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') else '/login/'}"
+        'login_url': f"http://172.31.2.213:8000{settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') and settings.LOGIN_URL.startswith('/') else '/' + settings.LOGIN_URL if hasattr(settings, 'LOGIN_URL') else '/login/'}"
     }
 
     # Plain text message as fallback

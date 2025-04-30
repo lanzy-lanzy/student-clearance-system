@@ -307,306 +307,7 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
 
     return pdf
 
-def generate_boarders_pdf(students, request=None, school_year=None, semester=None):
-    """
-    Generate a PDF report of boarders for a dormitory owner
-    """
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=letter,
-        rightMargin=0.5*inch,
-        leftMargin=0.5*inch,
-        topMargin=0.5*inch,
-        bottomMargin=0.5*inch
-    )
 
-    # Styles
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'Title',
-        parent=styles['Heading1'],
-        fontSize=16,
-        alignment=TA_CENTER,
-        spaceAfter=12
-    )
-
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
-        parent=styles['Heading2'],
-        fontSize=12,
-        alignment=TA_CENTER,
-        spaceAfter=12
-    )
-
-    header_style = ParagraphStyle(
-        'Header',
-        parent=styles['Heading2'],
-        fontSize=12,
-        textColor=colors.white,
-        alignment=TA_LEFT
-    )
-
-    normal_style = styles["Normal"]
-
-    # Content elements
-    elements = []
-
-    # Title
-    title = Paragraph("Dormitory Boarders Report", title_style)
-    elements.append(title)
-
-    # Subtitle with school year and semester
-    if school_year and semester:
-        subtitle = Paragraph(f"School Year: {school_year} | Semester: {semester}", subtitle_style)
-        elements.append(subtitle)
-
-    # Current date
-    date_text = Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y')}", normal_style)
-    elements.append(date_text)
-    elements.append(Spacer(1, 0.25*inch))
-
-    # Table data
-    data = [
-        [
-            Paragraph("Student ID", header_style),
-            Paragraph("Name", header_style),
-            Paragraph("Course", header_style),
-            Paragraph("Year Level", header_style),
-            Paragraph("Contact Number", header_style)
-        ]
-    ]
-
-    # Add student data
-    for student in students:
-        year_level_text = {
-            1: "1st Year",
-            2: "2nd Year",
-            3: "3rd Year",
-            4: "4th Year",
-            5: "5th Year"
-        }.get(student.year_level, f"{student.year_level} Year")
-
-        data.append([
-            student.student_id,
-            f"{student.user.first_name} {student.user.last_name}",
-            student.course.name if student.course else "N/A",
-            year_level_text,
-            student.contact_number or "N/A"
-        ])
-
-    # Create the table
-    table = Table(data, repeatRows=1)
-
-    # Style the table
-    table_style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-    ])
-
-    # Add alternating row colors
-    for i in range(1, len(data)):
-        if i % 2 == 0:
-            table_style.add('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
-
-    table.setStyle(table_style)
-    elements.append(table)
-
-    # Summary section
-    elements.append(Spacer(1, 0.5*inch))
-    elements.append(Paragraph(f"Total Boarders: {len(students)}", styles['Heading3']))
-
-    # Build the PDF
-    doc.build(elements)
-
-    # Get the value of the BytesIO buffer
-    pdf = buffer.getvalue()
-    buffer.close()
-
-    return pdf
-
-def generate_clearance_report_pdf(clearance_requests, request=None, school_year=None, semester=None):
-    """
-    Generate a PDF report of clearance requests for a dormitory owner
-    """
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=0.5*inch,
-        leftMargin=0.5*inch,
-        topMargin=0.5*inch,
-        bottomMargin=0.5*inch
-    )
-
-    # Styles
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'Title',
-        parent=styles['Heading1'],
-        fontSize=16,
-        alignment=TA_CENTER,
-        spaceAfter=12
-    )
-
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
-        parent=styles['Heading2'],
-        fontSize=12,
-        alignment=TA_CENTER,
-        spaceAfter=12
-    )
-
-    header_style = ParagraphStyle(
-        'Header',
-        parent=styles['Heading2'],
-        fontSize=12,
-        textColor=colors.white,
-        alignment=TA_LEFT
-    )
-
-    normal_style = styles["Normal"]
-
-    # Content elements
-    elements = []
-
-    # Title
-    title = Paragraph("Dormitory Clearance Report", title_style)
-    elements.append(title)
-
-    # Subtitle with school year and semester
-    if school_year and semester:
-        subtitle = Paragraph(f"School Year: {school_year} | Semester: {semester}", subtitle_style)
-        elements.append(subtitle)
-
-    # Current date
-    date_text = Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y')}", normal_style)
-    elements.append(date_text)
-    elements.append(Spacer(1, 0.25*inch))
-
-    # Table data
-    data = [
-        [
-            Paragraph("Student ID", header_style),
-            Paragraph("Name", header_style),
-            Paragraph("Request Date", header_style),
-            Paragraph("Status", header_style),
-            Paragraph("Reviewed Date", header_style),
-            Paragraph("Reviewed By", header_style),
-            Paragraph("Notes", header_style)
-        ]
-    ]
-
-    # Count statistics
-    pending_count = 0
-    approved_count = 0
-    denied_count = 0
-
-    # Add clearance request data
-    for request in clearance_requests:
-        # Update statistics
-        if request.status == 'pending':
-            pending_count += 1
-        elif request.status == 'approved':
-            approved_count += 1
-        elif request.status == 'denied':
-            denied_count += 1
-
-        # Format dates
-        request_date = request.request_date.strftime('%Y-%m-%d') if request.request_date else 'N/A'
-        reviewed_date = request.reviewed_date.strftime('%Y-%m-%d') if request.reviewed_date else 'N/A'
-
-        # Format status with proper capitalization
-        status = request.status.capitalize() if request.status else 'N/A'
-
-        data.append([
-            request.student.student_id,
-            f"{request.student.user.first_name} {request.student.user.last_name}",
-            request_date,
-            status,
-            reviewed_date,
-            request.reviewed_by.get_full_name() if request.reviewed_by else 'N/A',
-            request.notes or 'N/A'
-        ])
-
-    # Create the table
-    table = Table(data, repeatRows=1)
-
-    # Style the table
-    table_style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-    ])
-
-    # Add alternating row colors
-    for i in range(1, len(data)):
-        if i % 2 == 0:
-            table_style.add('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
-
-    table.setStyle(table_style)
-    elements.append(table)
-
-    # Summary section
-    elements.append(Spacer(1, 0.5*inch))
-    elements.append(Paragraph("Summary Statistics", styles['Heading3']))
-
-    summary_data = [
-        ["Total Requests", "Pending", "Approved", "Denied"],
-        [str(len(clearance_requests)), str(pending_count), str(approved_count), str(denied_count)]
-    ]
-
-    summary_table = Table(summary_data)
-    summary_style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-    ])
-
-    # Color the cells based on status
-    summary_style.add('BACKGROUND', (1, 1), (1, 1), colors.yellow)
-    summary_style.add('BACKGROUND', (2, 1), (2, 1), colors.lightgreen)
-    summary_style.add('BACKGROUND', (3, 1), (3, 1), colors.lightcoral)
-
-    summary_table.setStyle(summary_style)
-    elements.append(summary_table)
-
-    # Build the PDF
-    doc.build(elements)
-
-    # Get the value of the BytesIO buffer
-    pdf = buffer.getvalue()
-    buffer.close()
-
-    return pdf
 
 def generate_clearance_summary_pdf(report_data, request=None, school_year=None, semester=None):
     """
@@ -1053,7 +754,8 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
         parent=styles['Heading1'],
         fontSize=18,
         alignment=TA_CENTER,
-        spaceAfter=12
+        spaceAfter=12,
+        textColor=EMERALD_DARK
     )
 
     subtitle_style = ParagraphStyle(
@@ -1074,8 +776,35 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
 
     normal_style = styles["Normal"]
 
+    # Enhanced normal style
+    enhanced_normal = ParagraphStyle(
+        'EnhancedNormal',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        spaceAfter=6
+    )
+
+    # Style for section headers
+    section_header = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading3'],
+        fontSize=14,
+        textColor=EMERALD_DARK,
+        spaceAfter=10,
+        spaceBefore=15
+    )
+
     # Content elements
     elements = []
+
+    # Add logo if available
+    logo_path = get_logo_path()
+    if logo_path:
+        img = Image(logo_path, width=1.5*inch, height=1.5*inch)
+        img.hAlign = 'CENTER'
+        elements.append(img)
+        elements.append(Spacer(1, 0.25*inch))
 
     # Title
     title = Paragraph("Cleared Students Report", title_style)
@@ -1096,9 +825,127 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
         elements.append(subtitle)
 
     # Current date
-    date_text = Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y')}", normal_style)
+    date_text = Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", enhanced_normal)
+    date_text.alignment = TA_CENTER
     elements.append(date_text)
     elements.append(Spacer(1, 0.25*inch))
+
+    # Summary section
+    elements.append(Paragraph("Summary", section_header))
+
+    # Group by course and year level
+    course_counts = {}
+    year_level_counts = {}
+
+    for clearance in clearances:
+        student = clearance.student
+
+        # Count by course
+        course_name = student.course.name if student.course else "No Course"
+        if course_name not in course_counts:
+            course_counts[course_name] = 0
+        course_counts[course_name] += 1
+
+        # Count by year level
+        year_level = student.year_level
+        if year_level not in year_level_counts:
+            year_level_counts[year_level] = 0
+        year_level_counts[year_level] += 1
+
+    # Summary data
+    summary_data = [
+        ["Total Cleared Students:", str(len(clearances))],
+        ["Unique Courses:", str(len(course_counts))],
+        ["Earliest Clearance Date:", min([c.cleared_date for c in clearances if c.cleared_date]).strftime("%Y-%m-%d") if any(c.cleared_date for c in clearances) else "N/A"],
+        ["Latest Clearance Date:", max([c.cleared_date for c in clearances if c.cleared_date]).strftime("%Y-%m-%d") if any(c.cleared_date for c in clearances) else "N/A"],
+    ]
+
+    summary_table = Table(summary_data, colWidths=[3*inch, 1.5*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), EMERALD_PALE),
+        ('TEXTCOLOR', (0, 0), (0, -1), EMERALD_DARK),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, EMERALD_MEDIUM),
+    ]))
+
+    elements.append(summary_table)
+    elements.append(Spacer(1, 0.25*inch))
+
+    # Distribution by Year Level
+    if year_level_counts:
+        elements.append(Paragraph("Cleared Students by Year Level", section_header))
+
+        year_level_data = [
+            [
+                Paragraph("Year Level", header_style),
+                Paragraph("Number of Students", header_style),
+                Paragraph("Percentage", header_style)
+            ]
+        ]
+
+        # Sort year levels
+        sorted_year_levels = sorted(year_level_counts.items())
+
+        for year_level, count in sorted_year_levels:
+            year_level_text = {
+                1: "1st Year",
+                2: "2nd Year",
+                3: "3rd Year",
+                4: "4th Year",
+                5: "5th Year"
+            }.get(year_level, f"{year_level} Year")
+
+            percentage = (count / len(clearances)) * 100
+            year_level_data.append([
+                year_level_text,
+                str(count),
+                f"{percentage:.1f}%"
+            ])
+
+        # Add a total row
+        year_level_data.append([
+            "TOTAL",
+            str(len(clearances)),
+            "100.0%"
+        ])
+
+        year_level_table = Table(year_level_data, colWidths=[2*inch, 2*inch, 2*inch], repeatRows=1)
+
+        year_level_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -2), colors.white),
+            ('BACKGROUND', (0, -1), (-1, -1), EMERALD_PALE),  # Total row
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (1, 1), (2, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ])
+
+        # Add alternating row colors
+        for i in range(1, len(year_level_data)-1):  # Skip the header and total rows
+            if i % 2 == 0:
+                year_level_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+
+        year_level_table.setStyle(year_level_style)
+        elements.append(year_level_table)
+        elements.append(Spacer(1, 0.25*inch))
+
+    # Detailed students table
+    elements.append(Paragraph("Detailed List of Cleared Students", section_header))
 
     # Table data
     data = [
@@ -1162,10 +1009,6 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
 
     table.setStyle(table_style)
     elements.append(table)
-
-    # Summary section
-    elements.append(Spacer(1, 0.5*inch))
-    elements.append(Paragraph(f"Total Cleared Students: {len(clearances)}", styles['Heading3']))
 
     # Add page numbers
     elements.append(PageNumberFooter())

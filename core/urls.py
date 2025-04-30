@@ -31,6 +31,7 @@ urlpatterns = [
 
     # Staff Routes
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
+    path('staff/reports/', views.office_reports, name='office_reports'),
     path('staff/pending-requests/', views.staff_pending_requests, name='staff_pending_requests'),
     path('staff/clearance-history/', views.staff_clearance_history, name='staff_clearance_history'),
     path('staff/profile/', views.staff_profile, name='staff_profile'),
@@ -44,6 +45,7 @@ urlpatterns = [
     path('dormitory-owner/boarders/', views.bh_owner_boarders, name='bh_owner_boarders'),
     path('dormitory-owner/add-student/', views.bh_owner_add_student, name='bh_owner_add_student'),
     path('dormitory-owner/update-boarder-date/<int:student_id>/', views.update_boarder_date, name='update_boarder_date'),
+    path('dormitory-owner/toggle-boarder-status/<int:student_id>/', views.toggle_boarder_status, name='toggle_boarder_status'),
     path('dormitory-owner/pending-requests/', views.bh_owner_pending_requests, name='bh_owner_pending_requests'),
     path('dormitory-owner/approved-requests/', views.bh_owner_approved_requests, name='bh_owner_approved_requests'),
     path('dormitory-owner/denied-requests/', views.bh_owner_denied_requests, name='bh_owner_denied_requests'),
@@ -85,6 +87,7 @@ urlpatterns = [
     path('api/deans/<int:dean_id>/', views.get_dean_details, name='get_dean_details'),
     path('api/offices/detail/<int:office_id>/', views.office_detail_api, name='office_detail_api'),
     path('api/staff/<int:staff_id>/delete/', views.delete_staff, name='api_staff_delete'),
+    path('api/clearance/<int:clearance_id>/delete/', views.admin_delete_clearance, name='api_clearance_delete'),
     path('dashboard/admin/student-details/<int:student_id>/', views.get_student_details, name='get_student_details'),
     # Add missing stats endpoint (example)
     path('dashboard/admin/get-approval-stats/', views.get_approval_stats, name='get_approval_stats'),
@@ -108,4 +111,6 @@ urlpatterns = [
     path('api/batch-approval/<int:batch_id>/', api_views.batch_approval_details, name='api_batch_approval_details'),
     path('api/program-chair/reports/<str:report_type>/', api_views.program_chair_reports, name='api_program_chair_reports'),
     path('api/program-chair/reports/export/<str:format_type>/', api_views.export_program_chair_report, name='api_export_program_chair_report'),
+    # Add the URL pattern that matches the JavaScript code
+    path('api/program-chair/export/<str:format_type>/', api_views.export_program_chair_report, name='api_export_program_chair_report_alt'),
 ]
