@@ -4299,6 +4299,25 @@ def admin_reports(request):
             # Generate students by year level report
             students = Student.objects.select_related('user', 'course').all()
 
+            # Get exam type (Midterm/Final) from request
+            exam_type = request.GET.get('exam_type', 'Midterm')
+
+            # Filter by year level if specified
+            year_level = request.GET.get('year_level')
+            if year_level and year_level.isdigit():
+                students = students.filter(year_level=int(year_level))
+
+            # Filter by student status if specified
+            student_status = request.GET.get('student_status')
+            if student_status == 'cleared':
+                students = students.filter(clearance__is_cleared=True,
+                                          clearance__school_year=school_year,
+                                          clearance__semester=semester)
+            elif student_status == 'pending':
+                students = students.filter(clearance__is_cleared=False,
+                                          clearance__school_year=school_year,
+                                          clearance__semester=semester)
+
             # Filter by department (dean) if specified and not "all"
             if department and department != 'all' and department != '':
                 students = students.filter(course__dean_id=department)
@@ -4310,9 +4329,9 @@ def admin_reports(request):
 
             if format_type == 'pdf':
                 from core.pdf_utils import generate_students_by_year_level_pdf
-                pdf = generate_students_by_year_level_pdf(students, request, school_year, semester, department)
+                pdf = generate_students_by_year_level_pdf(students, request, school_year, semester, department, exam_type)
                 response = HttpResponse(pdf, content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="students_by_year_level_{school_year}_{semester}.pdf"'
+                response['Content-Disposition'] = f'attachment; filename="students_by_year_level_{school_year}_{semester}_{exam_type}.pdf"'
                 return response
             else:  # Excel format
                 response = HttpResponse(content_type='application/vnd.ms-excel')

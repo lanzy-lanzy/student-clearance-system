@@ -220,18 +220,18 @@
 
                 <!-- Student Namelist Container -->
                 <div id="studentNamelistContainer" class="mt-6 hidden">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <div class="bg-purple-600 text-white px-4 py-3 flex justify-between items-center">
-                            <h3 class="text-lg font-semibold">Student's List - <span id="namelistTitle"></span></h3>
-                            <div class="flex space-x-2">
-                                <button onclick="exportStudentsByYearLevel()" class="px-3 py-1 bg-white text-purple-700 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    PDF
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Header with PDF button -->
+                    <div class="bg-purple-600 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Student's List - <span id="namelistTitle"></span></h3>
+                        <button onclick="exportStudentsByYearLevel()" class="px-3 py-1 bg-white text-purple-700 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            PDF
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-b-lg shadow-md overflow-hidden">
                         <div class="p-4">
                             <div class="text-sm text-gray-500 mb-4">
                                 Generated on: <span id="generatedDate"></span>
@@ -1309,12 +1309,15 @@
         `;
         exportBtn.disabled = true;
 
-        // Get semester display name
+        // Get semester display name and exam type
         const semesterSelect = document.getElementById('report_semester');
         const semesterText = semesterSelect.options[semesterSelect.selectedIndex].text;
 
+        // Determine if it's midterm or final based on the semester text
+        const examType = semesterText.toLowerCase().includes('midterm') ? 'Midterm' : 'Final';
+
         // Set the title and date
-        document.getElementById('namelistTitle').textContent = `SY: ${schoolYear} ${semesterText}`;
+        document.getElementById('namelistTitle').textContent = `SY: ${schoolYear} ${semesterText} - ${examType} Records`;
         document.getElementById('generatedDate').textContent = new Date().toLocaleString();
 
         // Build the URL with parameters
@@ -1549,8 +1552,15 @@
         `;
         exportBtn.disabled = true;
 
+        // Get semester display name and exam type
+        const semesterSelect = document.getElementById('report_semester');
+        const semesterText = semesterSelect.options[semesterSelect.selectedIndex].text;
+
+        // Determine if it's midterm or final based on the semester text
+        const examType = semesterText.toLowerCase().includes('midterm') ? 'Midterm' : 'Final';
+
         // Build the URL with parameters
-        let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
+        let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=pdf&exam_type=${examType}`;
 
         if (yearLevel) {
             url += `&year_level=${yearLevel}`;

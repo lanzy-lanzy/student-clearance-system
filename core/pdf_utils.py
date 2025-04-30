@@ -308,7 +308,7 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
     return pdf
 
 
-def generate_students_by_year_level_pdf(students, request=None, school_year=None, semester=None, department=None):
+def generate_students_by_year_level_pdf(students, request=None, school_year=None, semester=None, department=None, exam_type=None):
     """
     Generate a PDF report of students grouped by year level for departments
     """
@@ -388,7 +388,8 @@ def generate_students_by_year_level_pdf(students, request=None, school_year=None
     # Subtitle with school year and semester
     if school_year and semester:
         semester_display = dict(SEMESTER_CHOICES).get(semester, semester)
-        subtitle_text = f"School Year: {school_year} | Semester: {semester_display}"
+        exam_display = exam_type if exam_type else "Midterm"
+        subtitle_text = f"School Year: {school_year} | Semester: {semester_display} - {exam_display} Records"
         if department:
             from core.models import Dean
             try:
