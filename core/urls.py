@@ -109,6 +109,7 @@ urlpatterns = [
     path('api/clearance/deny/', api_views.deny_clearance, name='api_deny_clearance'),
     path('api/students/batch-details/', api_views.students_batch_details, name='api_students_batch_details'),
     path('api/batch-approval/<int:batch_id>/', api_views.batch_approval_details, name='api_batch_approval_details'),
+    path('api/program-chair/students/', api_views.program_chair_students, name='api_program_chair_students'),
     path('api/program-chair/reports/<str:report_type>/', api_views.program_chair_reports, name='api_program_chair_reports'),
     path('api/program-chair/reports/export/<str:format_type>/', api_views.export_program_chair_report, name='api_export_program_chair_report'),
     # Add the URL pattern that matches the JavaScript code

@@ -832,7 +832,7 @@
             </div>
         `;
 
-        // Fetch students data
+        // Fetch students data for this program chair's department
         fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}`)
             .then(response => {
                 if (!response.ok) {
@@ -976,7 +976,7 @@
             </div>
         `;
 
-        // Fetch pending students data
+        // Fetch pending students data for this program chair's department
         fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}&status=pending`)
             .then(response => {
                 if (!response.ok) {
@@ -1093,7 +1093,7 @@
             </div>
         `;
 
-        // Fetch all students data
+        // Fetch all students data for this program chair's department
         fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}`)
             .then(response => {
                 if (!response.ok) {

@@ -346,6 +346,79 @@ def batch_approval_details(request, batch_id):
 
 @login_required
 @user_passes_test(is_program_chair)
+def program_chair_students(request):
+    """API endpoint to get students for a program chair's department"""
+    try:
+        program_chair = request.user.programchair
+
+        # Get current school year and semester
+        current_year = timezone.now().year
+        school_year = request.GET.get('school_year', f"{current_year}-{current_year + 1}")
+        semester = request.GET.get('semester', "1ST_MID")
+        status = request.GET.get('status', 'all')  # all, cleared, pending
+
+        # Get all students under this program chair's dean
+        students = Student.objects.filter(course__dean=program_chair.dean).select_related('user', 'course')
+
+        # Filter by status if provided
+        if status != 'all':
+            clearances = Clearance.objects.filter(
+                student__in=students,
+                school_year=school_year,
+                semester=semester
+            )
+
+            if status == 'cleared':
+                clearances = clearances.filter(is_cleared=True)
+                students = students.filter(id__in=clearances.values_list('student_id', flat=True))
+            elif status == 'pending':
+                clearances = clearances.filter(is_cleared=False)
+                students = students.filter(id__in=clearances.values_list('student_id', flat=True))
+
+        # Prepare student data
+        student_data = []
+        for student in students:
+            clearance = Clearance.objects.filter(
+                student=student,
+                school_year=school_year,
+                semester=semester
+            ).first()
+
+            # Get clearance status
+            is_cleared = False
+            pending_offices = []
+
+            if clearance:
+                is_cleared = clearance.is_cleared
+
+                # If not cleared, get pending offices
+                if not is_cleared:
+                    pending_requests = ClearanceRequest.objects.filter(
+                        clearance=clearance,
+                        status__in=['pending', 'denied']
+                    ).select_related('office')
+
+                    pending_offices = [req.office.name for req in pending_requests]
+
+            student_data.append({
+                'id': student.id,
+                'student_id': student.student_id,
+                'first_name': student.user.first_name,
+                'last_name': student.user.last_name,
+                'year_level': student.year_level,
+                'course': student.course.name,
+                'is_cleared': is_cleared,
+                'pending_offices': pending_offices
+            })
+
+        return JsonResponse({'success': True, 'data': student_data})
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())  # Log the full error for debugging
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@user_passes_test(is_program_chair)
 def program_chair_reports(request, report_type):
     """API endpoint to get report data for program chair"""
     try:
