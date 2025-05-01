@@ -34,74 +34,136 @@
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Total Students -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-white">Total Students</h3>
-                    <span class="text-2xl font-bold text-white">{{ total_students }}</span>
-                </div>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">Under your supervision</span>
-                </div>
-            </div>
+    <!-- Summary Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Clearance Summary</h3>
         </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Total Students -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">Total Students</div>
+                                        <div class="text-sm text-gray-500">Under your supervision</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ total_students }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">100%</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </td>
+                        </tr>
 
-        <!-- Cleared Students -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-white">Cleared</h3>
-                    <span class="text-2xl font-bold text-white">{{ cleared_count }}</span>
-                </div>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ cleared_percentage }}% of total</span>
-                </div>
-                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ cleared_percentage }}%"></div>
-                </div>
-            </div>
-        </div>
+                        <!-- Cleared Students -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">Cleared Students</div>
+                                        <div class="text-sm text-gray-500">Completed all requirements</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ cleared_count }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ cleared_percentage }}%</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ cleared_percentage }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
 
-        <!-- Pending Students -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-white">Pending</h3>
-                    <span class="text-2xl font-bold text-white">{{ pending_count }}</span>
-                </div>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ pending_percentage }}% of total</span>
-                </div>
-                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-yellow-600 h-2.5 rounded-full" style="width: {{ pending_percentage }}%"></div>
-                </div>
-            </div>
-        </div>
+                        <!-- Pending Students -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">Pending Students</div>
+                                        <div class="text-sm text-gray-500">Awaiting clearance approval</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ pending_count }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ pending_percentage }}%</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-yellow-600 h-2.5 rounded-full" style="width: {{ pending_percentage }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
 
-        <!-- Permits Issued -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-purple-500 to-purple-600">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-white">Permits Issued</h3>
-                    <span class="text-2xl font-bold text-white">{{ permits_issued }}</span>
-                </div>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">{{ permits_percentage }}% of cleared students</span>
-                </div>
-                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-purple-600 h-2.5 rounded-full" style="width: {{ permits_percentage }}%"></div>
-                </div>
+                        <!-- Permits Issued -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">Permits Issued</div>
+                                        <div class="text-sm text-gray-500">Examination permits generated</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ permits_issued }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ permits_percentage }}%</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-purple-600 h-2.5 rounded-full" style="width: {{ permits_percentage }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -131,26 +193,66 @@
 
     <!-- Detailed Reports Section -->
     <div class="bg-white rounded-lg shadow overflow-hidden mt-8">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
             <h3 class="text-lg font-semibold text-gray-800">Detailed Reports</h3>
+
+            <!-- Report Action Buttons - Moved to header for better visibility -->
+            <div class="flex flex-wrap gap-2">
+                <button id="btn-year-level" onclick="showYearLevelList()" class="px-3 py-2 bg-emerald-600 text-white text-xs sm:text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Year Level
+                </button>
+                <button id="btn-students-list" onclick="showStudentsList()" class="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Students List
+                </button>
+                <button id="btn-cleared-students" onclick="showClearedStudents()" class="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Cleared
+                </button>
+                <button id="btn-pending-students" onclick="showPendingStudents()" class="px-3 py-2 bg-orange-600 text-white text-xs sm:text-sm rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Pending
+                </button>
+            </div>
         </div>
+
         <div class="p-6">
             <div class="space-y-6">
-
-
-                <!-- Search Bar -->
-                <div class="mb-6">
-                    <div class="relative">
-                        <input type="text" id="student-search" placeholder="Search by name, ID number, or year level..."
-                               class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                               onkeyup="if(event.key === 'Enter') searchStudents()">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                            </svg>
+                <!-- Search and Export Controls -->
+                <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <!-- Search Bar -->
+                    <div class="w-full sm:w-2/3">
+                        <div class="relative">
+                            <input type="text" id="student-search" placeholder="Search by name, ID number, or year level..."
+                                   class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                   onkeyup="if(event.key === 'Enter') searchStudents()">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <button onclick="searchStudents()" class="absolute inset-y-0 right-0 px-4 text-emerald-600 font-medium hover:text-emerald-800">
+                                Search
+                            </button>
                         </div>
-                        <button onclick="searchStudents()" class="absolute inset-y-0 right-0 px-4 text-emerald-600 font-medium hover:text-emerald-800">
-                            Search
+                    </div>
+
+                    <!-- Export Data Button -->
+                    <div class="w-full sm:w-auto">
+                        <button onclick="displayStudentNamelist()" class="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center shadow-md">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <span class="whitespace-nowrap">Export Data</span>
                         </button>
                     </div>
                 </div>
@@ -161,44 +263,6 @@
                     <div class="text-center py-8 text-gray-500">
                         Select a report type to view detailed statistics
                     </div>
-                </div>
-
-                <!-- Report Action Buttons -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                    <button onclick="showYearLevelList()" class="px-4 py-3 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Year Level
-                    </button>
-                    <button onclick="showStudentsList()" class="px-4 py-3 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        Students List
-                    </button>
-                    <button onclick="showClearedStudents()" class="px-4 py-3 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Cleared Students
-                    </button>
-                    <button onclick="showPendingStudents()" class="px-4 py-3 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Pending Students
-                    </button>
-                </div>
-
-                <!-- Export Data Button -->
-                <div class="flex justify-center mt-6">
-                    <button onclick="displayStudentNamelist()" class="px-6 py-3 bg-purple-600 text-white text-base rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center shadow-md">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <span class="whitespace-nowrap font-medium">Export Data</span>
-                    </button>
                 </div>
 
                 <!-- Student Namelist Container -->
@@ -230,26 +294,33 @@
                 </div>
 
                 <!-- Export Instructions -->
-                <div class="mt-4 p-3 sm:p-4 bg-blue-50 text-blue-800 rounded-md">
+                <div class="mt-4 p-4 bg-blue-50 text-blue-800 rounded-md">
                     <div class="flex items-start">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <div>
-                            <p class="text-xs sm:text-sm font-medium">Instructions:</p>
-                            <ol class="text-xs mt-1 list-decimal list-inside">
-                                <li>Use the buttons above to view different reports:</li>
-                                <ul class="ml-5 list-disc text-xs">
-                                    <li><strong>Year Level</strong> - View statistics by year level</li>
-                                    <li><strong>Students List</strong> - View complete list of students</li>
-                                    <li><strong>Cleared Students</strong> - View only cleared students</li>
-                                    <li><strong>Pending Students</strong> - View students with pending clearance</li>
-                                </ul>
-                                <li>Use the search bar to find specific students by name, ID, or year level</li>
-                                <li>Each report includes an export option to download the data</li>
-                                <li>Click the "Export Data" button to generate a comprehensive report with all details</li>
-                                <li>The PDF button allows you to download a printable version of any report</li>
-                            </ol>
+                            <p class="text-sm font-medium">Instructions:</p>
+                            <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-xs font-semibold mb-1">Report Types:</h4>
+                                    <ul class="ml-4 list-disc text-xs space-y-1">
+                                        <li><strong>Year Level</strong> - View statistics by year level</li>
+                                        <li><strong>Students List</strong> - View complete list of students</li>
+                                        <li><strong>Cleared</strong> - View only cleared students</li>
+                                        <li><strong>Pending</strong> - View students with pending clearance</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-semibold mb-1">Actions:</h4>
+                                    <ul class="ml-4 list-disc text-xs space-y-1">
+                                        <li>Use the search bar to find specific students</li>
+                                        <li>Each report includes an export option</li>
+                                        <li>Click "Export Data" for comprehensive reports</li>
+                                        <li>PDF/Excel options available for all reports</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -258,8 +329,9 @@
     </div>
 </div>
 
-<!-- Include Chart.js -->
+<!-- Include Chart.js and SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- JavaScript for Charts and Reports -->
 <script>
@@ -390,46 +462,121 @@
     function renderYearLevelReport(data) {
         const reportContent = document.getElementById('reportContent');
 
+        // Calculate totals for summary
+        let totalStudents = 0;
+        let totalCleared = 0;
+        let totalPending = 0;
+        let totalNotStarted = 0;
+
+        data.forEach(item => {
+            totalStudents += item.total;
+            totalCleared += item.cleared;
+            totalPending += item.pending;
+            totalNotStarted += item.not_started;
+        });
+
+        const overallClearanceRate = totalStudents > 0 ? ((totalCleared / totalStudents) * 100).toFixed(1) : 0;
+
+        // Generate table rows for each year level
         let tableRows = '';
         data.forEach(item => {
             const clearanceRate = ((item.cleared / item.total) * 100).toFixed(1);
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[item.year_level] || `Year ${item.year_level}`;
+
             tableRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${item.year_level}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.total}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.cleared}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.pending}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${item.not_started}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">${item.total}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 text-center font-medium">${item.cleared}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-yellow-600 text-center">${item.pending}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">${item.not_started}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-2.5 mr-2">
-                                <div class="bg-emerald-600 h-2 sm:h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
+                            <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                                <div class="bg-emerald-600 h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
                             </div>
-                            <span class="text-xs sm:text-sm text-gray-700">${clearanceRate}%</span>
+                            <span class="text-sm text-gray-700">${clearanceRate}%</span>
                         </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-right">
+                        <button onclick="exportYearLevelData(${item.year_level})" class="text-blue-600 hover:text-blue-800">
+                            <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </button>
                     </td>
                 </tr>
             `;
         });
 
+        // Add a summary row
+        const summaryRow = `
+            <tr class="bg-gray-50 font-medium">
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">All Years</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center">${totalStudents}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-green-700 text-center">${totalCleared}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-yellow-700 text-center">${totalPending}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center">${totalNotStarted}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                            <div class="bg-emerald-700 h-2.5 rounded-full" style="width: ${overallClearanceRate}%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">${overallClearanceRate}%</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                    <button onclick="exportAllYearLevels()" class="text-blue-700 hover:text-blue-900">
+                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+        `;
+
         reportContent.innerHTML = `
-            <h4 class="text-lg font-medium text-gray-800 mb-4">Clearance Status by Year Level</h4>
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
-                <div class="inline-block min-w-full align-middle">
-                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h4 class="text-lg font-medium text-gray-800">Clearance Status by Year Level</h4>
+                    <div class="flex space-x-2">
+                        <button onclick="exportYearLevelReport('pdf')" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            PDF
+                        </button>
+                        <button onclick="exportYearLevelReport('excel')" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Started</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Not Started</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Export</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 ${tableRows}
+                                ${summaryRow}
                             </tbody>
                         </table>
                     </div>
@@ -653,36 +800,15 @@
             });
     }
 
-    function exportReport(format) {
+    function exportYearLevelReport(format) {
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
 
-        // Get the currently active report type
-        let reportType = 'year_level'; // Default
-
-        // Find which report is currently displayed
-        const reportContent = document.getElementById('reportContent');
-        if (reportContent.querySelector('h4')) {
-            const reportTitle = reportContent.querySelector('h4').textContent.trim().toLowerCase();
-            if (reportTitle.includes('year level')) reportType = 'year_level';
-            else if (reportTitle.includes('course')) reportType = 'course';
-            else if (reportTitle.includes('office')) reportType = 'office';
-            else if (reportTitle.includes('timeline')) reportType = 'timeline';
-        } else {
-            // If no report is displayed, show a message
-            alert('Please select a report type first before exporting.');
-            return;
-        }
-
-        // Get filter values
-        const yearLevel = document.getElementById('report_year_level').value;
-        const studentStatus = document.getElementById('report_student_status').value;
-
         // Show loading indicator
-        const exportBtn = document.querySelector(`button[onclick="exportReport('${format}')"]`);
-        const originalText = exportBtn.textContent;
+        const exportBtn = document.querySelector(`button[onclick="exportYearLevelReport('${format}')"]`);
+        const originalText = exportBtn.innerHTML;
         exportBtn.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin w-4 h-4 mr-1 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -691,9 +817,7 @@
         exportBtn.disabled = true;
 
         // Build the URL with filters
-        let url = `/api/program-chair/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=${reportType}`;
-        if (yearLevel) url += `&year_level=${yearLevel}`;
-        if (studentStatus) url += `&student_status=${studentStatus}`;
+        let url = `/api/program-chair/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=year_level`;
 
         // Redirect to export endpoint
         window.location.href = url;
@@ -705,18 +829,13 @@
         }, 3000);
     }
 
-    function exportClearedStudents() {
-        // Get filter values
+    function exportYearLevelData(yearLevel) {
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
-        const yearLevel = document.getElementById('report_year_level').value;
 
-        // Always use "cleared" as the student status for this specific export
-        // This ensures we're always getting cleared students regardless of the filter
-
-        // Show export format modal
+        // Show export format modal using SweetAlert2
         Swal.fire({
-            title: 'Export Cleared Students',
+            title: `Export Year ${yearLevel} Data`,
             html: `
                 <div class="mb-4">
                     <p class="mb-2 text-left">Select export format:</p>
@@ -732,28 +851,84 @@
             cancelButtonColor: '#6B7280',
             didOpen: () => {
                 document.getElementById('pdf-btn').addEventListener('click', () => {
-                    let url = `/api/program-chair/export/pdf/?school_year=${schoolYear}&semester=${semester}&report_type=cleared_students&student_status=cleared`;
-
-                    if (yearLevel) {
-                        url += `&year_level=${yearLevel}`;
-                    }
-
+                    let url = `/api/program-chair/export/pdf/?school_year=${schoolYear}&semester=${semester}&report_type=year_level&year_level=${yearLevel}`;
                     window.open(url, '_blank');
                     Swal.close();
                 });
 
                 document.getElementById('excel-btn').addEventListener('click', () => {
-                    let url = `/api/program-chair/export/excel/?school_year=${schoolYear}&semester=${semester}&report_type=cleared_students&student_status=cleared`;
-
-                    if (yearLevel) {
-                        url += `&year_level=${yearLevel}`;
-                    }
-
+                    let url = `/api/program-chair/export/excel/?school_year=${schoolYear}&semester=${semester}&report_type=year_level&year_level=${yearLevel}`;
                     window.open(url, '_blank');
                     Swal.close();
                 });
             }
         });
+    }
+
+    function exportAllYearLevels() {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+
+        // Show export format modal using SweetAlert2
+        Swal.fire({
+            title: 'Export All Year Levels',
+            html: `
+                <div class="mb-4">
+                    <p class="mb-2 text-left">Select export format:</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="pdf-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">PDF</button>
+                        <button id="excel-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Excel</button>
+                    </div>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            cancelButtonColor: '#6B7280',
+            didOpen: () => {
+                document.getElementById('pdf-btn').addEventListener('click', () => {
+                    let url = `/api/program-chair/export/pdf/?school_year=${schoolYear}&semester=${semester}&report_type=year_level_all`;
+                    window.open(url, '_blank');
+                    Swal.close();
+                });
+
+                document.getElementById('excel-btn').addEventListener('click', () => {
+                    let url = `/api/program-chair/export/excel/?school_year=${schoolYear}&semester=${semester}&report_type=year_level_all`;
+                    window.open(url, '_blank');
+                    Swal.close();
+                });
+            }
+        });
+    }
+
+    function exportClearedStudents(format) {
+        // Get filter values
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+
+        // Show loading indicator
+        const exportBtn = document.querySelector(`button[onclick="exportClearedStudents('${format}')"]`);
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4 mr-1 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Exporting...
+        `;
+        exportBtn.disabled = true;
+
+        // Build the URL with filters
+        let url = `/api/program-chair/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=cleared_students`;
+
+        // Redirect to export endpoint
+        window.location.href = url;
+
+        // Reset button after a delay (since we're navigating away)
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 3000);
     }
 
     function showStudentsList() {
@@ -824,44 +999,91 @@
             return;
         }
 
-        // Group students by year level
+        // Group students by year level for summary
         const studentsByYear = {};
+        let totalStudents = 0;
+        let totalCleared = 0;
+
         students.forEach(student => {
             const yearLevel = student.year_level || 'Unknown';
             if (!studentsByYear[yearLevel]) {
-                studentsByYear[yearLevel] = [];
+                studentsByYear[yearLevel] = {
+                    total: 0,
+                    cleared: 0,
+                    pending: 0
+                };
             }
-            studentsByYear[yearLevel].push(student);
+            studentsByYear[yearLevel].total++;
+            if (student.is_cleared) {
+                studentsByYear[yearLevel].cleared++;
+                totalCleared++;
+            } else {
+                studentsByYear[yearLevel].pending++;
+            }
+            totalStudents++;
         });
 
-        // Create the HTML for the students list
-        let html = `
-            <h4 class="text-lg font-medium text-gray-800 mb-4">Complete Students List</h4>
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
-                <div class="inline-block min-w-full align-middle">
-                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+        // Create summary rows
+        let summaryRows = '';
+        Object.keys(studentsByYear).sort((a, b) => Number(a) - Number(b)).forEach(yearLevel => {
+            const yearData = studentsByYear[yearLevel];
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[yearLevel] || `Year ${yearLevel}`;
+
+            const clearanceRate = ((yearData.cleared / yearData.total) * 100).toFixed(1);
+
+            summaryRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">${yearData.total}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 text-center">${yearData.cleared}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-yellow-600 text-center">${yearData.pending}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                                <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${clearanceRate}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-700">${clearanceRate}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        // Add total row
+        const totalClearanceRate = ((totalCleared / totalStudents) * 100).toFixed(1);
+        summaryRows += `
+            <tr class="bg-gray-50 font-medium">
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">All Students</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center">${totalStudents}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-green-700 text-center">${totalCleared}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-yellow-700 text-center">${totalStudents - totalCleared}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                            <div class="bg-blue-700 h-2.5 rounded-full" style="width: ${totalClearanceRate}%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">${totalClearanceRate}%</span>
+                    </div>
+                </td>
+            </tr>
         `;
 
         // Sort students alphabetically by last name
-        const allStudents = students.sort((a, b) => {
+        const sortedStudents = students.sort((a, b) => {
             const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
             const nameB = `${b.last_name}, ${b.first_name}`.toLowerCase();
             return nameA.localeCompare(nameB);
         });
 
-        // Add all students to the table
-        allStudents.forEach(student => {
+        // Create student rows
+        let studentRows = '';
+        sortedStudents.forEach(student => {
             const yearLevelText = {
                 1: '1st Year',
                 2: '2nd Year',
@@ -870,34 +1092,88 @@
                 5: '5th Year'
             }[student.year_level] || `Year ${student.year_level}`;
 
-            const statusClass = student.is_cleared ? 'text-green-600' : 'text-orange-600';
+            const statusClass = student.is_cleared ? 'text-green-600' : 'text-yellow-600';
             const statusText = student.is_cleared ? 'Cleared' : 'Pending';
+            const statusBg = student.is_cleared ? 'bg-green-100' : 'bg-yellow-100';
 
-            html += `
+            studentRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${statusClass} font-medium">${statusText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBg} ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
                 </tr>
             `;
         });
 
-        html += `
+        reportContent.innerHTML = `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h4 class="text-lg font-medium text-gray-800">Complete Students List</h4>
+                    <div class="flex space-x-2">
+                        <button onclick="exportStudentsList('pdf')" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            PDF
+                        </button>
+                        <button onclick="exportStudentsList('excel')" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <h5 class="text-sm font-medium text-gray-700 mb-3">Summary by Year Level</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cleared</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${summaryRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Students List Section -->
+                <div class="p-6">
+                    <h5 class="text-sm font-medium text-gray-700 mb-3">Student Details (${students.length})</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${studentRows}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            <div class="mt-4 text-right">
-                <button onclick="exportStudentsList()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                    Export List
-                </button>
-            </div>
         `;
-
-        reportContent.innerHTML = html;
     }
 
     function showClearedStudents() {
@@ -945,24 +1221,50 @@
             return;
         }
 
-        // Create the HTML for the cleared students list
-        let html = `
-            <h4 class="text-lg font-medium text-gray-800 mb-4">Cleared Students List</h4>
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
-                <div class="inline-block min-w-full align-middle">
-                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-        `;
+        // Group students by year level for summary
+        const studentsByYear = {};
+        let totalStudents = 0;
+
+        students.forEach(student => {
+            const yearLevel = student.year_level || 'Unknown';
+            if (!studentsByYear[yearLevel]) {
+                studentsByYear[yearLevel] = {
+                    total: 0
+                };
+            }
+            studentsByYear[yearLevel].total++;
+            totalStudents++;
+        });
+
+        // Create summary rows
+        let summaryRows = '';
+        Object.keys(studentsByYear).sort((a, b) => Number(a) - Number(b)).forEach(yearLevel => {
+            const yearData = studentsByYear[yearLevel];
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[yearLevel] || `Year ${yearLevel}`;
+
+            const percentage = ((yearData.total / totalStudents) * 100).toFixed(1);
+
+            summaryRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">${yearData.total}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                                <div class="bg-green-600 h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-700">${percentage}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
 
         // Sort students alphabetically by last name
         const sortedStudents = students.sort((a, b) => {
@@ -971,7 +1273,8 @@
             return nameA.localeCompare(nameB);
         });
 
-        // Add all cleared students to the table
+        // Create student rows
+        let studentRows = '';
         sortedStudents.forEach(student => {
             const yearLevelText = {
                 1: '1st Year',
@@ -981,31 +1284,87 @@
                 5: '5th Year'
             }[student.year_level] || `Year ${student.year_level}`;
 
-            html += `
+            studentRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">Cleared</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-600">
+                            Cleared
+                        </span>
+                    </td>
                 </tr>
             `;
         });
 
-        html += `
+        reportContent.innerHTML = `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h4 class="text-lg font-medium text-gray-800">Cleared Students List</h4>
+                    <div class="flex space-x-2">
+                        <button onclick="exportClearedStudents('pdf')" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            PDF
+                        </button>
+                        <button onclick="exportClearedStudents('excel')" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <h5 class="text-sm font-medium text-gray-700 mb-3">Summary by Year Level</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distribution</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${summaryRows}
+                                <tr class="bg-gray-50 font-medium">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Total</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center">${totalStudents}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">100%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Students List Section -->
+                <div class="p-6">
+                    <h5 class="text-sm font-medium text-gray-700 mb-3">Cleared Students (${students.length})</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${studentRows}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            <div class="mt-4 text-right">
-                <button onclick="exportClearedStudents()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                    Export List
-                </button>
-            </div>
         `;
-
-        reportContent.innerHTML = html;
     }
 
     function showPendingStudents() {
@@ -1053,24 +1412,50 @@
             return;
         }
 
-        // Create the HTML for the pending students list
-        let html = `
-            <h4 class="text-lg font-medium text-gray-800 mb-4">Pending Students List</h4>
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
-                <div class="inline-block min-w-full align-middle">
-                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Offices</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-        `;
+        // Group students by year level for summary
+        const studentsByYear = {};
+        let totalStudents = 0;
+
+        students.forEach(student => {
+            const yearLevel = student.year_level || 'Unknown';
+            if (!studentsByYear[yearLevel]) {
+                studentsByYear[yearLevel] = {
+                    total: 0
+                };
+            }
+            studentsByYear[yearLevel].total++;
+            totalStudents++;
+        });
+
+        // Create summary rows
+        let summaryRows = '';
+        Object.keys(studentsByYear).sort((a, b) => Number(a) - Number(b)).forEach(yearLevel => {
+            const yearData = studentsByYear[yearLevel];
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[yearLevel] || `Year ${yearLevel}`;
+
+            const percentage = ((yearData.total / totalStudents) * 100).toFixed(1);
+
+            summaryRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">${yearData.total}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                                <div class="bg-yellow-600 h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-700">${percentage}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
 
         // Sort students alphabetically by last name
         const sortedStudents = students.sort((a, b) => {
@@ -1079,7 +1464,8 @@
             return nameA.localeCompare(nameB);
         });
 
-        // Add all pending students to the table
+        // Create student rows
+        let studentRows = '';
         sortedStudents.forEach(student => {
             const yearLevelText = {
                 1: '1st Year',
@@ -1092,31 +1478,89 @@
             const pendingOffices = student.pending_offices || [];
             const pendingOfficesText = pendingOffices.join(', ') || 'None';
 
-            html += `
+            studentRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-orange-600">${pendingOfficesText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-600">
+                            Pending
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-orange-600">${pendingOfficesText}</td>
                 </tr>
             `;
         });
 
-        html += `
+        reportContent.innerHTML = `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h4 class="text-lg font-medium text-gray-800">Pending Students List</h4>
+                    <div class="flex space-x-2">
+                        <button onclick="exportPendingStudentsList('pdf')" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            PDF
+                        </button>
+                        <button onclick="exportPendingStudentsList('excel')" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <h5 class="text-sm font-medium text-gray-700 mb-3">Summary by Year Level</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distribution</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${summaryRows}
+                                <tr class="bg-gray-50 font-medium">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Total</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center">${totalStudents}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">100%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Students List Section -->
+                <div class="p-6">
+                    <h5 class="text-sm font-medium text-gray-700 mb-3">Pending Students (${students.length})</h5>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Offices</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${studentRows}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            <div class="mt-4 text-right">
-                <button onclick="exportPendingStudentsList()" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
-                    Export List
-                </button>
-            </div>
         `;
-
-        reportContent.innerHTML = html;
     }
 
     function searchStudents() {
@@ -1180,24 +1624,21 @@
             return;
         }
 
-        // Create the HTML for the search results
-        let html = `
-            <h4 class="text-lg font-medium text-gray-800 mb-4">Search Results for "${searchTerm}" (${students.length} found)</h4>
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
-                <div class="inline-block min-w-full align-middle">
-                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-        `;
+        // Group students by status for summary
+        let clearedCount = 0;
+        let pendingCount = 0;
+
+        students.forEach(student => {
+            if (student.is_cleared) {
+                clearedCount++;
+            } else {
+                pendingCount++;
+            }
+        });
+
+        const totalCount = students.length;
+        const clearedPercentage = ((clearedCount / totalCount) * 100).toFixed(1);
+        const pendingPercentage = ((pendingCount / totalCount) * 100).toFixed(1);
 
         // Sort students alphabetically by last name
         const sortedStudents = students.sort((a, b) => {
@@ -1206,7 +1647,8 @@
             return nameA.localeCompare(nameB);
         });
 
-        // Add all matching students to the table
+        // Create student rows
+        let studentRows = '';
         sortedStudents.forEach(student => {
             const yearLevelText = {
                 1: '1st Year',
@@ -1216,103 +1658,146 @@
                 5: '5th Year'
             }[student.year_level] || `Year ${student.year_level}`;
 
-            const statusClass = student.is_cleared ? 'text-green-600' : 'text-orange-600';
+            const statusClass = student.is_cleared ? 'text-green-600' : 'text-yellow-600';
             const statusText = student.is_cleared ? 'Cleared' : 'Pending';
+            const statusBg = student.is_cleared ? 'bg-green-100' : 'bg-yellow-100';
 
-            html += `
+            // Highlight the search term in the student's name and ID
+            let studentName = `${student.last_name}, ${student.first_name}`;
+            let studentId = student.student_id || 'N/A';
+
+            if (studentName.toLowerCase().includes(searchTerm.toLowerCase())) {
+                const regex = new RegExp(`(${searchTerm})`, 'gi');
+                studentName = studentName.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+            }
+
+            if (studentId.toLowerCase().includes(searchTerm.toLowerCase())) {
+                const regex = new RegExp(`(${searchTerm})`, 'gi');
+                studentId = studentId.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+            }
+
+            studentRows += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
-                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${statusClass} font-medium">${statusText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${studentId}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${studentName}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBg} ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
                 </tr>
             `;
         });
 
-        html += `
+        reportContent.innerHTML = `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h4 class="text-lg font-medium text-gray-800">Search Results for "${searchTerm}" (${students.length} found)</h4>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-gray-500">Total Results</div>
+                            <div class="mt-1 text-2xl font-semibold text-gray-900">${totalCount}</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-green-600">Cleared</div>
+                            <div class="mt-1 text-2xl font-semibold text-green-700">${clearedCount}</div>
+                            <div class="text-xs text-green-600">${clearedPercentage}% of results</div>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-yellow-600">Pending</div>
+                            <div class="mt-1 text-2xl font-semibold text-yellow-700">${pendingCount}</div>
+                            <div class="text-xs text-yellow-600">${pendingPercentage}% of results</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students List Section -->
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${studentRows}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         `;
-
-        reportContent.innerHTML = html;
     }
 
-    function exportStudentsList() {
+    function exportStudentsList(format) {
         // Get filter values
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
 
-        // Show export format modal
-        Swal.fire({
-            title: 'Export Students List',
-            html: `
-                <div class="mb-4">
-                    <p class="mb-2 text-left">Select export format:</p>
-                    <div class="flex justify-center space-x-4">
-                        <button id="pdf-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">PDF</button>
-                        <button id="excel-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Excel</button>
-                    </div>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Cancel',
-            cancelButtonColor: '#6B7280',
-            didOpen: () => {
-                document.getElementById('pdf-btn').addEventListener('click', () => {
-                    let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
-                    window.open(url, '_blank');
-                    Swal.close();
-                });
+        // Show loading indicator
+        const exportBtn = document.querySelector(`button[onclick="exportStudentsList('${format}')"]`);
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4 mr-1 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Exporting...
+        `;
+        exportBtn.disabled = true;
 
-                document.getElementById('excel-btn').addEventListener('click', () => {
-                    let url = `{% url 'admin_reports' %}?report_type=students_by_year_level&school_year=${schoolYear}&semester=${semester}&format_type=excel`;
-                    window.open(url, '_blank');
-                    Swal.close();
-                });
-            }
-        });
+        // Build the URL with filters
+        let url = `/api/program-chair/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=students_list`;
+
+        // Redirect to export endpoint
+        window.location.href = url;
+
+        // Reset button after a delay (since we're navigating away)
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 3000);
     }
 
-    function exportPendingStudentsList() {
+    function exportPendingStudentsList(format) {
         // Get filter values
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
 
-        // Show export format modal
-        Swal.fire({
-            title: 'Export Pending Students List',
-            html: `
-                <div class="mb-4">
-                    <p class="mb-2 text-left">Select export format:</p>
-                    <div class="flex justify-center space-x-4">
-                        <button id="pdf-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">PDF</button>
-                        <button id="excel-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Excel</button>
-                    </div>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Cancel',
-            cancelButtonColor: '#6B7280',
-            didOpen: () => {
-                document.getElementById('pdf-btn').addEventListener('click', () => {
-                    let url = `{% url 'admin_reports' %}?report_type=pending_students&school_year=${schoolYear}&semester=${semester}&format_type=pdf`;
-                    window.open(url, '_blank');
-                    Swal.close();
-                });
+        // Show loading indicator
+        const exportBtn = document.querySelector(`button[onclick="exportPendingStudentsList('${format}')"]`);
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4 mr-1 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Exporting...
+        `;
+        exportBtn.disabled = true;
 
-                document.getElementById('excel-btn').addEventListener('click', () => {
-                    let url = `{% url 'admin_reports' %}?report_type=pending_students&school_year=${schoolYear}&semester=${semester}&format_type=excel`;
-                    window.open(url, '_blank');
-                    Swal.close();
-                });
-            }
-        });
+        // Build the URL with filters
+        let url = `/api/program-chair/export/${format}/?school_year=${schoolYear}&semester=${semester}&report_type=pending_students`;
+
+        // Redirect to export endpoint
+        window.location.href = url;
+
+        // Reset button after a delay (since we're navigating away)
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 3000);
     }
 
     function displayStudentNamelist() {
