@@ -129,60 +129,7 @@
         }
     }
 
-    // Batch Functions
-    function openBatchAssignModal() {
-        // Fetch unassigned students before opening the modal
-        fetch('/dashboard/admin/dormitory-owners/unassigned-students/')
-            .then(response => response.json())
-            .then(data => {
-                const studentsList = document.querySelector('#batchAssignForm .student-list');
-                studentsList.innerHTML = '';
 
-                if (data.students && data.students.length > 0) {
-                    data.students.forEach(student => {
-                        const studentItem = document.createElement('div');
-                        studentItem.className = 'flex items-center';
-                        studentItem.innerHTML = `
-                            <input type="checkbox" id="student_${student.id}" name="student_ids" value="${student.id}"
-                                   class="student-checkbox h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                            <label for="student_${student.id}" class="ml-2 text-sm text-gray-700">
-                                ${student.name} (${student.student_id}) - ${student.course}
-                            </label>
-                        `;
-                        studentsList.appendChild(studentItem);
-                    });
-
-                    // Show the student list and hide the no students message
-                    document.getElementById('noUnassignedStudentsMessage').classList.add('hidden');
-                    document.querySelector('#batchAssignForm .student-list-container').classList.remove('hidden');
-                } else {
-                    // Show the no students message and hide the student list
-                    document.getElementById('noUnassignedStudentsMessage').classList.remove('hidden');
-                    document.querySelector('#batchAssignForm .student-list-container').classList.add('hidden');
-                }
-
-                // Open the modal
-                document.getElementById('batchAssignModal').classList.remove('hidden');
-            })
-            .catch(error => {
-                console.error('Error fetching unassigned students:', error);
-                alert('Failed to load unassigned students. Please try again.');
-            });
-    }
-
-    function closeBatchAssignModal() {
-        document.getElementById('batchAssignModal').classList.add('hidden');
-        document.getElementById('batchAssignForm').reset();
-    }
-
-    function openBatchExportModal() {
-        document.getElementById('batchExportModal').classList.remove('hidden');
-    }
-
-    function closeBatchExportModal() {
-        document.getElementById('batchExportModal').classList.add('hidden');
-        document.getElementById('batchExportForm').reset();
-    }
 
     // Student Management Functions
     function unassignStudent(studentId) {
@@ -343,10 +290,7 @@
         alert('This feature will be implemented soon!');
     }
 
-    function printDormitoryOwnersList() {
-        // This would print the dormitory owners list
-        alert('This feature will be implemented soon!');
-    }
+
 </script>
 {% endblock %}
 
@@ -406,30 +350,7 @@
         </form>
     </div>
 
-    <!-- Batch Actions -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Batch Actions</h2>
-        <div class="flex flex-wrap gap-3">
-            <button onclick="openBatchAssignModal()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Batch Assign Students
-            </button>
-            <button onclick="openBatchExportModal()" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                Export Data
-            </button>
-            <button onclick="printDormitoryOwnersList()" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                </svg>
-                Print List
-            </button>
-        </div>
-    </div>
+
 
     <!-- Dormitory Owners List -->
     {% include 'components/dormitory_owners/owners_list.html' %}
@@ -576,126 +497,7 @@
         </div>
     </div>
 
-    <!-- Batch Assign Students Modal -->
-    <div id="batchAssignModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg font-medium text-gray-900">Batch Assign Students</h3>
-                <p class="text-sm text-gray-500 mt-1">Assign multiple students to a dormitory owner at once.</p>
 
-                <form id="batchAssignForm" method="POST" action="{% url 'admin_dormitory_owners' %}" class="mt-4">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="batch_assign">
-
-                    <div class="mb-4">
-                        <label for="batch_dormitory_owner" class="block text-sm font-medium text-gray-700">Select Dormitory Owner</label>
-                        <select id="batch_dormitory_owner" name="dormitory_owner_id" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
-                            <option value="">Select a dormitory owner</option>
-                            {% for owner in dormitory_owners %}
-                            <option value="{{ owner.id }}">{{ owner.get_full_name }} ({{ owner.student_count }} students)</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Students</label>
-                        <div id="noUnassignedStudentsMessage" class="hidden p-4 text-center text-gray-500 border border-gray-300 rounded-md">
-                            No unassigned students found. All students are already assigned to dormitory owners.
-                        </div>
-                        <div class="student-list-container border border-gray-300 rounded-md p-3 max-h-60 overflow-y-auto">
-                            <div class="mb-2">
-                                <input type="checkbox" id="select_all_students" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="select_all_students" class="ml-2 text-sm font-medium text-gray-700">Select All</label>
-                            </div>
-                            <div class="space-y-2 mt-3 student-list">
-                                <!-- Student list will be populated dynamically -->
-                                <div class="flex justify-center">
-                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                                    <span class="ml-2 text-sm text-gray-500">Loading students...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="mark_as_boarders" name="mark_as_boarders" checked class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                            <label for="mark_as_boarders" class="ml-2 text-sm text-gray-700">Mark selected students as boarders</label>
-                        </div>
-                    </div>
-
-                    <div class="mt-5 flex justify-end gap-2">
-                        <button type="button" onclick="closeBatchAssignModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Assign Students
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Batch Export Modal -->
-    <div id="batchExportModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg font-medium text-gray-900">Export Dormitory Owner Data</h3>
-                <p class="text-sm text-gray-500 mt-1">Select the format and data to export.</p>
-
-                <form id="batchExportForm" method="POST" action="{% url 'admin_dormitory_owners' %}" class="mt-4">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="export_data">
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Export Format</label>
-                        <div class="space-y-2">
-                            <div class="flex items-center">
-                                <input type="radio" id="export_pdf" name="export_format" value="pdf" checked class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="export_pdf" class="ml-2 text-sm text-gray-700">PDF</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="radio" id="export_excel" name="export_format" value="excel" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="export_excel" class="ml-2 text-sm text-gray-700">Excel</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="radio" id="export_csv" name="export_format" value="csv" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="export_csv" class="ml-2 text-sm text-gray-700">CSV</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Include Data</label>
-                        <div class="space-y-2">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="include_owners" name="include_owners" checked class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="include_owners" class="ml-2 text-sm text-gray-700">Dormitory Owners</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="include_students" name="include_students" checked class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="include_students" class="ml-2 text-sm text-gray-700">Assigned Students</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="include_contact" name="include_contact" checked class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="include_contact" class="ml-2 text-sm text-gray-700">Contact Information</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-5 flex justify-end gap-2">
-                        <button type="button" onclick="closeBatchExportModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            Export
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <!-- View Dormitory Owner Details Modal -->
     <div id="viewDetailsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -856,46 +658,13 @@
             });
         }
 
-        // Batch assign form submit handler
-        const batchAssignForm = document.getElementById('batchAssignForm');
-        if (batchAssignForm) {
-            batchAssignForm.addEventListener('submit', function(e) {
-                const selectedStudents = document.querySelectorAll('#batchAssignForm input[name="student_ids"]:checked');
-                if (selectedStudents.length === 0) {
-                    e.preventDefault();
-                    alert('Please select at least one student to assign.');
-                    return false;
-                }
 
-                const dormitoryOwner = document.getElementById('batch_dormitory_owner').value;
-                if (!dormitoryOwner) {
-                    e.preventDefault();
-                    alert('Please select a dormitory owner.');
-                    return false;
-                }
-
-                console.log('Batch assign form submitted');
-            });
-        }
-
-        // Select all students checkbox
-        const selectAllCheckbox = document.getElementById('select_all_students');
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                const studentCheckboxes = document.querySelectorAll('.student-checkbox');
-                studentCheckboxes.forEach(checkbox => {
-                    checkbox.checked = selectAllCheckbox.checked;
-                });
-            });
-        }
 
         // Close modals when clicking outside
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
             const editModal = document.getElementById('editModal');
             const deleteModal = document.getElementById('deleteModal');
-            const batchAssignModal = document.getElementById('batchAssignModal');
-            const batchExportModal = document.getElementById('batchExportModal');
             const viewDetailsModal = document.getElementById('viewDetailsModal');
 
             if (event.target === addModal) {
@@ -904,10 +673,6 @@
                 closeEditModal();
             } else if (event.target === deleteModal) {
                 closeDeleteModal();
-            } else if (event.target === batchAssignModal) {
-                closeBatchAssignModal();
-            } else if (event.target === batchExportModal) {
-                closeBatchExportModal();
             } else if (event.target === viewDetailsModal) {
                 closeViewDetailsModal();
             }
