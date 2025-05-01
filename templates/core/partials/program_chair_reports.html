@@ -136,21 +136,7 @@
         </div>
         <div class="p-6">
             <div class="space-y-6">
-                <!-- Report Type Selector -->
-                <div class="flex flex-wrap gap-2 sm:gap-4 mb-4">
-                    <button id="btn-year-level" onclick="showReport('year_level')" class="px-3 sm:px-4 py-2 bg-emerald-600 text-white text-sm sm:text-base rounded-md hover:bg-emerald-700 transition-colors">
-                        Year Level
-                    </button>
-                    <button id="btn-students-list" onclick="showStudentsList()" class="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm sm:text-base rounded-md hover:bg-blue-700 transition-colors">
-                        Students List
-                    </button>
-                    <button id="btn-cleared-students" onclick="exportClearedStudents()" class="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-md hover:bg-green-700 transition-colors">
-                        Cleared Students
-                    </button>
-                    <button id="btn-pending-students" onclick="showPendingStudents()" class="px-3 sm:px-4 py-2 bg-orange-600 text-white text-sm sm:text-base rounded-md hover:bg-orange-700 transition-colors">
-                        Pending Students
-                    </button>
-                </div>
+
 
                 <!-- Search Bar -->
                 <div class="mb-6">
@@ -177,35 +163,32 @@
                     </div>
                 </div>
 
-                <!-- Report Filters -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 bg-gray-50 p-4 rounded-lg">
-                    <div>
-                        <label for="report_year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
-                        <select id="report_year_level" name="year_level" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
-                            <option value="">All Year Levels</option>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
-                            <option value="5">5th Year</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="report_student_status" class="block text-sm font-medium text-gray-700 mb-1">Student Status</label>
-                        <select id="report_student_status" name="student_status" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
-                            <option value="all">All Students</option>
-                            <option value="cleared">Cleared Students</option>
-                            <option value="pending">Pending Students</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="applyReportFilters()" class="w-full px-3 py-2 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                            </svg>
-                            Apply Filters
-                        </button>
-                    </div>
+                <!-- Report Action Buttons -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    <button onclick="showYearLevelList()" class="px-4 py-3 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Year Level
+                    </button>
+                    <button onclick="showStudentsList()" class="px-4 py-3 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Students List
+                    </button>
+                    <button onclick="showClearedStudents()" class="px-4 py-3 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Cleared Students
+                    </button>
+                    <button onclick="showPendingStudents()" class="px-4 py-3 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Pending Students
+                    </button>
                 </div>
 
                 <!-- Export Data Button -->
@@ -255,12 +238,17 @@
                         <div>
                             <p class="text-xs sm:text-sm font-medium">Instructions:</p>
                             <ol class="text-xs mt-1 list-decimal list-inside">
-                                <li>Select the desired Year Level from the dropdown (or leave as "All Year Levels")</li>
-                                <li>Select the Student Status if needed (All, Cleared, or Pending)</li>
-                                <li>Click the "Export Data" button to view the student namelist</li>
-                                <li>The report shows a summary table and detailed student lists by year level</li>
-                                <li>Each student entry includes ID number, name, and clearance status</li>
-                                <li>Click the PDF button to download a printable version of the report</li>
+                                <li>Use the buttons above to view different reports:</li>
+                                <ul class="ml-5 list-disc text-xs">
+                                    <li><strong>Year Level</strong> - View statistics by year level</li>
+                                    <li><strong>Students List</strong> - View complete list of students</li>
+                                    <li><strong>Cleared Students</strong> - View only cleared students</li>
+                                    <li><strong>Pending Students</strong> - View students with pending clearance</li>
+                                </ul>
+                                <li>Use the search bar to find specific students by name, ID, or year level</li>
+                                <li>Each report includes an export option to download the data</li>
+                                <li>Click the "Export Data" button to generate a comprehensive report with all details</li>
+                                <li>The PDF button allows you to download a printable version of any report</li>
                             </ol>
                         </div>
                     </div>
@@ -362,37 +350,10 @@
         window.location.href = `{% url 'program_chair_dashboard' %}?view=reports&school_year=${schoolYear}&semester=${semester}`;
     }
 
-    function showReport(reportType) {
+    function showYearLevelList() {
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
         const reportContent = document.getElementById('reportContent');
-
-        // Update active button
-        const allButtons = document.querySelectorAll('#btn-year-level, #btn-students-list, #btn-cleared-students, #btn-pending-students');
-        allButtons.forEach(btn => {
-            if (btn.id === 'btn-year-level') {
-                btn.classList.remove('bg-emerald-700');
-                btn.classList.add('bg-emerald-600');
-            } else if (btn.id === 'btn-students-list') {
-                btn.classList.remove('bg-blue-700');
-                btn.classList.add('bg-blue-600');
-            } else if (btn.id === 'btn-cleared-students') {
-                btn.classList.remove('bg-green-700');
-                btn.classList.add('bg-green-600');
-            } else if (btn.id === 'btn-pending-students') {
-                btn.classList.remove('bg-orange-700');
-                btn.classList.add('bg-orange-600');
-            }
-        });
-
-        // Highlight the active button
-        const activeButton = document.getElementById(`btn-${reportType.replace('_', '-')}`);
-        if (activeButton) {
-            if (activeButton.id === 'btn-year-level') {
-                activeButton.classList.remove('bg-emerald-600');
-                activeButton.classList.add('bg-emerald-700');
-            }
-        }
 
         // Show loading state
         reportContent.innerHTML = `
@@ -401,17 +362,12 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="mt-2 text-gray-600">Loading report data...</p>
+                <p class="mt-2 text-gray-600">Loading year level data...</p>
             </div>
         `;
 
-        // Enable export buttons
-        document.querySelectorAll('.flex.justify-end.space-x-3 button').forEach(btn => {
-            btn.disabled = false;
-        });
-
         // Fetch report data from the server
-        fetch(`/api/program-chair/reports/${reportType}/?school_year=${schoolYear}&semester=${semester}`)
+        fetch(`/api/program-chair/reports/year_level/?school_year=${schoolYear}&semester=${semester}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -420,23 +376,7 @@
             })
             .then(data => {
                 if (data.success) {
-                    // Render the appropriate report based on type
-                    switch (reportType) {
-                        case 'year_level':
-                            renderYearLevelReport(data.data);
-                            break;
-                        case 'course':
-                            renderCourseReport(data.data);
-                            break;
-                        case 'office':
-                            renderOfficeReport(data.data);
-                            break;
-                        case 'timeline':
-                            renderTimelineReport(data.data);
-                            break;
-                        default:
-                            reportContent.innerHTML = '<div class="text-center py-8 text-gray-500">Invalid report type selected</div>';
-                    }
+                    renderYearLevelReport(data.data);
                 } else {
                     reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error loading report data'}</div>`;
                 }
@@ -960,33 +900,118 @@
         reportContent.innerHTML = html;
     }
 
-    function showPendingStudents() {
+    function showClearedStudents() {
         const schoolYear = document.getElementById('report_school_year').value;
         const semester = document.getElementById('report_semester').value;
         const reportContent = document.getElementById('reportContent');
 
-        // Update active button
-        const allButtons = document.querySelectorAll('#btn-year-level, #btn-students-list, #btn-cleared-students, #btn-pending-students');
-        allButtons.forEach(btn => {
-            if (btn.id === 'btn-year-level') {
-                btn.classList.remove('bg-emerald-700');
-                btn.classList.add('bg-emerald-600');
-            } else if (btn.id === 'btn-students-list') {
-                btn.classList.remove('bg-blue-700');
-                btn.classList.add('bg-blue-600');
-            } else if (btn.id === 'btn-cleared-students') {
-                btn.classList.remove('bg-green-700');
-                btn.classList.add('bg-green-600');
-            } else if (btn.id === 'btn-pending-students') {
-                btn.classList.remove('bg-orange-700');
-                btn.classList.add('bg-orange-600');
-            }
+        // Show loading state
+        reportContent.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="animate-spin h-8 w-8 text-green-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-600">Loading cleared students...</p>
+            </div>
+        `;
+
+        // Fetch cleared students data for this program chair's department
+        fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}&student_status=cleared`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    renderClearedStudentsList(data.data);
+                } else {
+                    reportContent.innerHTML = `<div class="text-center py-8 text-red-500">${data.error || 'Error loading cleared students data'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching cleared students data:', error);
+                reportContent.innerHTML = `<div class="text-center py-8 text-red-500">Error loading cleared students data: ${error.message}</div>`;
+            });
+    }
+
+    function renderClearedStudentsList(students) {
+        const reportContent = document.getElementById('reportContent');
+
+        if (!students || students.length === 0) {
+            reportContent.innerHTML = `<div class="text-center py-8 text-gray-500">No cleared students found for the selected filters</div>`;
+            return;
+        }
+
+        // Create the HTML for the cleared students list
+        let html = `
+            <h4 class="text-lg font-medium text-gray-800 mb-4">Cleared Students List</h4>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <div class="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+        `;
+
+        // Sort students alphabetically by last name
+        const sortedStudents = students.sort((a, b) => {
+            const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
+            const nameB = `${b.last_name}, ${b.first_name}`.toLowerCase();
+            return nameA.localeCompare(nameB);
         });
 
-        // Highlight the active button
-        const activeButton = document.getElementById('btn-pending-students');
-        activeButton.classList.remove('bg-orange-600');
-        activeButton.classList.add('bg-orange-700');
+        // Add all cleared students to the table
+        sortedStudents.forEach(student => {
+            const yearLevelText = {
+                1: '1st Year',
+                2: '2nd Year',
+                3: '3rd Year',
+                4: '4th Year',
+                5: '5th Year'
+            }[student.year_level] || `Year ${student.year_level}`;
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${student.student_id || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.last_name}, ${student.first_name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${yearLevelText}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${student.course || 'N/A'}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-medium">Cleared</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-right">
+                <button onclick="exportClearedStudents()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                    Export List
+                </button>
+            </div>
+        `;
+
+        reportContent.innerHTML = html;
+    }
+
+    function showPendingStudents() {
+        const schoolYear = document.getElementById('report_school_year').value;
+        const semester = document.getElementById('report_semester').value;
+        const reportContent = document.getElementById('reportContent');
 
         // Show loading state
         reportContent.innerHTML = `
@@ -1000,7 +1025,7 @@
         `;
 
         // Fetch pending students data for this program chair's department
-        fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}&status=pending`)
+        fetch(`/api/program-chair/students/?school_year=${schoolYear}&semester=${semester}&student_status=pending`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
