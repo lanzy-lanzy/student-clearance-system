@@ -173,7 +173,28 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
     elements.append(date_text)
     elements.append(Spacer(1, 0.25*inch))
 
-    # Table data
+    # Create paragraph styles for table cells
+    cell_style = ParagraphStyle(
+        'CellStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        wordWrap='CJK',
+    )
+
+    # Define column widths for better layout
+    col_widths = [
+        0.7*inch,    # Student ID
+        1.2*inch,    # Name
+        1.5*inch,    # Email
+        1.8*inch,    # Course
+        0.8*inch,    # Year Level
+        0.9*inch,    # Contact
+        0.7*inch,    # Status
+        0.9*inch,    # Residence
+    ]
+
+    # Table data with paragraphs for proper text wrapping
     data = [
         [
             Paragraph("Student ID", header_style),
@@ -187,7 +208,7 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
         ]
     ]
 
-    # Add student data
+    # Add student data with paragraphs for proper text wrapping
     for student in students:
         year_level_text = {
             1: "1st Year",
@@ -200,19 +221,22 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
         status = "Approved" if student.is_approved else "Pending"
         residence = "Boarder" if student.is_boarder else "Non-Boarder"
 
+        # Format name as last name, first name for better sorting and display
+        name = f"{student.user.last_name}, {student.user.first_name}"
+
         data.append([
-            student.student_id,
-            f"{student.user.first_name} {student.user.last_name}",
-            student.user.email,
-            student.course.name if student.course else "N/A",
-            year_level_text,
-            student.contact_number or "N/A",
-            status,
-            residence
+            Paragraph(student.student_id, cell_style),
+            Paragraph(name, cell_style),
+            Paragraph(student.user.email, cell_style),
+            Paragraph(student.course.name if student.course else "N/A", cell_style),
+            Paragraph(year_level_text, cell_style),
+            Paragraph(student.contact_number or "N/A", cell_style),
+            Paragraph(status, cell_style),
+            Paragraph(residence, cell_style)
         ])
 
-    # Create the table
-    table = Table(data, repeatRows=1)
+    # Create the table with specific column widths
+    table = Table(data, repeatRows=1, colWidths=col_widths)
 
     # Style the table
     table_style = TableStyle([
@@ -271,27 +295,46 @@ def generate_students_pdf(students, request=None, school_year=None, semester=Non
         residence = "Boarder" if student.is_boarder else "Non-Boarder"
         residence_counts[residence] += 1
 
-    # Create summary tables
+    # Create a more structured summary table with headers
     summary_data = [
-        ["Total Students:", str(len(students))],
-        ["Approved Students:", str(status_counts['Approved'])],
-        ["Pending Students:", str(status_counts['Pending'])],
-        ["Boarders:", str(residence_counts['Boarder'])],
-        ["Non-Boarders:", str(residence_counts['Non-Boarder'])]
+        ["Category", "Count", "Percentage"],
+        ["Total Students", str(len(students)), "100%"],
+        ["Approved Students", str(status_counts['Approved']), f"{(status_counts['Approved']/len(students)*100) if len(students) > 0 else 0:.1f}%"],
+        ["Pending Students", str(status_counts['Pending']), f"{(status_counts['Pending']/len(students)*100) if len(students) > 0 else 0:.1f}%"],
+        ["Boarders", str(residence_counts['Boarder']), f"{(residence_counts['Boarder']/len(students)*100) if len(students) > 0 else 0:.1f}%"],
+        ["Non-Boarders", str(residence_counts['Non-Boarder']), f"{(residence_counts['Non-Boarder']/len(students)*100) if len(students) > 0 else 0:.1f}%"]
     ]
 
-    summary_table = Table(summary_data, colWidths=[2*inch, 1*inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), EMERALD_PALE),
-        ('TEXTCOLOR', (0, 0), (0, -1), EMERALD_DARK),
+    # Create the summary table with better column widths
+    summary_table = Table(summary_data, colWidths=[2*inch, 1*inch, 1.2*inch], repeatRows=1)
+
+    # Style the summary table
+    summary_style = TableStyle([
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), EMERALD_DARK),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+
+        # Data rows styling
+        ('BACKGROUND', (0, 1), (-1, 1), EMERALD_PALE),  # Total row with special background
+        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),  # Bold category names
+        ('FONTNAME', (1, 1), (-1, -1), 'Helvetica'),
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
         ('GRID', (0, 0), (-1, -1), 0.5, EMERALD_MEDIUM),
-    ]))
+    ])
+
+    # Add alternating row colors
+    for i in range(2, len(summary_data)):
+        if i % 2 == 0:
+            summary_style.add('BACKGROUND', (0, i), (-1, i), EMERALD_PALE)
+
+    summary_table.setStyle(summary_style)
 
     elements.append(summary_table)
 
@@ -1372,7 +1415,26 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
     # Detailed students table
     elements.append(Paragraph("Detailed List of Cleared Students", section_header))
 
-    # Table data
+    # Create paragraph styles for table cells
+    cell_style = ParagraphStyle(
+        'CellStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        wordWrap='CJK',
+    )
+
+    # Define column widths for better layout
+    col_widths = [
+        0.8*inch,    # Student ID
+        1.5*inch,    # Name
+        2.0*inch,    # Course
+        0.9*inch,    # Year Level
+        1.0*inch,    # Contact
+        1.0*inch,    # Date Cleared
+    ]
+
+    # Table data with paragraphs for proper text wrapping
     data = [
         [
             Paragraph("Student ID", header_style),
@@ -1384,8 +1446,11 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
         ]
     ]
 
-    # Add student data
-    for clearance in clearances:
+    # Sort clearances by student last name for better organization
+    sorted_clearances = sorted(clearances, key=lambda c: f"{c.student.user.last_name}, {c.student.user.first_name}".lower())
+
+    # Add student data with paragraphs for proper text wrapping
+    for clearance in sorted_clearances:
         student = clearance.student
         year_level_text = {
             1: "1st Year",
@@ -1397,17 +1462,20 @@ def generate_cleared_students_pdf(clearances, request=None, school_year=None, se
 
         cleared_date = clearance.cleared_date.strftime("%Y-%m-%d") if clearance.cleared_date else "N/A"
 
+        # Format name as last name, first name for better sorting and display
+        name = f"{student.user.last_name}, {student.user.first_name}"
+
         data.append([
-            student.student_id,
-            f"{student.user.first_name} {student.user.last_name}",
-            student.course.name if student.course else "N/A",
-            year_level_text,
-            student.contact_number or "N/A",
-            cleared_date
+            Paragraph(student.student_id, cell_style),
+            Paragraph(name, cell_style),
+            Paragraph(student.course.name if student.course else "N/A", cell_style),
+            Paragraph(year_level_text, cell_style),
+            Paragraph(student.contact_number or "N/A", cell_style),
+            Paragraph(cleared_date, cell_style)
         ])
 
-    # Create the table
-    table = Table(data, repeatRows=1)
+    # Create the table with specific column widths
+    table = Table(data, repeatRows=1, colWidths=col_widths)
 
     # Style the table
     table_style = TableStyle([

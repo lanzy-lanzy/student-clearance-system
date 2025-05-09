@@ -38,7 +38,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Eligible for Permit -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
+            <div class="p-5 bg-blue-500">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-white">Eligible for Permit</h3>
                     <span class="text-2xl font-bold text-white">{{ eligible_count }}</span>
@@ -57,7 +57,7 @@
 
         <!-- Permits Issued -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
+            <div class="p-5 bg-green-500">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-white">Permits Issued</h3>
                     <span class="text-2xl font-bold text-white">{{ issued_count }}</span>
@@ -71,15 +71,12 @@
                         View All
                     </a>
                 </div>
-                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ issued_percentage }}%"></div>
-                </div>
             </div>
         </div>
 
         <!-- Pending Permits -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600">
+            <div class="p-5 bg-yellow-500">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-white">Pending Permits</h3>
                     <span class="text-2xl font-bold text-white">{{ pending_permit_count }}</span>
@@ -92,9 +89,6 @@
                        class="text-sm text-yellow-600 font-medium hover:text-yellow-800">
                         View All
                     </a>
-                </div>
-                <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-yellow-600 h-2.5 rounded-full" style="width: {{ pending_permit_percentage }}%"></div>
                 </div>
             </div>
         </div>
@@ -152,19 +146,28 @@
         </div>
 
         <!-- Table -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permit Status</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
+        <form id="batch-print-form" method="post" action="{% url 'program_chair_dashboard' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="batch_print_permits">
+            <input type="hidden" name="view" value="permit_printing">
+            <input type="hidden" name="school_year" value="{{ selected_school_year }}">
+            <input type="hidden" name="semester" value="{{ selected_semester }}">
+
+
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clearance Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permit Status</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for student in students %}
                     <tr class="hover:bg-gray-50 transition-colors duration-150">
@@ -272,8 +275,74 @@
         </div>
         {% endif %}
     </div>
+    </form>
 
+    <!-- Batch Printing Section -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Batch Permit Printing</h3>
+        </div>
+        <div class="p-6">
+            <form method="post" action="{% url 'program_chair_dashboard' %}" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="batch_print_permits">
+                <input type="hidden" name="view" value="permit_printing">
+                <input type="hidden" name="school_year" value="{{ selected_school_year }}">
+                <input type="hidden" name="semester" value="{{ selected_semester }}">
 
+                <!-- Filter Options -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        <select id="course" name="course"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.code }} - {{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select id="department" name="department"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">All Departments</option>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}">{{ department.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="year_level" class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                        <select id="year_level" name="year_level"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">All Year Levels</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="status" name="status"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="eligible">Eligible for Permit</option>
+                            <option value="not_printed">Not Yet Printed</option>
+                            <option value="all_cleared">All Cleared Students</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors">
+                        Generate Batch Permits
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Recent Permit Activity -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden mt-8">

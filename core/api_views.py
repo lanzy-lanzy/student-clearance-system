@@ -625,47 +625,46 @@ def export_program_chair_report(request, format_type):
         # Get semester display name for the title
         semester_display = dict(SEMESTER_CHOICES).get(semester, semester)
 
-        # Get report data based on report type
-        if report_type == 'year_level':
-            data = get_year_level_report_data(students, clearances)
-            title = f"Student's List - SY: {school_year} {semester_display} Records"
-            headers = ['Year Level', 'Total Students', 'Cleared', 'Pending', 'Not Started', 'Clearance Rate']
+        # Determine if it's midterm or final based on the semester
+        exam_type = "Midterm" if "MID" in semester else "Final"
 
-        elif report_type == 'course':
-            data = get_course_report_data(students, clearances, program_chair)
-            title = f"Clearance Status by Course - {school_year}, {semester} Semester"
-            headers = ['Course Code', 'Course Name', 'Total Students', 'Cleared', 'Pending', 'Clearance Rate']
+        # Handle different report types
+        if report_type == 'year_level' or report_type == 'year_level_all':
+            # For year_level_all, we don't filter by year level
+            if report_type == 'year_level_all':
+                year_level = None
+                students = Student.objects.filter(course__dean=program_chair.dean)
 
-        elif report_type == 'office':
-            data = get_office_report_data(clearances)
-            title = f"Clearance Status by Office - {school_year}, {semester} Semester"
-            headers = ['Office', 'Total Requests', 'Approved', 'Pending', 'Avg. Processing Time', 'Approval Rate']
+            if format_type == 'pdf':
+                from core.pdf_utils import generate_students_by_year_level_pdf
+                pdf = generate_students_by_year_level_pdf(students, request, school_year, semester, None, exam_type)
+                response = HttpResponse(pdf, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="students_by_year_level_{school_year}_{semester}.pdf"'
+                return response
+            elif format_type == 'excel':
+                data = get_year_level_report_data(students, clearances)
+                title = f"Student's List by Year Level - SY: {school_year} {semester_display} Records"
+                headers = ['Year Level', 'Total Students', 'Cleared', 'Pending', 'Not Started', 'Clearance Rate']
+                return export_as_excel(data, title, headers, report_type)
 
-        elif report_type == 'timeline':
-            data = get_timeline_report_data(semester, school_year, students, clearances)
-            title = f"Clearance Timeline - {school_year}, {semester} Semester"
-            headers = ['Date', 'New Clearances', 'Completed Clearances', 'Permits Issued', 'Completion Rate']
+        elif report_type == 'students_list':
+            if format_type == 'pdf':
+                from core.pdf_utils import generate_students_pdf
+                pdf = generate_students_pdf(students, request, school_year, semester)
+                response = HttpResponse(pdf, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="students_list_{school_year}_{semester}.pdf"'
+                return response
+            elif format_type == 'excel':
+                return export_students_list_excel(students, school_year, semester)
 
-        else:
-            return JsonResponse({'success': False, 'error': 'Invalid report type'}, status=400)
-
-        # Special case for cleared students report
-        if report_type == 'cleared_students':
-            # Always get only cleared students, regardless of the student_status filter
-            # This ensures we're always getting cleared students for this specific report
+        elif report_type == 'cleared_students':
+            # Get only cleared clearances
             cleared_clearances = Clearance.objects.filter(
                 student__in=students,
                 school_year=school_year,
                 semester=semester,
                 is_cleared=True
             ).select_related('student', 'student__user', 'student__course')
-
-            # Apply year level filter if provided
-            if year_level and year_level.isdigit():
-                cleared_clearances = cleared_clearances.filter(student__year_level=int(year_level))
-
-            # Log the count for debugging
-            print(f"Found {cleared_clearances.count()} cleared students for export")
 
             if format_type == 'pdf':
                 from core.pdf_utils import generate_cleared_students_pdf
@@ -676,13 +675,56 @@ def export_program_chair_report(request, format_type):
             elif format_type == 'excel':
                 return export_cleared_students_excel(cleared_clearances, school_year, semester)
 
-        # Export based on format type for other report types
-        if format_type == 'pdf':
-            return export_as_pdf(data, title, headers)
-        elif format_type == 'excel':
-            return export_as_excel(data, title, headers, report_type)
-        else:
-            return JsonResponse({'success': False, 'error': 'Invalid export format'}, status=400)
+        elif report_type == 'pending_students':
+            # Get only pending clearances
+            pending_clearances = Clearance.objects.filter(
+                student__in=students,
+                school_year=school_year,
+                semester=semester,
+                is_cleared=False
+            ).select_related('student', 'student__user', 'student__course')
+
+            if format_type == 'pdf':
+                from core.pdf_utils import generate_pending_clearances_pdf
+                pdf = generate_pending_clearances_pdf(pending_clearances, request, school_year, semester)
+                response = HttpResponse(pdf, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="pending_students_{school_year}_{semester}.pdf"'
+                return response
+            elif format_type == 'excel':
+                return export_pending_students_excel(pending_clearances, school_year, semester)
+
+        elif report_type == 'course':
+            data = get_course_report_data(students, clearances, program_chair)
+            title = f"Clearance Status by Course - {school_year}, {semester_display} Semester"
+            headers = ['Course Code', 'Course Name', 'Total Students', 'Cleared', 'Pending', 'Clearance Rate']
+
+            if format_type == 'pdf':
+                return export_as_pdf(data, title, headers)
+            elif format_type == 'excel':
+                return export_as_excel(data, title, headers, report_type)
+
+        elif report_type == 'office':
+            data = get_office_report_data(clearances)
+            title = f"Clearance Status by Office - {school_year}, {semester_display} Semester"
+            headers = ['Office', 'Total Requests', 'Approved', 'Pending', 'Avg. Processing Time', 'Approval Rate']
+
+            if format_type == 'pdf':
+                return export_as_pdf(data, title, headers)
+            elif format_type == 'excel':
+                return export_as_excel(data, title, headers, report_type)
+
+        elif report_type == 'timeline':
+            data = get_timeline_report_data(semester, school_year, students, clearances)
+            title = f"Clearance Timeline - {school_year}, {semester_display} Semester"
+            headers = ['Date', 'New Clearances', 'Completed Clearances', 'Permits Issued', 'Completion Rate']
+
+            if format_type == 'pdf':
+                return export_as_pdf(data, title, headers)
+            elif format_type == 'excel':
+                return export_as_excel(data, title, headers, report_type)
+
+        # If we get here, the report type is not supported
+        return JsonResponse({'success': False, 'error': f'Unsupported report type: {report_type}'}, status=400)
 
     except Exception as e:
         import traceback
@@ -840,6 +882,377 @@ def get_timeline_report_data(semester, school_year, students, clearances):
         ])
     return data
 
+# Function to export students list as Excel
+def export_students_list_excel(students, school_year, semester):
+    """Export students list data to Excel"""
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="students_list_{school_year}_{semester}.xlsx"'
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Students List"
+
+    # Add title
+    ws.merge_cells('A1:F1')
+    title_cell = ws['A1']
+    title_cell.value = f"Complete Students List - {school_year}, {semester}"
+    title_cell.font = Font(size=16, bold=True)
+    title_cell.alignment = Alignment(horizontal='center')
+
+    # Add date
+    ws.merge_cells('A2:F2')
+    date_cell = ws['A2']
+    date_cell.value = f"Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    date_cell.font = Font(size=10)
+    date_cell.alignment = Alignment(horizontal='center')
+
+    # Add summary by year level
+    ws.merge_cells('A4:F4')
+    summary_title = ws['A4']
+    summary_title.value = "Summary by Year Level"
+    summary_title.font = Font(size=14, bold=True, color="047857")
+    summary_title.alignment = Alignment(horizontal='left')
+
+    # Add summary headers
+    summary_headers = ['Year Level', 'Total', 'Cleared', 'Pending', 'Clearance Rate']
+    summary_row = 6
+    for col_num, header in enumerate(summary_headers, 1):
+        cell = ws.cell(row=summary_row, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+
+    # Group students by year level for summary
+    students_by_year = {}
+    total_students = 0
+    total_cleared = 0
+
+    for student in students:
+        year_level = student.year_level
+        if year_level not in students_by_year:
+            students_by_year[year_level] = {
+                'total': 0,
+                'cleared': 0,
+                'pending': 0
+            }
+        students_by_year[year_level]['total'] += 1
+
+        # Check if student is cleared
+        is_cleared = hasattr(student, 'is_cleared') and student.is_cleared
+        if is_cleared:
+            students_by_year[year_level]['cleared'] += 1
+            total_cleared += 1
+        else:
+            students_by_year[year_level]['pending'] += 1
+
+        total_students += 1
+
+    # Add summary data
+    current_row = summary_row + 1
+    for year_level in sorted(students_by_year.keys()):
+        year_data = students_by_year[year_level]
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(year_level, f"Year {year_level}")
+
+        clearance_rate = round((year_data['cleared'] / year_data['total']) * 100, 1) if year_data['total'] > 0 else 0
+
+        row_data = [
+            year_level_text,
+            year_data['total'],
+            year_data['cleared'],
+            year_data['pending'],
+            f"{clearance_rate}%"
+        ]
+
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=current_row, column=col_num)
+            cell.value = cell_value
+            cell.alignment = Alignment(horizontal='center')
+
+            # Add alternating row colors
+            if current_row % 2 == 0:
+                cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+
+        current_row += 1
+
+    # Add total row
+    total_clearance_rate = round((total_cleared / total_students) * 100, 1) if total_students > 0 else 0
+    total_row_data = [
+        "All Students",
+        total_students,
+        total_cleared,
+        total_students - total_cleared,
+        f"{total_clearance_rate}%"
+    ]
+
+    for col_num, cell_value in enumerate(total_row_data, 1):
+        cell = ws.cell(row=current_row, column=col_num)
+        cell.value = cell_value
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+        cell.fill = PatternFill(start_color="A7F3D0", end_color="A7F3D0", fill_type="solid")
+
+    current_row += 2
+
+    # Add student details section
+    ws.merge_cells(f'A{current_row}:F{current_row}')
+    details_title = ws[f'A{current_row}']
+    details_title.value = f"Student Details ({len(students)})"
+    details_title.font = Font(size=14, bold=True, color="047857")
+    details_title.alignment = Alignment(horizontal='left')
+
+    current_row += 2
+
+    # Add student details headers
+    details_headers = ['Student ID', 'Name', 'Year Level', 'Course', 'Status']
+    for col_num, header in enumerate(details_headers, 1):
+        cell = ws.cell(row=current_row, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+
+    current_row += 1
+
+    # Sort students alphabetically by last name
+    sorted_students = sorted(students, key=lambda s: f"{s.user.last_name}, {s.user.first_name}".lower())
+
+    # Add student details data
+    for student in sorted_students:
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(student.year_level, f"Year {student.year_level}")
+
+        is_cleared = hasattr(student, 'is_cleared') and student.is_cleared
+        status = "Cleared" if is_cleared else "Pending"
+
+        row_data = [
+            student.student_id,
+            f"{student.user.last_name}, {student.user.first_name}",
+            year_level_text,
+            student.course.name if student.course else "N/A",
+            status
+        ]
+
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=current_row, column=col_num)
+            cell.value = cell_value
+            cell.alignment = Alignment(horizontal='left')
+
+            # Add alternating row colors
+            if current_row % 2 == 0:
+                cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+
+        current_row += 1
+
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            if cell.value:
+                cell_length = len(str(cell.value))
+                if cell_length > max_length:
+                    max_length = cell_length
+        adjusted_width = (max_length + 2) * 1.2
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # Save the workbook to the response
+    wb.save(response)
+    return response
+
+# Function to export pending students as Excel
+def export_pending_students_excel(clearances, school_year, semester):
+    """Export pending students data to Excel"""
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="pending_students_{school_year}_{semester}.xlsx"'
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Pending Students"
+
+    # Add title
+    ws.merge_cells('A1:F1')
+    title_cell = ws['A1']
+    title_cell.value = f"Pending Students - {school_year}, {semester}"
+    title_cell.font = Font(size=16, bold=True)
+    title_cell.alignment = Alignment(horizontal='center')
+
+    # Add date
+    ws.merge_cells('A2:F2')
+    date_cell = ws['A2']
+    date_cell.value = f"Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    date_cell.font = Font(size=10)
+    date_cell.alignment = Alignment(horizontal='center')
+
+    # Group students by year level for summary
+    students_by_year = {}
+    total_students = 0
+
+    for clearance in clearances:
+        student = clearance.student
+        year_level = student.year_level
+        if year_level not in students_by_year:
+            students_by_year[year_level] = 0
+        students_by_year[year_level] += 1
+        total_students += 1
+
+    # Add summary section
+    ws.merge_cells('A4:F4')
+    summary_title = ws['A4']
+    summary_title.value = "Summary by Year Level"
+    summary_title.font = Font(size=14, bold=True, color="047857")
+    summary_title.alignment = Alignment(horizontal='left')
+
+    # Add summary headers
+    summary_headers = ['Year Level', 'Count', 'Distribution']
+    summary_row = 6
+    for col_num, header in enumerate(summary_headers, 1):
+        cell = ws.cell(row=summary_row, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+
+    # Add summary data
+    current_row = summary_row + 1
+    for year_level in sorted(students_by_year.keys()):
+        count = students_by_year[year_level]
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(year_level, f"Year {year_level}")
+
+        percentage = round((count / total_students) * 100, 1) if total_students > 0 else 0
+
+        row_data = [
+            year_level_text,
+            count,
+            f"{percentage}%"
+        ]
+
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=current_row, column=col_num)
+            cell.value = cell_value
+            cell.alignment = Alignment(horizontal='center')
+
+            # Add alternating row colors
+            if current_row % 2 == 0:
+                cell.fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+
+        current_row += 1
+
+    # Add total row
+    total_row_data = [
+        "Total",
+        total_students,
+        "100.0%"
+    ]
+
+    for col_num, cell_value in enumerate(total_row_data, 1):
+        cell = ws.cell(row=current_row, column=col_num)
+        cell.value = cell_value
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+        cell.fill = PatternFill(start_color="FDE68A", end_color="FDE68A", fill_type="solid")
+
+    current_row += 2
+
+    # Add student details section
+    ws.merge_cells(f'A{current_row}:G{current_row}')
+    details_title = ws[f'A{current_row}']
+    details_title.value = f"Pending Students Details ({total_students})"
+    details_title.font = Font(size=14, bold=True, color="047857")
+    details_title.alignment = Alignment(horizontal='left')
+
+    current_row += 2
+
+    # Add student details headers
+    details_headers = ['Student ID', 'Name', 'Year Level', 'Course', 'Status', 'Pending Offices']
+    for col_num, header in enumerate(details_headers, 1):
+        cell = ws.cell(row=current_row, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+
+    current_row += 1
+
+    # Sort clearances by student name
+    sorted_clearances = sorted(clearances, key=lambda c: f"{c.student.user.last_name}, {c.student.user.first_name}".lower())
+
+    # Add student details data
+    for clearance in sorted_clearances:
+        student = clearance.student
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(student.year_level, f"Year {student.year_level}")
+
+        # Get pending offices
+        pending_offices = []
+        clearance_requests = ClearanceRequest.objects.filter(
+            clearance=clearance,
+            status='pending'
+        ).select_related('office')
+
+        for req in clearance_requests:
+            pending_offices.append(req.office.name)
+
+        pending_offices_text = ", ".join(pending_offices) if pending_offices else "None"
+
+        row_data = [
+            student.student_id,
+            f"{student.user.last_name}, {student.user.first_name}",
+            year_level_text,
+            student.course.name if student.course else "N/A",
+            "Pending",
+            pending_offices_text
+        ]
+
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=current_row, column=col_num)
+            cell.value = cell_value
+            cell.alignment = Alignment(horizontal='left')
+
+            # Add alternating row colors
+            if current_row % 2 == 0:
+                cell.fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+
+        current_row += 1
+
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            if cell.value:
+                cell_length = len(str(cell.value))
+                if cell_length > max_length:
+                    max_length = cell_length
+        adjusted_width = (max_length + 2) * 1.2
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # Save the workbook to the response
+    wb.save(response)
+    return response
+
 # Function to export cleared students as Excel
 def export_cleared_students_excel(clearances, school_year, semester):
     """Export cleared students data to Excel"""
@@ -864,18 +1277,104 @@ def export_cleared_students_excel(clearances, school_year, semester):
     date_cell.font = Font(size=10)
     date_cell.alignment = Alignment(horizontal='center')
 
-    # Add headers
-    headers = ['Student ID', 'Student Name', 'Course', 'Year Level', 'Contact Number', 'Date Cleared']
-    header_row = 4
-    for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=header_row, column=col_num)
+    # Group students by year level for summary
+    students_by_year = {}
+    total_students = 0
+
+    for clearance in clearances:
+        student = clearance.student
+        year_level = student.year_level
+        if year_level not in students_by_year:
+            students_by_year[year_level] = 0
+        students_by_year[year_level] += 1
+        total_students += 1
+
+    # Add summary section
+    ws.merge_cells('A4:F4')
+    summary_title = ws['A4']
+    summary_title.value = "Summary by Year Level"
+    summary_title.font = Font(size=14, bold=True, color="047857")
+    summary_title.alignment = Alignment(horizontal='left')
+
+    # Add summary headers
+    summary_headers = ['Year Level', 'Count', 'Distribution']
+    summary_row = 6
+    for col_num, header in enumerate(summary_headers, 1):
+        cell = ws.cell(row=summary_row, column=col_num)
         cell.value = header
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
         cell.alignment = Alignment(horizontal='center')
 
+    # Add summary data
+    current_row = summary_row + 1
+    for year_level in sorted(students_by_year.keys()):
+        count = students_by_year[year_level]
+        year_level_text = {
+            1: "1st Year",
+            2: "2nd Year",
+            3: "3rd Year",
+            4: "4th Year",
+            5: "5th Year"
+        }.get(year_level, f"Year {year_level}")
+
+        percentage = round((count / total_students) * 100, 1) if total_students > 0 else 0
+
+        row_data = [
+            year_level_text,
+            count,
+            f"{percentage}%"
+        ]
+
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=current_row, column=col_num)
+            cell.value = cell_value
+            cell.alignment = Alignment(horizontal='center')
+
+            # Add alternating row colors
+            if current_row % 2 == 0:
+                cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+
+        current_row += 1
+
+    # Add total row
+    total_row_data = [
+        "Total",
+        total_students,
+        "100.0%"
+    ]
+
+    for col_num, cell_value in enumerate(total_row_data, 1):
+        cell = ws.cell(row=current_row, column=col_num)
+        cell.value = cell_value
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+        cell.fill = PatternFill(start_color="A7F3D0", end_color="A7F3D0", fill_type="solid")
+
+    current_row += 2
+
+    # Add student details section
+    ws.merge_cells(f'A{current_row}:F{current_row}')
+    details_title = ws[f'A{current_row}']
+    details_title.value = f"Cleared Students Details ({total_students})"
+    details_title.font = Font(size=14, bold=True, color="047857")
+    details_title.alignment = Alignment(horizontal='left')
+
+    current_row += 2
+
+    # Add headers
+    headers = ['Student ID', 'Student Name', 'Course', 'Year Level', 'Contact Number', 'Date Cleared']
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=current_row, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+
+    current_row += 1
+
     # Add data
-    for row_num, clearance in enumerate(clearances, header_row + 1):
+    for clearance in sorted(clearances, key=lambda c: f"{c.student.user.last_name}, {c.student.user.first_name}".lower()):
         student = clearance.student
         year_level_text = {
             1: "1st Year",
@@ -889,7 +1388,7 @@ def export_cleared_students_excel(clearances, school_year, semester):
 
         row_data = [
             student.student_id,
-            f"{student.user.first_name} {student.user.last_name}",
+            f"{student.user.last_name}, {student.user.first_name}",
             student.course.name if student.course else "N/A",
             year_level_text,
             student.contact_number or "N/A",
@@ -897,13 +1396,15 @@ def export_cleared_students_excel(clearances, school_year, semester):
         ]
 
         for col_num, cell_value in enumerate(row_data, 1):
-            cell = ws.cell(row=row_num, column=col_num)
+            cell = ws.cell(row=current_row, column=col_num)
             cell.value = cell_value
-            cell.alignment = Alignment(horizontal='center' if col_num > 1 else 'left')
+            cell.alignment = Alignment(horizontal='left')
 
             # Add alternating row colors
-            if row_num % 2 == 0:
+            if current_row % 2 == 0:
                 cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+
+        current_row += 1
 
     # Auto-adjust column widths
     for column in ws.columns:
